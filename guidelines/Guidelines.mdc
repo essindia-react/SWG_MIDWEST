@@ -1,0 +1,199 @@
+# Southwest Greens Ohio — CRM Guidelines
+
+## General Guidelines
+
+- Always write TypeScript — no plain `.js` or `.jsx` files.
+- Prefer named exports over default exports for components.
+- Keep components focused and small. If a component exceeds ~150 lines, split it.
+- Put shared helper functions in `/src/lib/`. Put reusable hooks in `/src/hooks/`.
+- Avoid absolute positioning. Use MUI's `Box`, `Stack`, and `Grid` with flexbox/grid for all layouts.
+- Refactor as you go — no dead code, no unused imports.
+- All dates are stored as ISO 8601 strings. Display them with a shared `formatDate()` utility in `/src/lib/formatters.ts`.
+- Dollar values are always formatted as USD currency using `formatCurrency()` from the same file.
+- Phone numbers should always be displayed in the format `(XXX) XXX-XXXX`.
+
+---
+
+## Brand & Design System
+
+### Color Palette
+
+```ts
+// /src/theme/theme.ts
+primary:   '#2E7D32'   // Southwest Greens dark green
+secondary: '#81C784'   // Light green accent
+neutral:   '#F5F5F5'   // Background gray
+text:      '#1A1A1A'   // Near-black body text
+warning:   '#F9A825'   // Amber — quotes pending, tasks overdue
+error:     '#C62828'   // Red — lost leads, critical flags
+info:      '#1565C0'   // Blue — informational callouts
+```
+
+### Typography
+
+- Base font size: `14px`
+- Font family: `Inter, sans-serif` (set in MUI theme)
+- Page titles: `h5` variant (MUI Typography)
+- Section headers: `h6` variant
+- Table headers: `body2` + `fontWeight: 600`
+- Labels / metadata: `caption` variant
+
+### Spacing
+
+- Use MUI's `spacing()` system (base 8px). Never hard-code pixel values in `sx`.
+- Section padding: `p: 3` (24px)
+- Card padding: `p: 2` (16px)
+- Gap between stat cards: `gap: 2`
+
+---
+
+## MUI Usage Rules
+
+### Forms & Inputs
+- Always use `MUI TextField` with `variant="outlined"` and `size="small"`.
+- Group related fields using `MUI Grid` (`container` + `item`) — never stack them manually.
+- Required fields must show the asterisk via `required` prop — do not add `*` in the label string.
+- Use `MUI Select` for dropdowns with 3 or more options. For 2 or fewer, use `RadioGroup`.
+- Date inputs must use `MUI DatePicker` from `@mui/x-date-pickers`.
+- Form validation errors appear as `helperText` on the field — never as alert banners for field-level errors.
+- Every form must have a primary `Submit` button and a `Cancel` button. Never use only one button.
+
+### Buttons
+- Primary action: `variant="contained"` with `color="primary"` (green).
+- Secondary/cancel: `variant="outlined"`.
+- Destructive action (delete, mark lost): `variant="contained"` with `color="error"`.
+- Icon-only buttons must always include a `tooltip` (MUI `Tooltip` wrapper).
+- Maximum **one** primary button per card or form section.
+
+### Modals / Dialogs
+- Use `MUI Dialog` for all confirmations, quick-edit forms, and detail overlays.
+- Destructive confirmation dialogs must always spell out what will be deleted/changed in the body text.
+- Modal max widths: `xs` for confirmations, `sm` for simple forms, `md` for complex forms, `lg` for quote builder.
+- Always trap focus inside open modals (MUI handles this by default — don't override).
+
+### Data Tables
+- Use `MUI DataGrid` for all list views (leads, contacts, projects, quotes).
+- Always include: column sorting, pagination (page size options: 10, 25, 50), and a search/filter bar above the table.
+- Row click opens the detail view — do not use a separate "View" button column.
+- Action buttons (edit, delete) live in the final column using `renderCell`.
+- Never show more than 8 columns by default. Hide secondary columns behind a column visibility toggle.
+
+### Charts
+- Use `MUI X Charts` or `Recharts` — do not mix both in the same project.
+- All charts must have a `title` prop displayed above the chart in `h6` typography.
+- Charts must handle empty/zero states gracefully — show a placeholder message, not a broken chart.
+- Pie charts: maximum 6 slices. Combine smaller categories into "Other" beyond that.
+- Bar charts: use horizontal bars when there are more than 5 categories.
+- All chart colors must pull from the brand palette — never use default library colors.
+
+### Stat / KPI Cards
+- Each stat card shows: label, primary value, and an optional trend indicator (up/down arrow + % change).
+- Cards render in a responsive row using `MUI Grid` — 4 columns on desktop, 2 on tablet, 1 on mobile.
+- Use `lucide-react` icons in the top-right of each stat card. Icon size: `20px`.
+
+---
+
+## Ant Design Usage Rules
+
+- **Only use Ant Design for `Steps` (stepper) components** — nothing else.
+- Import `Steps` from `antd` only in project status and quote workflow contexts.
+- Always set `direction="horizontal"` on desktop and `direction="vertical"` on mobile (`useMediaQuery` to switch).
+- Step labels must be concise — max 3 words per step title.
+- Completed steps: `status="finish"`. Current step: `status="process"`. Blocked: `status="error"`.
+- Do not import global Ant Design CSS — scope it to the components that use it to avoid style collisions with MUI.
+
+---
+
+## lucide-react Icon Rules
+
+- Import only the icons you use — never import the entire library.
+- Standard icon size: `16px` for inline/table use, `20px` for buttons, `24px` for empty states.
+- Icons must always be accompanied by a visible label or a `MUI Tooltip` — never icon-only without tooltip.
+- Use consistent icons across the app:
+
+| Action / Concept | Icon |
+|---|---|
+| Lead / Contact | `UserCircle` |
+| Project | `HardHat` |
+| Quote | `FileText` |
+| Task | `CheckSquare` |
+| Phone | `Phone` |
+| Email | `Mail` |
+| Location / Region | `MapPin` |
+| Add / Create | `Plus` |
+| Edit | `Pencil` |
+| Delete | `Trash2` |
+| Search | `Search` |
+| Filter | `SlidersHorizontal` |
+| Dashboard | `LayoutDashboard` |
+| Won / Success | `CheckCircle` |
+| Lost / Error | `XCircle` |
+| Warning | `AlertTriangle` |
+| Golf Green | `Flag` |
+| Turf / Grass | `Leaf` |
+
+---
+
+## CRM-Specific Business Rules
+
+### Lead Management
+- A lead must have `firstName`, `lastName`, `phone`, and `projectType` at minimum before saving.
+- `leadSource` must always be captured — default to `web-form` if unknown.
+- Leads older than 7 days with status `new` automatically appear highlighted in the leads list.
+- Only one `projectType` per lead record. If a customer wants multiple services, create multiple leads linked to the same contact.
+
+### Project Management
+- A project record cannot be created without a linked contact.
+- `squareFootage` is required before a quote can be generated.
+- `installStartDate` cannot be set before `quoteApprovedDate`.
+- Projects with `projectStatus = complete` must have a `warrantyExpiryDate` set.
+- Warranty duration defaults to **2 years** from install completion.
+
+### Quote Management
+- Quotes expire after **30 days** — show a visual warning badge at day 25.
+- A quote cannot be marked `accepted` without a corresponding signed contract (file attachment).
+- Line items must each have a `description`, `qty`, and `unitPrice` — no empty rows allowed.
+- The quote total must auto-calculate from line items. Never allow manual total override.
+
+### Tasks
+- Tasks must have a `dueDate` and `assignedTo` before saving.
+- Overdue tasks (past `dueDate` and not `done`) must display with a red `AlertTriangle` icon.
+- Tasks linked to a project appear in both the project detail view and the global task board.
+
+### Regional Assignment
+- Every lead and project must be tagged with an `ohioRegion`.
+- Auto-populate `ohioRegion` from the zip code where possible.
+- Columbus is the default region if zip code lookup fails.
+
+---
+
+## Navigation & Layout
+
+- Sidebar navigation — always visible on desktop, collapsible to icon-only on tablet, drawer on mobile.
+- Sidebar order: Dashboard → Leads → Contacts → Projects → Quotes → Tasks → Reports → Settings.
+- Active sidebar item uses `primary` green background with white text.
+- Page header includes: page title (h5), breadcrumb trail, and a primary CTA button (e.g. "Add Lead").
+- Breadcrumbs use `>` separator and link all levels except the current page.
+
+---
+
+## Empty States
+
+Every list view and data table must handle the case where there is no data:
+- Show a `lucide-react` icon relevant to the section (e.g. `UserCircle` for contacts).
+- Show a short message: `"No [leads] yet"`.
+- Show a primary CTA button: `"Add your first [lead]"`.
+- Never show a blank white box.
+
+---
+
+## Responsive Breakpoints (MUI defaults)
+
+| Breakpoint | Width | Layout Behavior |
+|---|---|---|
+| `xs` | 0–600px | Single column, mobile drawer nav |
+| `sm` | 600–900px | Two columns, icon-only sidebar |
+| `md` | 900–1200px | Full sidebar, 3-col grids |
+| `lg` | 1200px+ | Full layout, 4-col stat cards |
+
+Always test layouts at `sm` and `md` — these are the most common screen sizes for field reps on tablets.

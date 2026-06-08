@@ -1,0 +1,224 @@
+# Southwest Greens Ohio — CRM Skill Sheet
+
+## Business Context
+
+Southwest Greens Ohio is Ohio's leading artificial turf and synthetic putting green installer. They serve the entire state (Columbus, Cleveland, Cincinnati, Dayton, Akron, Toledo, Parma) and handle both **residential and commercial** projects.
+
+### Core Service Lines
+
+| Service                 | Key Notes                                                                |
+| ----------------------- | ------------------------------------------------------------------------ |
+| Golf / Putting Greens   | Flagship product. Outdoor, indoor, basement, Nicklaus Design partnership |
+| Artificial Turf & Grass | Residential lawns, commercial applications, Bolt™ Fiber, HydroChill™     |
+| Pet & Dog Turf          | Specialized drainage and odor-resistant installations                    |
+| Playground Turf         | Schools, parks, retirement communities                                   |
+| Sports Turf             | Universities, courts, multi-sport                                        |
+| Synthetic Tee Lines     | Golf practice facilities                                                 |
+
+### Business Model
+
+- Leads come in via **quote requests** (web form, phone, walk-in)
+- Projects go through a **design → quote → install → follow-up** lifecycle
+- Sales team manages relationships; installers handle field work
+- Maintenance contracts exist post-installation
+
+---
+
+## CRM Data Model
+
+### Lead / Contact Record
+
+```
+firstName, lastName, email, phone, address, city, zipCode, ohioRegion
+leadSource (web-form | phone | referral | social | walk-in)
+projectType (putting-green | artificial-turf | pet-turf | playground | sports-turf | tee-line | other)
+projectSubtype (outdoor | indoor | basement | commercial | residential)
+squareFootageEstimate
+budgetRange
+notes
+assignedRep
+status (new | contacted | consulted | quoted | won | lost | nurturing)
+createdAt, updatedAt
+```
+
+### Project Record
+
+```
+projectId, contactId
+serviceType, subtype
+locationAddress, city, ohioRegion
+squareFootage
+productLine (bolt-fiber | hydrochill | nicklaus-design | standard)
+estimatedValue, finalValue
+installStartDate, installEndDate
+installCrew[]
+projectStatus (design | quoted | approved | scheduled | in-progress | complete | warranty)
+warrantyExpiryDate
+attachments[] (photos, contracts, invoices)
+notes
+```
+
+### Quote Record
+
+```
+quoteId, contactId, projectId
+lineItems[] { description, qty, unitPrice, total }
+totalAmount
+validUntil
+status (draft | sent | accepted | declined | expired)
+sentAt, acceptedAt
+```
+
+### Activity / Interaction Log
+
+```
+activityId, contactId, projectId?
+type (call | email | site-visit | quote-sent | follow-up | install-update | payment)
+summary
+createdBy (rep)
+createdAt
+```
+
+### Task Record
+
+```
+taskId, contactId?, projectId?
+title, description
+assignedTo
+dueDate
+priority (low | medium | high)
+status (open | in-progress | done)
+```
+
+---
+
+## CRM Module Structure
+
+```
+/src
+  /pages
+    /dashboard          ← KPI overview, charts, recent activity
+    /leads              ← Lead list, filters, kanban pipeline
+    /contacts           ← Contact detail, history, projects
+    /projects           ← Project list, timeline, status board
+    /quotes             ← Quote builder, send, track
+    /tasks              ← Task board / list by rep
+    /reports            ← Revenue by service, region, rep
+    /settings           ← Users, regions, service config
+
+  /components
+    /leads
+      LeadCard.tsx
+      LeadKanban.tsx
+      LeadForm.tsx         ← MUI form inputs
+      LeadStatusChip.tsx
+    /contacts
+      ContactDetail.tsx
+      ActivityTimeline.tsx
+      ContactForm.tsx
+    /projects
+      ProjectCard.tsx
+      ProjectStatusStepper.tsx   ← Ant Design Stepper
+      ProjectForm.tsx
+    /quotes
+      QuoteBuilder.tsx
+      QuoteLineItem.tsx
+      QuoteSummary.tsx
+    /tasks
+      TaskBoard.tsx
+      TaskCard.tsx
+    /shared
+      PageHeader.tsx
+      StatCard.tsx
+      ConfirmModal.tsx      ← MUI Modal
+      DataTable.tsx         ← MUI DataGrid
+      RegionBadge.tsx
+      ServiceTypeBadge.tsx
+
+  /charts
+    RevenueBarChart.tsx       ← MUI X Charts / Recharts
+    LeadsByServicePie.tsx
+    ConversionFunnelChart.tsx
+    RegionHeatMap.tsx
+
+  /hooks
+    useLeads.ts
+    useProjects.ts
+    useQuotes.ts
+    useTasks.ts
+
+  /lib
+    api.ts
+    constants.ts             ← service types, regions, status maps
+    formatters.ts
+
+  /theme
+    theme.ts                 ← MUI theme with SWG brand colors
+```
+
+---
+
+## Ohio Region Taxonomy
+
+Used for filtering, routing, and reporting:
+
+- Columbus (Central Ohio — HQ region)
+- Cleveland
+- Cincinnati
+- Dayton
+- Akron
+- Toledo
+- Parma
+- Other Ohio
+
+---
+
+## Project Status Pipeline (Ant Design Stepper Steps)
+
+```
+1. Design Consultation
+2. Quote Sent
+3. Quote Approved
+4. Install Scheduled
+5. Installation In Progress
+6. Project Complete
+7. Warranty Active
+```
+
+---
+
+## Lead Pipeline Stages (Kanban)
+
+```
+New → Contacted → Consulted → Quoted → Won / Lost / Nurturing
+```
+
+---
+
+## Key Metrics (Dashboard KPIs)
+
+- Total leads this month / YTD
+- Conversion rate (leads → won)
+- Revenue closed vs pipeline value
+- Average project value by service type
+- Leads by Ohio region (map/bar)
+- Leads by source (pie chart)
+- Open tasks by rep
+- Projects in progress (count + value)
+
+---
+
+## Technology Stack
+
+| Concern           | Library                           |
+| ----------------- | --------------------------------- |
+| UI Framework      | React + TypeScript                |
+| Component Library | MUI (Material UI) v5+             |
+| Icons             | lucide-react                      |
+| Steppers          | Ant Design (`Steps` component)    |
+| Charts            | MUI X Charts or Recharts          |
+| Forms             | MUI TextField, Select, DatePicker |
+| Modals            | MUI Dialog                        |
+| Data Tables       | MUI DataGrid                      |
+| State             | React Query + Zustand             |
+| Routing           | React Router v6                   |
