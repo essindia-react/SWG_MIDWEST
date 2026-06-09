@@ -6,12 +6,19 @@ export const ROUTES = {
   projects: "/projects",
   fieldOperations: "/field-operations",
   tasks: "/tasks",
+  tasksMobile: "/tasks/mobile",
+  mobileTaskManagement: "/mobile-task-management",
   calendar: "/calendar",
   communications: "/communications",
   quotes: "/quotes",
+  invoicing: "/invoicing",
   automations: "/automations",
   analytics: "/analytics",
   mobile: "/mobile",
+  siteMaterialRequest: "/site-material-request",
+  siteMaterialRequestMobile: "/site-material-request/mobile",
+  inventory: "/inventory",
+  inventoryTab: (tab: string) => `/inventory?tab=${tab}`,
   settings: "/settings",
 } as const;
 
@@ -22,12 +29,16 @@ export const ROUTE_TITLES: Record<string, string> = {
   [ROUTES.projects]: "Project Management",
   [ROUTES.fieldOperations]: "Field Operations",
   [ROUTES.tasks]: "Task Management",
+  [ROUTES.mobileTaskManagement]: "Mobile Task Management",
   [ROUTES.calendar]: "Calendar & Scheduling",
   [ROUTES.communications]: "Communications Center",
   [ROUTES.quotes]: "Quotes & Proposals",
+  [ROUTES.invoicing]: "Invoicing & Milestone Payments",
   [ROUTES.automations]: "Automation Builder",
   [ROUTES.analytics]: "Lead Source Analytics",
   [ROUTES.mobile]: "Mobile Sales View",
+  [ROUTES.siteMaterialRequest]: "Site Material Request",
+  [ROUTES.inventory]: "Inventory Management",
   [ROUTES.settings]: "Settings",
 };
 
@@ -39,6 +50,14 @@ const LEAD_WORKFLOW_TITLES: Record<string, string> = {
   documents: "Documents",
 };
 
+const INVENTORY_TAB_TITLES: Record<string, string> = {
+  master: "Products",
+  "stock-ledger": "Stock Ledger",
+  "material-requests": "Material Requests",
+  "product-swaps": "Product Swaps",
+  reports: "Inventory Reports",
+};
+
 export function getPageTitle(pathname: string, search = ""): string {
   if (/^\/leads\/[^/]+$/.test(pathname)) {
     return "Lead Detail";
@@ -47,6 +66,12 @@ export function getPageTitle(pathname: string, search = ""): string {
     const step = new URLSearchParams(search).get("step");
     if (step && LEAD_WORKFLOW_TITLES[step]) {
       return LEAD_WORKFLOW_TITLES[step];
+    }
+  }
+  if (pathname === ROUTES.inventory) {
+    const tab = new URLSearchParams(search).get("tab") ?? "master";
+    if (INVENTORY_TAB_TITLES[tab]) {
+      return INVENTORY_TAB_TITLES[tab];
     }
   }
   return ROUTE_TITLES[pathname] ?? "Dashboard";

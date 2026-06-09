@@ -1,3 +1,11 @@
+import type {
+  LeadEstimationArea,
+  LeadEstimationOverhead,
+  LeadEstimationProduct,
+  LeadUploadedDocument,
+  LeadUploadedImage,
+} from "../../../../types/lead";
+
 export interface WorkspaceFormValues {
   // Inquiry — Lead Information
   leadNo: string;
@@ -63,6 +71,7 @@ export interface WorkspaceFormValues {
   obstacleFence: boolean;
   obstaclePool: boolean;
   obstacleLandscaping: boolean;
+  siteVisitImages: LeadUploadedImage[];
   // Design
   designId: string;
   designName: string;
@@ -70,6 +79,7 @@ export interface WorkspaceFormValues {
   designCreatedBy: string;
   designCreatedDate: string;
   designLastUpdated: string;
+  designImage?: LeadUploadedImage;
   // Estimation
   estimationNo: string;
   estimationDate: string;
@@ -82,6 +92,9 @@ export interface WorkspaceFormValues {
   overheadTitle: string;
   overheadRate: string;
   overheadUnit: string;
+  estimationAreas: LeadEstimationArea[];
+  estimationProducts: LeadEstimationProduct[];
+  estimationOverheads: LeadEstimationOverhead[];
   // Proposal
   proposalId: string;
   proposalName: string;
@@ -93,6 +106,7 @@ export interface WorkspaceFormValues {
   nextFollowUpDate: string;
   remarks: string;
   documentCount: number;
+  uploadedDocuments: LeadUploadedDocument[];
 }
 
 export const EMPTY_WORKSPACE_FORM: WorkspaceFormValues = {
@@ -149,6 +163,7 @@ export const EMPTY_WORKSPACE_FORM: WorkspaceFormValues = {
   obstacleFence: false,
   obstaclePool: false,
   obstacleLandscaping: false,
+  siteVisitImages: [],
   designId: "DSN-8821",
   designName: "",
   designStatus: "Draft",
@@ -166,6 +181,20 @@ export const EMPTY_WORKSPACE_FORM: WorkspaceFormValues = {
   overheadTitle: "",
   overheadRate: "",
   overheadUnit: "Flat Fee",
+  estimationAreas: [
+    {
+      id: "area-1",
+      areaName: "",
+      areaType: "Main Turf",
+      areaLength: "",
+      areaWidth: "",
+      customArea: "",
+    },
+  ],
+  estimationProducts: [],
+  estimationOverheads: [
+    { id: "oh-1", title: "", rate: "", unit: "Flat Fee" },
+  ],
   proposalId: "PRP-9902",
   proposalName: "",
   proposalStatus: "Draft",
@@ -174,7 +203,8 @@ export const EMPTY_WORKSPACE_FORM: WorkspaceFormValues = {
   statusUpdate: "Decision Pending",
   nextFollowUpDate: "",
   remarks: "",
-  documentCount: 6,
+  documentCount: 0,
+  uploadedDocuments: [],
 };
 
 export type WorkspaceFormChange = <K extends keyof WorkspaceFormValues>(

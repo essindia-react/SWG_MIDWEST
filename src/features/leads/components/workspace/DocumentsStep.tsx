@@ -1,156 +1,182 @@
-import { useEffect, useState } from "react";
+import { useRef, useState } from "react";
 import { Box, Button, Grid, IconButton, Typography } from "@mui/material";
-import { Paperclip, Plus, Trash2, Upload } from "lucide-react";
+import { FileText, Paperclip, Trash2, Upload } from "lucide-react";
+import { toast } from "sonner";
+import type { LeadUploadedDocument } from "../../../../types/lead";
+import { WorkspaceSection } from "./WorkspaceSection";
+import { SelectField, TextFieldInput } from "./workspaceFields";
+import type { WorkspaceFormChange, WorkspaceFormValues } from "./types";
 
-const DOCUMENT_CATEGORIES = [
-  "Customer Documents",
-  "Design Documents",
-  "Proposal Documents",
+const DOCUMENT_TYPES = [
+  "Customer ID Proof",
+  "Design Drawing",
+  "Contract Draft",
+  "Proposal Document",
+  "Site Photos",
+  "Invoice",
+  "Other",
 ] as const;
 
-type DocumentCategory = (typeof DOCUMENT_CATEGORIES)[number];
-
-const DEFAULT_ITEMS: Record<DocumentCategory, string[]> = {
-  "Customer Documents": ["Customer ID Proof", "Contract Draft"],
-  "Design Documents": ["Design ID Proof", "Contract Draft"],
-  "Proposal Documents": ["Proposal ID Proof", "Contract Draft"],
-};
-
-const DEFAULT_COUNTS: Record<DocumentCategory, number> = {
-  "Customer Documents": DEFAULT_ITEMS["Customer Documents"].length,
-  "Design Documents": DEFAULT_ITEMS["Design Documents"].length,
-  "Proposal Documents": DEFAULT_ITEMS["Proposal Documents"].length,
-};
-
 interface DocumentsStepProps {
-  onCountChange?: (count: number) => void;
+  values: WorkspaceFormValues;
+  onChange: WorkspaceFormChange;
 }
 
-function UploadSlot({
-  label,
-  removable,
-  onRemove,
-}: {
-  label: string;
-  removable: boolean;
-  onRemove: () => void;
-}) {
-  return (
-    <Box>
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
-        <Typography sx={{ fontSize: "0.75rem", fontWeight: 600, color: "text.primary" }}>
-          {label}
-        </Typography>
-        {removable && (
-          <IconButton size="small" onClick={onRemove} aria-label={`Remove ${label}`} sx={{ p: 0.5 }}>
-            <Trash2 size={14} color="#DC2626" />
-          </IconButton>
-        )}
-      </Box>
-      <Box
-        sx={{
-          border: 2,
-          borderStyle: "dashed",
-          borderColor: "divider",
-          borderRadius: 2,
-          p: 2,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          textAlign: "center",
-          bgcolor: "grey.50",
-          cursor: "pointer",
-          "&:hover": { bgcolor: "background.paper", borderColor: "primary.main" },
-          transition: "all 0.2s",
-        }}
-      >
-        <Upload size={24} color="#94A3B8" />
-        <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
-          Click or drag file to upload
-        </Typography>
-      </Box>
-    </Box>
-  );
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-export function DocumentsStep({ onCountChange }: DocumentsStepProps) {
-  const [categoryItems, setCategoryItems] = useState(DEFAULT_ITEMS);
+export function DocumentsStep({ values, onChange }: DocumentsStepProps) {
+  const [documentType, setDocumentType] = useState<string>(DOCUMENT_TYPES[0]);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  const totalCount = DOCUMENT_CATEGORIES.reduce(
-    (sum, cat) => sum + categoryItems[cat].length,
-    0
-  );
+  const customerName = `${values.firstName} ${values.lastName}`.trim() || values.estimationCustomerName;
+  const customerId = values.existingCustomerId || values.leadNo;
 
-  useEffect(() => {
-    onCountChange?.(totalCount);
-  }, [totalCount, onCountChange]);
-
-  const handleAddMore = (category: DocumentCategory) => {
-    setCategoryItems((prev) => {
-      const count = prev[category].length + 1;
-      return {
-        ...prev,
-        [category]: [...prev[category], `Additional Document ${count}`],
-      };
-    });
+  const handleUpload = (file: File) => {
+    if (!documentType) {
+      toast.error("Select a document type first");
+      return;
+    }
+    const doc: LeadUploadedDocument = {
+      id: `doc-${Date.now()}`,
+      documentType,
+      fileName: file.name,
+      fileSize: file.size,
+      uploadedAt: new Date().toISOString(),
+    };
+    const next = [...values.uploadedDocuments, doc];
+    onChange("uploadedDocuments", next);
+    onChange("documentCount", next.length);
+    toast.success(`${documentType} uploaded successfully`);
   };
 
-  const handleRemove = (category: DocumentCategory, index: number) => {
-    if (index < DEFAULT_COUNTS[category]) return;
-    setCategoryItems((prev) => ({
-      ...prev,
-      [category]: prev[category].filter((_, i) => i !== index),
-    }));
+  const handleRemove = (id: string) => {
+    const next = values.uploadedDocuments.filter((d) => d.id !== id);
+    onChange("uploadedDocuments", next);
+    onChange("documentCount", next.length);
   };
 
   return (
-    <Grid container spacing={3}>
-      {DOCUMENT_CATEGORIES.map((cat) => (
-        <Grid key={cat} size={{ xs: 12, md: 4 }}>
+    <WorkspaceSection title="Documents">
+      <Grid container spacing={3}>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <TextFieldInput label="Customer Name" value={customerName} onChange={() => {}} disabled />
+        </Grid>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <TextFieldInput label="Customer ID" value={customerId} onChange={() => {}} disabled />
+        </Grid>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <SelectField
+            label="Document Type"
+            value={documentType}
+            onChange={setDocumentType}
+            options={DOCUMENT_TYPES}
+          />
+        </Grid>
+        <Grid size={{ xs: 12 }}>
+          <input
+            ref={inputRef}
+            type="file"
+            accept="image/*,.pdf"
+            style={{ display: "none" }}
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) handleUpload(file);
+              e.target.value = "";
+            }}
+          />
           <Box
+            onClick={() => inputRef.current?.click()}
             sx={{
-              p: 3,
-              border: 1,
+              border: 2,
+              borderStyle: "dashed",
               borderColor: "divider",
-              borderRadius: 3,
-              bgcolor: "background.paper",
+              borderRadius: 2,
+              p: 3,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              textAlign: "center",
+              bgcolor: "grey.50",
+              cursor: "pointer",
+              maxWidth: 400,
+              "&:hover": { bgcolor: "background.paper", borderColor: "primary.main" },
             }}
           >
-            <Typography
-              sx={{
-                fontSize: "0.9375rem",
-                fontWeight: 700,
-                mb: 3,
-                display: "flex",
-                alignItems: "center",
-                gap: 1,
-              }}
-            >
-              <Paperclip size={16} color="#2E7D32" />
-              {cat}
+            <Upload size={28} color="#94A3B8" />
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+              Upload {documentType || "document"}
             </Typography>
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-              {categoryItems[cat].map((item, index) => (
-                <UploadSlot
-                  key={`${cat}-${item}-${index}`}
-                  label={item}
-                  removable={index >= DEFAULT_COUNTS[cat]}
-                  onRemove={() => handleRemove(cat, index)}
-                />
-              ))}
-            </Box>
-            <Button
-              variant="outlined"
-              size="small"
-              startIcon={<Plus size={14} />}
-              onClick={() => handleAddMore(cat)}
-              sx={{ mt: 2, width: "100%" }}
-            >
-              Add More
-            </Button>
+            <Typography variant="caption" color="text.secondary">
+              Click to select image or PDF
+            </Typography>
           </Box>
         </Grid>
-      ))}
-    </Grid>
+      </Grid>
+
+      {values.uploadedDocuments.length > 0 && (
+        <Box sx={{ mt: 4 }}>
+          <Typography
+            sx={{
+              fontSize: "0.9375rem",
+              fontWeight: 700,
+              mb: 2,
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+            }}
+          >
+            <Paperclip size={16} color="#2E7D32" />
+            Uploaded Documents ({values.uploadedDocuments.length})
+          </Typography>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+            {values.uploadedDocuments.map((doc) => (
+              <Box
+                key={doc.id}
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 2,
+                  p: 2,
+                  border: 1,
+                  borderColor: "divider",
+                  borderRadius: 2,
+                  bgcolor: "background.paper",
+                }}
+              >
+                <Box
+                  sx={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 1.5,
+                    bgcolor: "#E8F5E9",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0,
+                  }}
+                >
+                  <FileText size={20} color="#2E7D32" />
+                </Box>
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Typography sx={{ fontSize: "0.8125rem", fontWeight: 600 }} noWrap>
+                    {doc.fileName}
+                  </Typography>
+                  <Typography sx={{ fontSize: "0.6875rem", color: "text.secondary" }}>
+                    {doc.documentType} · {formatFileSize(doc.fileSize)}
+                  </Typography>
+                </Box>
+                <IconButton size="small" color="error" onClick={() => handleRemove(doc.id)}>
+                  <Trash2 size={16} />
+                </IconButton>
+              </Box>
+            ))}
+          </Box>
+        </Box>
+      )}
+    </WorkspaceSection>
   );
 }

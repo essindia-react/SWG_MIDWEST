@@ -9,6 +9,7 @@ import {
 import { WorkspaceSection } from "../../../leads/components/workspace/WorkspaceSection";
 import {
   getCustomerById,
+  getProposalsForCustomer,
   PROJECT_CUSTOMERS,
   PROJECT_STATUS_OPTIONS,
   PROJECT_TYPE_OPTIONS,
@@ -34,7 +35,15 @@ export function ProjectEditTab({ project, onSave }: ProjectEditTabProps) {
     return customer ? `${customer.name} — ${customer.code}` : "";
   }, [project.customerId]);
 
+  const initialProposalLabel = useMemo(() => {
+    if (!project.proposalId) return "";
+    return project.proposalName
+      ? `${project.proposalId} — ${project.proposalName}`
+      : project.proposalId;
+  }, [project.proposalId, project.proposalName]);
+
   const [customerLabel, setCustomerLabel] = useState(initialCustomerLabel);
+  const [proposalLabel, setProposalLabel] = useState(initialProposalLabel);
   const [plannedStartDate, setPlannedStartDate] = useState(project.plannedStartDate);
   const [plannedEndDate, setPlannedEndDate] = useState(project.plannedEndDate);
   const [description, setDescription] = useState(project.description);
@@ -55,6 +64,19 @@ export function ProjectEditTab({ project, onSave }: ProjectEditTabProps) {
     return match ? getCustomerById(match.id) : undefined;
   }, [customerLabel]);
 
+  const proposalOptions = useMemo(() => {
+    if (!selectedCustomer) return [];
+    return getProposalsForCustomer(selectedCustomer.id).map(
+      (p) => `${p.id} — ${p.name}`
+    );
+  }, [selectedCustomer]);
+
+  const selectedProposal = useMemo(() => {
+    if (!selectedCustomer || !proposalLabel) return undefined;
+    const proposalId = proposalLabel.split(" — ")[0];
+    return getProposalsForCustomer(selectedCustomer.id).find((p) => p.id === proposalId);
+  }, [selectedCustomer, proposalLabel]);
+
   const handleSave = () => {
     const customer = PROJECT_CUSTOMERS.find(
       (c) => `${c.name} — ${c.code}` === customerLabel
@@ -63,6 +85,8 @@ export function ProjectEditTab({ project, onSave }: ProjectEditTabProps) {
     onSave({
       customerId: customer?.id ?? project.customerId,
       customerName: customer?.name ?? project.customerName,
+      proposalId: selectedProposal?.id ?? "",
+      proposalName: selectedProposal?.name ?? "",
       plannedStartDate,
       plannedEndDate,
       description,
@@ -102,8 +126,20 @@ export function ProjectEditTab({ project, onSave }: ProjectEditTabProps) {
             <SelectField
               label="Customer Name"
               value={customerLabel}
-              onChange={setCustomerLabel}
+              onChange={(value) => {
+                setCustomerLabel(value);
+                setProposalLabel("");
+              }}
               options={customerOptions}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, md: 6, lg: 4 }}>
+            <SelectField
+              label="Proposal"
+              value={proposalLabel}
+              onChange={setProposalLabel}
+              options={proposalOptions}
+              disabled={!selectedCustomer}
             />
           </Grid>
 

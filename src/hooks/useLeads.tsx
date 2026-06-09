@@ -26,6 +26,7 @@ interface LeadsContextValue {
   leads: Lead[];
   userAddedLeads: Lead[];
   addLead: (input: LeadFormInput) => Lead;
+  updateLead: (id: string, input: LeadFormInput) => void;
   updateLeadStatus: (id: string, status: LeadStatus) => void;
   updateLeadPipelineStage: (id: string, stage: PipelineStage) => void;
   getLeadById: (id: string) => Lead | undefined;
@@ -88,6 +89,31 @@ export function LeadsProvider({ children }: { children: ReactNode }) {
     return newLead;
   }, []);
 
+  const updateLead = useCallback((id: string, input: LeadFormInput) => {
+    const now = new Date().toISOString();
+    setLeads((prev) =>
+      prev.map((lead) => {
+        if (lead.id !== id) return lead;
+        const ohioRegion = zipToOhioRegion(input.zipCode);
+        const estimatedValue =
+          input.manualEstimatedRevenue ??
+          estimateLeadValue(
+            input.projectType,
+            input.squareFootageEstimate,
+            input.budgetRange
+          );
+        const { manualEstimatedRevenue: _, formPipelineStage: __, ...leadFields } = input;
+        return applyLeadDefaults({
+          ...lead,
+          ...leadFields,
+          ohioRegion,
+          estimatedValue,
+          updatedAt: now,
+        });
+      })
+    );
+  }, []);
+
   const updateLeadStatus = useCallback((id: string, status: LeadStatus) => {
     const now = new Date().toISOString();
     setLeads((prev) =>
@@ -114,6 +140,7 @@ export function LeadsProvider({ children }: { children: ReactNode }) {
       leads,
       userAddedLeads,
       addLead,
+      updateLead,
       updateLeadStatus,
       updateLeadPipelineStage,
       getLeadById,
@@ -122,6 +149,7 @@ export function LeadsProvider({ children }: { children: ReactNode }) {
       leads,
       userAddedLeads,
       addLead,
+      updateLead,
       updateLeadStatus,
       updateLeadPipelineStage,
       getLeadById,

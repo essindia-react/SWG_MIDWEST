@@ -140,35 +140,6 @@ export function WorkOrderManagementTab({
         )}
       </WorkspaceSection>
 
-      <WorkspaceSection title="Materials Required (Pick List Preview)">
-        {project.budget.materials.length === 0 ? (
-          <Typography sx={{ fontSize: "0.875rem", color: "text.disabled", fontStyle: "italic" }}>
-            No materials in budget.
-          </Typography>
-        ) : (
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>Item</TableCell>
-                <TableCell>SKU</TableCell>
-                <TableCell>Quantity</TableCell>
-                <TableCell>Unit</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {project.budget.materials.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell>{item.materialName}</TableCell>
-                  <TableCell>{item.sku}</TableCell>
-                  <TableCell>{item.estimatedQuantity}</TableCell>
-                  <TableCell>{item.unit}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-      </WorkspaceSection>
-
       <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
         <Button
           variant="outlined"

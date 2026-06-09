@@ -7,6 +7,8 @@ import {
   UserCircle,
   AlertCircle,
   PlusCircle,
+  Eye,
+  Edit2,
 } from "lucide-react";
 import { getLeadWorkflowSection } from "../constants/leadWorkflowSections";
 import { useLeads } from "../../../hooks/useLeads";
@@ -19,7 +21,44 @@ import { ROUTES } from "../../../routes/paths";
 
 interface LeadsListProps {
   onAddLead?: () => void;
+  onEditLead?: (leadId: string) => void;
   workflowStep?: string;
+}
+
+function LeadRowActions({
+  leadId,
+  onView,
+  onEdit,
+}: {
+  leadId: string;
+  onView: (id: string) => void;
+  onEdit: (id: string) => void;
+}) {
+  return (
+    <div
+      className="flex items-center justify-center gap-1"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <button
+        type="button"
+        onClick={() => onView(leadId)}
+        className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-green-700 hover:bg-green-50 transition-colors"
+        aria-label="View lead"
+        title="View lead"
+      >
+        <Eye className="w-4 h-4" />
+      </button>
+      <button
+        type="button"
+        onClick={() => onEdit(leadId)}
+        className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+        aria-label="Edit lead"
+        title="Edit lead"
+      >
+        <Edit2 className="w-4 h-4" />
+      </button>
+    </div>
+  );
 }
 
 const COLUMNS: { label: string; field: keyof LeadTableRow }[] = [
@@ -34,7 +73,7 @@ const COLUMNS: { label: string; field: keyof LeadTableRow }[] = [
   { label: "City", field: "city" },
 ];
 
-export function LeadsList({ onAddLead, workflowStep }: LeadsListProps) {
+export function LeadsList({ onAddLead, onEditLead, workflowStep }: LeadsListProps) {
   const isWorkflowView = Boolean(workflowStep);
   const activeWorkflow = isWorkflowView ? getLeadWorkflowSection(workflowStep) : null;
   const navigate = useNavigate();
@@ -173,6 +212,7 @@ export function LeadsList({ onAddLead, workflowStep }: LeadsListProps) {
                   </button>
                 </th>
               ))}
+              <th className="p-4 text-center sticky right-0 z-30 bg-white border-l border-slate-200 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.08)]">Actions</th>
             </tr>
           </thead>
           <tbody className="text-sm divide-y divide-slate-100">
@@ -234,6 +274,13 @@ export function LeadsList({ onAddLead, workflowStep }: LeadsListProps) {
                 <td className="p-4 text-slate-600">{lead.leadSource}</td>
                 <td className="p-4 text-slate-600">{lead.leadType}</td>
                 <td className="p-4 text-slate-600">{lead.city}</td>
+                <td className="p-4 sticky right-0 z-30 bg-white border-l border-slate-200 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.08)]">
+                  <LeadRowActions
+                    leadId={lead.id}
+                    onView={(id) => navigate(ROUTES.leadDetail(id))}
+                    onEdit={(id) => onEditLead?.(id)}
+                  />
+                </td>
               </tr>
             ))}
           </tbody>

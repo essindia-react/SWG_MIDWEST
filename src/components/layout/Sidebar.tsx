@@ -1,7 +1,7 @@
 // sideNave 1
 import React from "react";
 import { useEffect, useRef, useState, type MouseEvent } from "react";
-import { NavLink, useLocation } from "react-router";
+import { NavLink, useLocation, useNavigate } from "react-router";
 import {
   LayoutDashboard,
   Users,
@@ -12,14 +12,18 @@ import {
   Calendar,
   MessageSquare,
   FileText,
+  Receipt,
   Zap,
   BarChart3,
   Settings,
+  Package,
+  Warehouse,
   Leaf,
   ChevronRight,
   ChevronDown,
   Smartphone,
 } from "lucide-react";
+import { INVENTORY_TABS } from "../../features/inventory/constants/inventoryConstants";
 import { LEAD_WORKFLOW_SECTIONS } from "../../features/leads/constants/leadWorkflowSections";
 import { ROUTES } from "../../routes/paths";
 
@@ -29,14 +33,24 @@ const navItems = [
   { to: ROUTES.pipeline, label: "Pipeline", icon: GitBranch },
   { to: ROUTES.projects, label: "Project Management", icon: FolderKanban },
   { to: ROUTES.fieldOperations, label: "Field Operations", icon: HardHat },
-  { to: ROUTES.tasks, label: "Tasks", icon: CheckSquare },
+  { to: ROUTES.tasks, label: "Task Management", icon: CheckSquare },
+  // {
+  //   to: ROUTES.mobileTaskManagement,
+  //   label: "Mobile Task Management",
+  //   icon: Smartphone,
+  //   openMobileInNewTab: true,
+  //   mobileRoute: ROUTES.tasksMobile,
+  // },
   { to: ROUTES.calendar, label: "Calendar", icon: Calendar },
-  { to: ROUTES.communications, label: "Communications", icon: MessageSquare },
-  { to: ROUTES.quotes, label: "Quotes", icon: FileText },
-  { to: ROUTES.automations, label: "Automations", icon: Zap },
-  { to: ROUTES.analytics, label: "Analytics", icon: BarChart3 },
+  // { to: ROUTES.communications, label: "Communications", icon: MessageSquare },
+  // { to: ROUTES.quotes, label: "Quotes", icon: FileText },
+  { to: ROUTES.invoicing, label: "Invoicing", icon: Receipt },
+  // { to: ROUTES.automations, label: "Automations", icon: Zap },
+  // { to: ROUTES.analytics, label: "Analytics", icon: BarChart3 },
+  { to: ROUTES.inventory, label: "Inventory", icon: Warehouse, hasInventoryMenu: true },
+  { to: ROUTES.siteMaterialRequest, label: "Site Material Request", icon: Package },
   // { to: ROUTES.mobile, label: "Mobile View", icon: Smartphone },
-  { to: ROUTES.settings, label: "Settings", icon: Settings },
+  // { to: ROUTES.settings, label: "Settings", icon: Settings },
 ];
 
 const EXPANDED_WIDTH = 240;
@@ -61,6 +75,56 @@ function useIsMobile() {
   return isMobile;
 }
 
+function InventorySubMenu({
+  activeTab,
+  isVisible,
+  onItemSelect,
+}: {
+  activeTab: string;
+  isVisible: boolean;
+  onItemSelect: () => void;
+}) {
+  return (
+    <div
+      className="grid transition-[grid-template-rows] duration-200 ease-out"
+      style={{ gridTemplateRows: isVisible ? "1fr" : "0fr" }}
+    >
+      <div className="min-h-0 overflow-hidden">
+        <div className="ml-1 pr-1">
+          <div className="flex flex-col gap-1 ml-5">
+            {INVENTORY_TABS.map((tab) => {
+              const isActive = activeTab === tab.id;
+
+              return (
+                <NavLink
+                  key={tab.id}
+                  to={ROUTES.inventoryTab(tab.id)}
+                  onClick={onItemSelect}
+                  className="flex items-center no-underline rounded-lg px-3 py-1.5 transition-colors hover:bg-white/8"
+                  style={{
+                    color: isActive ? "#ffffff" : "rgba(255,255,255,0.55)",
+                    opacity: isActive ? 1 : 0.88,
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: "13px",
+                      fontWeight: isActive ? 600 : 500,
+                      display: "block",
+                    }}
+                  >
+                    {tab.label}
+                  </span>
+                </NavLink>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function LeadWorkflowSubMenu({
   activeStep,
   isVisible,
@@ -76,8 +140,8 @@ function LeadWorkflowSubMenu({
       style={{ gridTemplateRows: isVisible ? "1fr" : "0fr" }}
     >
       <div className="min-h-0 overflow-hidden">
-        <div className="mt-2 ml-1 pr-1">
-          <div className="flex flex-col gap-2">
+        <div className="ml-1 pr-1">
+          <div className="flex flex-col gap-2 ml-5">
             {LEAD_WORKFLOW_SECTIONS.map((section) => {
               const isActive = activeStep === section.id;
 
@@ -113,17 +177,25 @@ function LeadWorkflowSubMenu({
 
 export function Sidebar() {
   const location = useLocation();
+  const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [collapsed, setCollapsed] = useState(true);
   const [hoverExpandEnabled, setHoverExpandEnabled] = useState(true);
   const [leadsExpanded, setLeadsExpanded] = useState(true);
   const [leadsSubmenuVisible, setLeadsSubmenuVisible] = useState(false);
+  const [inventoryExpanded, setInventoryExpanded] = useState(true);
+  const [inventorySubmenuVisible, setInventorySubmenuVisible] = useState(false);
   const submenuTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const inventorySubmenuTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isLeadsPage = location.pathname === ROUTES.leads;
   const isLeadsSection =
     isLeadsPage || /^\/leads\/[^/]+$/.test(location.pathname);
   const activeStep = new URLSearchParams(location.search).get("step");
+
+  const isInventoryPage = location.pathname === ROUTES.inventory;
+  const isInventorySection = isInventoryPage;
+  const activeInventoryTab = new URLSearchParams(location.search).get("tab") ?? "master";
 
   useEffect(() => {
     if (isMobile) setCollapsed(true);
@@ -134,8 +206,13 @@ export function Sidebar() {
   }, [isLeadsSection]);
 
   useEffect(() => {
+    if (isInventorySection) setInventoryExpanded(true);
+  }, [isInventorySection]);
+
+  useEffect(() => {
     return () => {
       if (submenuTimerRef.current) clearTimeout(submenuTimerRef.current);
+      if (inventorySubmenuTimerRef.current) clearTimeout(inventorySubmenuTimerRef.current);
     };
   }, []);
 
@@ -143,6 +220,8 @@ export function Sidebar() {
   const sidebarWidth = isOpen ? EXPANDED_WIDTH : COLLAPSED_WIDTH;
   const showLeadsSubmenu =
     isOpen && ((isLeadsSection && leadsExpanded) || leadsSubmenuVisible);
+  const showInventorySubmenu =
+    isOpen && ((isInventorySection && inventoryExpanded) || inventorySubmenuVisible);
 
   const clearSubmenuTimer = () => {
     if (submenuTimerRef.current) {
@@ -166,6 +245,28 @@ export function Sidebar() {
     }
   };
 
+  const clearInventorySubmenuTimer = () => {
+    if (inventorySubmenuTimerRef.current) {
+      clearTimeout(inventorySubmenuTimerRef.current);
+      inventorySubmenuTimerRef.current = null;
+    }
+  };
+
+  const scheduleInventorySubmenuOpen = (wasCollapsed: boolean) => {
+    clearInventorySubmenuTimer();
+    const delay = wasCollapsed ? SIDEBAR_EXPAND_MS : SUBMENU_OPEN_DELAY_MS;
+    inventorySubmenuTimerRef.current = setTimeout(() => {
+      setInventorySubmenuVisible(true);
+    }, delay);
+  };
+
+  const resetInventorySubmenu = () => {
+    clearInventorySubmenuTimer();
+    if (!isInventorySection) {
+      setInventorySubmenuVisible(false);
+    }
+  };
+
   const handleSidebarMouseEnter = () => {
     if (!isMobile && hoverExpandEnabled) {
       setCollapsed(false);
@@ -176,12 +277,14 @@ export function Sidebar() {
     setHoverExpandEnabled(true);
     setCollapsed(true);
     resetLeadsSubmenu();
+    resetInventorySubmenu();
   };
 
   const handleNavSelect = () => {
     setCollapsed(true);
     setHoverExpandEnabled(false);
     resetLeadsSubmenu();
+    resetInventorySubmenu();
   };
 
   const handleLeadsMouseEnter = () => {
@@ -205,8 +308,74 @@ export function Sidebar() {
     handleNavSelect();
   };
 
+  const handleInventoryMouseEnter = () => {
+    const wasCollapsed = collapsed;
+    if (!isMobile && hoverExpandEnabled) {
+      setCollapsed(false);
+    }
+    scheduleInventorySubmenuOpen(wasCollapsed);
+  };
+
+  const handleInventoryMouseLeave = () => {
+    resetInventorySubmenu();
+  };
+
+  const handleInventoryClick = (e: MouseEvent) => {
+    if (isInventoryPage) {
+      e.preventDefault();
+      setInventoryExpanded((value) => !value);
+      return;
+    }
+    handleNavSelect();
+  };
+
   const renderNavItem = (item: (typeof navItems)[number]) => {
     const Icon = item.icon;
+
+    if ("hasInventoryMenu" in item && item.hasInventoryMenu) {
+      return (
+        <div
+          key={item.to}
+          onMouseEnter={handleInventoryMouseEnter}
+          onMouseLeave={handleInventoryMouseLeave}
+        >
+          <NavLink
+            to={ROUTES.inventoryTab("master")}
+            onClick={handleInventoryClick}
+            className={`w-full flex items-center gap-3 rounded-lg transition-all group no-underline ${
+              isOpen ? "px-3 py-2.5" : "px-0 py-2.5 justify-center"
+            } ${isInventorySection ? "" : "hover:bg-white/8"}`}
+            style={{
+              backgroundColor: isInventorySection ? "rgba(255,255,255,0.15)" : "transparent",
+              color: isInventorySection ? "#ffffff" : "rgba(255,255,255,0.65)",
+            }}
+            title={!isOpen ? item.label : undefined}
+          >
+            <Icon className="w-4 h-4 flex-shrink-0" />
+            {isOpen && (
+              <>
+                <span style={{ fontSize: "15px", fontWeight: isInventorySection ? 600 : 400 }}>
+                  {item.label}
+                </span>
+                <span className="ml-auto flex items-center">
+                  {showInventorySubmenu ? (
+                    <ChevronDown className="w-3.5 h-3.5 opacity-60" />
+                  ) : (
+                    <ChevronRight className="w-3.5 h-3.5 opacity-60" />
+                  )}
+                </span>
+              </>
+            )}
+          </NavLink>
+
+          <InventorySubMenu
+            activeTab={activeInventoryTab}
+            isVisible={showInventorySubmenu}
+            onItemSelect={handleNavSelect}
+          />
+        </div>
+      );
+    }
 
     if (item.hasWorkflowMenu) {
       return (
@@ -234,22 +403,62 @@ export function Sidebar() {
                   {item.label}
                 </span>
                 <span className="ml-auto flex items-center">
-                  {showLeadsSubmenu ? (
+                  {/* {showLeadsSubmenu ? (
                     <ChevronDown className="w-3.5 h-3.5 opacity-60" />
                   ) : (
                     <ChevronRight className="w-3.5 h-3.5 opacity-60" />
-                  )}
+                  )} */}
+                  <ChevronRight className="w-3.5 h-3.5 opacity-60" />
                 </span>
               </>
             )}
           </NavLink>
 
-          <LeadWorkflowSubMenu
+          {/* <LeadWorkflowSubMenu
             activeStep={activeStep}
             isVisible={showLeadsSubmenu}
             onItemSelect={handleNavSelect}
-          />
+          /> */}
         </div>
+      );
+    }
+
+    if (item.openMobileInNewTab) {
+      const isActive = location.pathname === item.to;
+      const mobileRoute =
+        "mobileRoute" in item && item.mobileRoute
+          ? item.mobileRoute
+          : ROUTES.siteMaterialRequestMobile;
+
+      return (
+        <NavLink
+          key={item.to}
+          to={item.to}
+          onClick={(e) => {
+            e.preventDefault();
+            window.open(mobileRoute as string, "_blank");
+            navigate(item.to);
+            handleNavSelect();
+          }}
+          className={`w-full flex items-center gap-3 rounded-lg transition-all group no-underline ${
+            isOpen ? "px-3 py-2.5" : "px-0 py-2.5 justify-center"
+          } ${isActive ? "" : "hover:bg-white/8"}`}
+          style={{
+            backgroundColor: isActive ? "rgba(255,255,255,0.15)" : "transparent",
+            color: isActive ? "#ffffff" : "rgba(255,255,255,0.65)",
+          }}
+          title={!isOpen ? item.label : undefined}
+        >
+          <Icon className="w-5 h-5 flex-shrink-0" />
+          {isOpen && (
+            <>
+              <span style={{ fontSize: "15px", fontWeight: isActive ? 600 : 400 }}>
+                {item.label}
+              </span>
+              {isActive && <ChevronRight className="w-3.5 h-3.5 ml-auto opacity-60" />}
+            </>
+          )}
+        </NavLink>
       );
     }
 

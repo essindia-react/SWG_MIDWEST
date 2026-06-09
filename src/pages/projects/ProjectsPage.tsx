@@ -48,12 +48,12 @@ export function ProjectsPage() {
       <ProjectsList
         onAddProject={openCreate}
         onSelectProject={(id) => openProject(id, "view")}
-        onEditProject={(id) => openProject(id, "edit")}
+        onEditProject={(id) => openProject(id, "view")}
       />
       {projectId && (
         <ProjectWorkspacePanel
           projectId={projectId}
-          initialTab={searchParams.get("mode") === "edit" ? "edit" : "details"}
+          initialTab="details"
           onClose={closeProject}
         />
       )}

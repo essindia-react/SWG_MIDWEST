@@ -30,6 +30,9 @@ export interface ProjectTask {
   plannedEndDate: string;
   assignedTo: string;
   status: ProjectTaskStatus;
+  fieldVisitTime?: string;
+  fieldExitTime?: string;
+  remarks?: string;
 }
 
 export interface ProjectMilestone {
@@ -159,6 +162,8 @@ export interface Project {
   projectDate: string;
   customerId: string;
   customerName: string;
+  proposalId?: string;
+  proposalName?: string;
   plannedStartDate: string;
   plannedEndDate: string;
   description: string;
@@ -185,6 +190,8 @@ export type MilestoneWithTasksInput = MilestoneFormInput & {
 export interface ProjectFormInput {
   customerId: string;
   customerName: string;
+  proposalId?: string;
+  proposalName?: string;
   plannedStartDate: string;
   plannedEndDate: string;
   description: string;
@@ -217,6 +224,9 @@ export interface ProjectTaskFormInput {
   plannedEndDate: string;
   assignedTo: string;
   status: ProjectTaskStatus;
+  fieldVisitTime?: string;
+  fieldExitTime?: string;
+  remarks?: string;
 }
 
 export interface TeamAssignmentFormInput {

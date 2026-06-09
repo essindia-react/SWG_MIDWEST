@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { Box, Button, IconButton, ThemeProvider, Typography } from "@mui/material";
-import { ArrowRight, Edit2, Save, X } from "lucide-react";
+import { Box, IconButton, ThemeProvider, Typography } from "@mui/material";
+import { ArrowRight, X } from "lucide-react";
 import { toast } from "sonner";
 import { useProjects } from "../../../../hooks/useProjects";
 import { theme } from "../../../../theme/theme";
@@ -70,8 +70,25 @@ export function ProjectWorkspacePanel({
     return null;
   }
 
-  const handleSave = () => {
-    toast.success("Project saved");
+  const SECTION_SAVE_LABELS: Record<string, string> = {
+    details: "Project details",
+    teams: "Team assignments",
+    milestones: "Milestones",
+    documents: "Documents",
+    "budget-materials": "Materials cost",
+    "budget-crew": "Crew cost",
+    "budget-equipment": "Equipment cost",
+    "budget-overhead": "Overhead expenses",
+    "budget-summary": "Budget summary",
+  };
+
+  const handleSaveSection = (tabId: string) => {
+    if (tabId !== activeTab) {
+      setFocus({});
+      setActiveTab(tabId as ProjectWorkspaceTabId);
+    }
+    const label = SECTION_SAVE_LABELS[tabId] ?? "Section";
+    toast.success(`${label} saved`);
   };
 
   const handleDocumentsChange = (documents: ProjectDocument[]) => {
@@ -218,8 +235,15 @@ export function ProjectWorkspacePanel({
                   else handleClose();
                 }}
                 size="small"
-                // color="inherit"
-                sx={{ backgroundColor: "white" }}
+                sx={{
+                  backgroundColor: "white",
+                  transition: "box-shadow 0.1s ease",
+                  "&:hover": {
+                    backgroundColor: "white",
+                    boxShadow:
+                      "inset 2px 2px 4px rgba(0,0,0,0.15), inset -2px -2px 4px rgba(255,255,255,0.8)",
+                  },
+                }}
                 className="absolute top-1/2 -translate-x-[100%]"
               >
                 <ArrowRight size={20} />
@@ -244,14 +268,6 @@ export function ProjectWorkspacePanel({
                   Edit
                 </Button>
               )} */}
-              <Button
-                variant="contained"
-                color="primary"
-                startIcon={<Save size={16} />}
-                onClick={handleSave}
-              >
-                Save
-              </Button>
               <IconButton onClick={handleClose} size="small">
                 <X size={20} />
               </IconButton>
@@ -267,6 +283,7 @@ export function ProjectWorkspacePanel({
                   setFocus({});
                   setActiveTab(tabId as ProjectWorkspaceTabId);
                 }}
+                onSaveSection={handleSaveSection}
                 projectName={project.customerName}
               />
             )}

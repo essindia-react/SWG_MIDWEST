@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { useSearchParams } from "react-router";
-import { ProjectsList } from "../../features/projects/components/ProjectsList";
+import { FieldOperationsList } from "../../features/field-operations/components/FieldOperationsList";
 import { FieldOperationsWorkspacePanel } from "../../features/field-operations/components/workspace/FieldOperationsWorkspacePanel";
 
 export function FieldOperationsPage() {
@@ -20,13 +20,7 @@ export function FieldOperationsPage() {
 
   return (
     <div className="flex-1 overflow-hidden flex flex-col relative">
-      <ProjectsList
-        title="Field Operations"
-        subtitle="Manage work orders, pick lists, field documents, and on-site activity timelines."
-        showAddButton={false}
-        showEditAction={false}
-        onSelectProject={openProject}
-      />
+      <FieldOperationsList onSelectProject={openProject} />
       {projectId && (
         <FieldOperationsWorkspacePanel projectId={projectId} onClose={closeProject} />
       )}

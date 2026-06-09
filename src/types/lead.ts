@@ -77,6 +77,46 @@ export type BudgetRange =
   | "50k-100k"
   | "over-100k";
 
+export interface LeadUploadedDocument {
+  id: string;
+  documentType: string;
+  fileName: string;
+  fileSize: number;
+  uploadedAt: string;
+}
+
+export interface LeadUploadedImage {
+  id: string;
+  fileName: string;
+  fileSize: number;
+  uploadedAt: string;
+}
+
+export interface LeadEstimationArea {
+  id: string;
+  areaName: string;
+  areaType: string;
+  areaLength: string;
+  areaWidth: string;
+  customArea: string;
+}
+
+export interface LeadEstimationProduct {
+  id: string;
+  productType: string;
+  productName: string;
+  unit: string;
+  quantity: string;
+  cost: number;
+}
+
+export interface LeadEstimationOverhead {
+  id: string;
+  title: string;
+  rate: string;
+  unit: string;
+}
+
 export interface LeadWorkflowData {
   visitDate?: string;
   visitTime?: string;
@@ -85,17 +125,23 @@ export interface LeadWorkflowData {
   assignedSalesRepName?: string;
   siteVisitScheduledDate?: string;
   siteAddress?: string;
+  siteVisitImages?: LeadUploadedImage[];
   designId?: string;
   designName?: string;
   designStatus?: string;
   designCreatedBy?: string;
+  designImage?: LeadUploadedImage;
   estimationNo?: string;
   estimationDate?: string;
   estimationCustomerName?: string;
   areaName?: string;
+  estimationAreas?: LeadEstimationArea[];
+  estimationProducts?: LeadEstimationProduct[];
+  estimationOverheads?: LeadEstimationOverhead[];
   proposalId?: string;
   proposalStatus?: string;
   proposalName?: string;
+  documents?: LeadUploadedDocument[];
   documentCount?: number;
 }
 

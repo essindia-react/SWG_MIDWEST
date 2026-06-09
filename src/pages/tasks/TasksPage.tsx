@@ -1,9 +1,9 @@
-import { TasksView } from "../../features/tasks/components/TasksView";
+import { TaskManagementView } from "../../features/tasks/components/TaskManagementView";
 
 export function TasksPage() {
   return (
     <div className="overflow-y-auto flex-1">
-      <TasksView />
+      <TaskManagementView />
     </div>
   );
 }

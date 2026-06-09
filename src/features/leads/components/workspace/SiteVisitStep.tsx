@@ -1,6 +1,9 @@
-import { Grid } from "@mui/material";
+import React, { useState } from "react";
+import { Box, Button, Grid } from "@mui/material";
+import { Plus } from "lucide-react";
 import { WorkspaceSection } from "./WorkspaceSection";
 import { CheckboxCard, RadioField, SelectField, TextFieldInput } from "./workspaceFields";
+import { fileToUploadedImage, ImageUploadField } from "./ImageUploadField";
 import type { WorkspaceFormChange, WorkspaceFormValues } from "./types";
 
 const VISIT_STATUSES = ["Scheduled", "Completed", "Cancelled"] as const;
@@ -16,6 +19,31 @@ interface SiteVisitStepProps {
 }
 
 export function SiteVisitStep({ values, onChange }: SiteVisitStepProps) {
+  const [emptySlots, setEmptySlots] = useState(
+    Math.max(1, values.siteVisitImages.length === 0 ? 1 : 0)
+  );
+
+  const totalSlots = values.siteVisitImages.length + emptySlots;
+
+  const handleUploadAt = (slotIndex: number, file: File) => {
+    const uploaded = fileToUploadedImage(file);
+    if (slotIndex < values.siteVisitImages.length) {
+      const next = [...values.siteVisitImages];
+      next[slotIndex] = uploaded;
+      onChange("siteVisitImages", next);
+    } else {
+      onChange("siteVisitImages", [...values.siteVisitImages, uploaded]);
+      setEmptySlots((n) => Math.max(1, n));
+    }
+  };
+
+  const handleRemoveAt = (slotIndex: number) => {
+    onChange(
+      "siteVisitImages",
+      values.siteVisitImages.filter((_, i) => i !== slotIndex)
+    );
+  };
+
   return (
     <>
       <WorkspaceSection title="Visit Info">
@@ -109,6 +137,26 @@ export function SiteVisitStep({ values, onChange }: SiteVisitStepProps) {
           <CheckboxCard label="Pool" checked={values.obstaclePool} onChange={(v) => onChange("obstaclePool", v)} />
           <CheckboxCard label="Existing Landscaping" checked={values.obstacleLandscaping} onChange={(v) => onChange("obstacleLandscaping", v)} />
         </Grid>
+      </WorkspaceSection>
+
+      <WorkspaceSection title="Site Images">
+        <Grid container spacing={2}>
+          {Array.from({ length: totalSlots }).map((_, index) => (
+            <Grid key={`site-img-${index}`} size={{ xs: 12, md: 6, lg: 4 }}>
+              <ImageUploadField
+                label={`Site Image ${index + 1}`}
+                image={index < values.siteVisitImages.length ? values.siteVisitImages[index] : undefined}
+                onUpload={(file) => handleUploadAt(index, file)}
+                onRemove={
+                  index < values.siteVisitImages.length
+                    ? () => handleRemoveAt(index)
+                    : undefined
+                }
+              />
+            </Grid>
+          ))}
+        </Grid>
+        
       </WorkspaceSection>
     </>
   );

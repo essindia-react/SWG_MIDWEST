@@ -84,6 +84,8 @@ function createProjectRecord(input: ProjectFormInput): Project {
     projectDate: today,
     customerId: input.customerId,
     customerName: input.customerName,
+    proposalId: input.proposalId,
+    proposalName: input.proposalName,
     plannedStartDate: input.plannedStartDate,
     plannedEndDate: input.plannedEndDate,
     description: input.description,

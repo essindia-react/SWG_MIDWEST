@@ -14,7 +14,6 @@ import { ProjectWorkspaceSidebar } from "../../../projects/components/workspace/
 import { FieldOperationDetailsTab } from "./FieldOperationDetailsTab";
 import { FieldDocumentsGuidesTab } from "./FieldDocumentsGuidesTab";
 import { WorkOrderManagementTab } from "./WorkOrderManagementTab";
-import { PickListManagementTab } from "./PickListManagementTab";
 import { ActivityTimelineTab } from "./ActivityTimelineTab";
 
 interface FieldOperationsWorkspacePanelProps {
@@ -85,10 +84,6 @@ export function FieldOperationsWorkspacePanel({
             onFieldOpsChange={handleFieldOpsChange}
           />
         );
-      case "pick-list":
-        return (
-          <PickListManagementTab fieldOps={fieldOps} onFieldOpsChange={handleFieldOpsChange} />
-        );
       case "activity-timeline":
         return (
           <ActivityTimelineTab
@@ -156,7 +151,15 @@ export function FieldOperationsWorkspacePanel({
               <IconButton
                 onClick={handleClose}
                 size="small"
-                sx={{ backgroundColor: "white" }}
+                sx={{
+                  backgroundColor: "white",
+                  transition: "box-shadow 0.1s ease",
+                  "&:hover": {
+                    backgroundColor: "white",
+                    boxShadow:
+                      "inset 2px 2px 4px rgba(0,0,0,0.15), inset -2px -2px 4px rgba(255,255,255,0.8)",
+                  },
+                }}
                 className="absolute top-1/2 -translate-x-[100%]"
               >
                 <ArrowRight size={20} />

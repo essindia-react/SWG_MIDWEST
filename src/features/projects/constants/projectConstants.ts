@@ -85,6 +85,37 @@ export const PROJECT_CUSTOMERS = [
   },
 ] as const;
 
+export const PROJECT_PROPOSALS = [
+  {
+    id: "PRP-9901",
+    name: "Proposal - Green Valley HOA Turf",
+    customerId: "cust-1088",
+    status: "Accepted",
+  },
+  {
+    id: "PRP-9902",
+    name: "Proposal - John Smith Backyard",
+    customerId: "cust-1024",
+    status: "Accepted",
+  },
+  {
+    id: "PRP-9903",
+    name: "Proposal - Park Estates Phase 1",
+    customerId: "cust-1156",
+    status: "Sent",
+  },
+  {
+    id: "PRP-9904",
+    name: "Proposal - John Smith Putting Green",
+    customerId: "cust-1024",
+    status: "Accepted",
+  },
+] as const;
+
+export function getProposalsForCustomer(customerId: string) {
+  return PROJECT_PROPOSALS.filter((p) => p.customerId === customerId);
+}
+
 export const PROJECT_TYPE_OPTIONS = [
   "General Landscaping",
   "Artificial Turf Installation",

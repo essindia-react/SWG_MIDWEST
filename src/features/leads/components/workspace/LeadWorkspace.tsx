@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   Box,
   Button,
@@ -17,6 +17,10 @@ import { useCalendarEvents } from "../../../../hooks/useCalendarEvents";
 import { useLeads } from "../../../../hooks/useLeads";
 import { useNotifications } from "../../../../hooks/useNotifications";
 import { getLeadFullName } from "../../../../lib/leadHelpers";
+import {
+  leadToWorkspaceForm,
+  workspaceFormToLeadInput,
+} from "../../../../lib/leadWorkspaceHelpers";
 import { SALES_REPS } from "../../../../lib/constants";
 import { generateLeadNumber } from "../../../../lib/leadDefaults";
 import { getOhioRegionLabel } from "../../../../lib/leadHelpers";
@@ -44,6 +48,7 @@ import { WorkspaceVerticalStepper } from "./WorkspaceVerticalStepper";
 
 interface LeadWorkspaceProps {
   onBack: () => void;
+  leadId?: string;
 }
 
 const LEAD_SOURCE_TO_API: Record<string, LeadSource> = {
@@ -107,7 +112,7 @@ function getNextStepLabel(activeStep: number): string {
   return STEP_NEXT_LABELS[activeStep] ?? "Save & Next Step";
 }
 
-function SaveOptionsButton() {
+function SaveOptionsButton({ onSave, onSaveDraft }: { onSave: () => void; onSaveDraft: () => void }) {
   const [hovered, setHovered] = useState(false);
 
   return (
@@ -137,7 +142,7 @@ function SaveOptionsButton() {
           <Button
             size="small"
             color="inherit"
-            onClick={() => toast.info("Draft saved locally for this session")}
+            onClick={onSaveDraft}
             sx={{ justifyContent: "flex-start", px: 2, py: 1, borderRadius: 0 }}
           >
             As Draft
@@ -145,14 +150,14 @@ function SaveOptionsButton() {
           <Button
             size="small"
             color="inherit"
-            onClick={() => toast.success("Changes saved")}
+            onClick={onSave}
             sx={{ justifyContent: "flex-start", px: 2, py: 1, borderRadius: 0 }}
           >
             Save
           </Button>
         </Box>
       )}
-      <Button variant="outlined" color="inherit">
+      <Button variant="outlined" color="inherit" onClick={onSave}>
         Save
       </Button>
     </Box>
@@ -199,7 +204,13 @@ function toWorkflowData(
     estimationNo: values.estimationNo || undefined,
     estimationDate: values.estimationDate || undefined,
     estimationCustomerName: values.estimationCustomerName || customerName,
-    areaName: values.areaName || undefined,
+    areaName: values.estimationAreas[0]?.areaName || values.areaName || undefined,
+    siteVisitImages: values.siteVisitImages.length ? values.siteVisitImages : undefined,
+    designImage: values.designImage,
+    estimationAreas: values.estimationAreas,
+    estimationProducts: values.estimationProducts,
+    estimationOverheads: values.estimationOverheads,
+    documents: values.uploadedDocuments.length ? values.uploadedDocuments : undefined,
     proposalId: values.proposalId || undefined,
     proposalStatus: values.proposalStatus || undefined,
     proposalName: values.proposalName || `Proposal - ${customerName}`,
@@ -236,7 +247,7 @@ function toLeadInput(values: WorkspaceFormValues): LeadFormInput {
     drainageRequired: values.drainage === "Poor",
     removeExistingGrass: values.surfaceType === "Grass",
     hoaApprovalRequired: values.leadType === "HOA" || values.jobSitePropertyType === "HOA",
-    workflowData: toWorkflowData(values, values.documentCount),
+    workflowData: toWorkflowData(values, values.uploadedDocuments.length || values.documentCount),
   };
 }
 
@@ -246,15 +257,23 @@ const JOB_SITE_TO_SITE_FIELDS = {
   jobSiteZip: "siteZip",
 } as const;
 
-export function LeadWorkspace({ onBack }: LeadWorkspaceProps) {
-  const { addLead } = useLeads();
+export function LeadWorkspace({ onBack, leadId }: LeadWorkspaceProps) {
+  const { addLead, updateLead, getLeadById } = useLeads();
+  const editingLead = leadId ? getLeadById(leadId) : undefined;
+  const isEditing = Boolean(editingLead);
   const { addNotification } = useNotifications();
   const { addEventFromLead } = useCalendarEvents();
   const [activeStep, setActiveStep] = useState(0);
-  const [form, setForm] = useState<WorkspaceFormValues>(() => ({
-    ...EMPTY_WORKSPACE_FORM,
-    leadNo: generateLeadNumber(),
-  }));
+  const [form, setForm] = useState<WorkspaceFormValues>(() => {
+    if (editingLead) return leadToWorkspaceForm(editingLead);
+    return { ...EMPTY_WORKSPACE_FORM, leadNo: generateLeadNumber() };
+  });
+
+  useEffect(() => {
+    if (editingLead) {
+      setForm(leadToWorkspaceForm(editingLead));
+    }
+  }, [leadId, editingLead]);
 
   const handleChange = useCallback(
     <K extends keyof WorkspaceFormValues>(field: K, value: WorkspaceFormValues[K]) => {
@@ -295,11 +314,39 @@ export function LeadWorkspace({ onBack }: LeadWorkspaceProps) {
     []
   );
 
+  const persistLead = useCallback(
+    (asDraft = false) => {
+      const input = workspaceFormToLeadInput(form, editingLead);
+      if (isEditing && leadId) {
+        updateLead(leadId, input);
+        toast.success(asDraft ? "Draft saved" : "Lead updated successfully");
+        return;
+      }
+      toast.info(
+        asDraft
+          ? "Draft saved locally for this session"
+          : "Changes saved locally for this session"
+      );
+    },
+    [form, editingLead, isEditing, leadId, updateLead]
+  );
+
   const handleNext = () => {
     if (activeStep < WORKSPACE_STEPS.length - 1) {
+      if (isEditing && leadId) {
+        updateLead(leadId, workspaceFormToLeadInput(form, editingLead));
+      }
       setActiveStep((s) => s + 1);
       return;
     }
+
+    if (isEditing && leadId) {
+      updateLead(leadId, workspaceFormToLeadInput(form, editingLead));
+      toast.success(`Lead #${form.leadNo} updated successfully`);
+      onBack();
+      return;
+    }
+
     const newLead = addLead(toLeadInput(form));
     const customerName = getLeadFullName(newLead);
 
@@ -327,7 +374,9 @@ export function LeadWorkspace({ onBack }: LeadWorkspaceProps) {
 
   const headerTitle =
     activeStep === 0
-      ? "Create New Lead"
+      ? isEditing
+        ? `Edit Lead #${form.leadNo}`
+        : "Create New Lead"
       : `Lead #${form.leadNo}${form.territoryBranch ? ` / ${form.territoryBranch}` : ""}`;
 
   const renderStepContent = (stepId: number) => {
@@ -345,11 +394,7 @@ export function LeadWorkspace({ onBack }: LeadWorkspaceProps) {
       case 6:
         return <FollowUpStep values={form} onChange={handleChange} />;
       case 7:
-        return (
-          <DocumentsStep
-            onCountChange={(count) => handleChange("documentCount", count)}
-          />
-        );
+        return <DocumentsStep values={form} onChange={handleChange} />;
       default:
         return null;
     }
@@ -423,7 +468,10 @@ export function LeadWorkspace({ onBack }: LeadWorkspaceProps) {
                 >
                   Back
                 </Button>
-                <SaveOptionsButton />
+                <SaveOptionsButton
+                  onSave={() => persistLead(false)}
+                  onSaveDraft={() => persistLead(true)}
+                />
                 <Button
                   variant="contained"
                   color="primary"
@@ -436,7 +484,9 @@ export function LeadWorkspace({ onBack }: LeadWorkspaceProps) {
                   }
                   onClick={handleNext}
                 >
-                  {getNextStepLabel(activeStep)}
+                  {isEditing && activeStep === WORKSPACE_STEPS.length - 1
+                    ? "Save Lead"
+                    : getNextStepLabel(activeStep)}
                 </Button>
               </Box>
             </Box>

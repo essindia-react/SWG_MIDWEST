@@ -1,5 +1,6 @@
 import React from "react";
-import { Box, Typography } from "@mui/material";
+import { Box, IconButton, Typography } from "@mui/material";
+import { Save } from "lucide-react";
 import type { ProjectWorkspaceSidebarItem } from "../../constants/projectConstants";
 
 const BRAND_GREEN = "#2E7D32";
@@ -8,6 +9,7 @@ interface ProjectWorkspaceSidebarProps {
   items: ProjectWorkspaceSidebarItem[];
   activeTab: string;
   onTabClick: (tabId: string) => void;
+  onSaveSection: (tabId: string) => void;
   projectName: string;
 }
 
@@ -15,12 +17,13 @@ export function ProjectWorkspaceSidebar({
   items,
   activeTab,
   onTabClick,
+  onSaveSection,
   projectName,
 }: ProjectWorkspaceSidebarProps) {
   return (
     <Box
       sx={{
-        width: 240,
+        width: 260,
         flexShrink: 0,
         borderRight: 1,
         borderColor: "divider",
@@ -66,38 +69,64 @@ export function ProjectWorkspaceSidebar({
           return (
             <Box
               key={tab.id}
-              component="button"
-              type="button"
-              onClick={() => onTabClick(tab.id)}
               sx={{
                 display: "flex",
                 alignItems: "center",
-                gap: 1.5,
-                px: 2,
-                py: 1.5,
+                gap: 0.5,
                 borderRadius: 2,
-                border: "none",
-                cursor: "pointer",
-                textAlign: "left",
                 bgcolor: isActive ? "rgba(46, 125, 50, 0.1)" : "transparent",
-                color: isActive ? BRAND_GREEN : "text.secondary",
                 transition: "all 0.2s",
                 "&:hover": {
                   bgcolor: isActive ? "rgba(46, 125, 50, 0.12)" : "action.hover",
                 },
               }}
             >
-              <Icon size={18} strokeWidth={isActive ? 2.25 : 2} />
-              <Typography
+              <Box
+                component="button"
+                type="button"
+                onClick={() => onTabClick(tab.id)}
                 sx={{
-                  fontSize: "0.8125rem",
-                  fontWeight: isActive ? 700 : 500,
-                  color: isActive ? BRAND_GREEN : "text.primary",
-                  lineHeight: 1.3,
+                  flex: 1,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1.5,
+                  px: 2,
+                  py: 1.5,
+                  border: "none",
+                  cursor: "pointer",
+                  textAlign: "left",
+                  bgcolor: "transparent",
+                  color: isActive ? BRAND_GREEN : "text.secondary",
                 }}
               >
-                {tab.label}
-              </Typography>
+                <Icon size={18} strokeWidth={isActive ? 2.25 : 2} />
+                <Typography
+                  sx={{
+                    fontSize: "0.8125rem",
+                    fontWeight: isActive ? 700 : 500,
+                    color: isActive ? BRAND_GREEN : "text.primary",
+                    lineHeight: 1.3,
+                  }}
+                >
+                  {tab.label}
+                </Typography>
+              </Box>
+              <IconButton
+                size="small"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSaveSection(tab.id);
+                }}
+                aria-label={`Save ${tab.label}`}
+                title={`Save ${tab.label}`}
+                sx={{
+                  mr: 0.5,
+                  color: isActive ? BRAND_GREEN : "text.secondary",
+                  "&:hover": { bgcolor: "rgba(46, 125, 50, 0.12)" },
+                }}
+              >
+                <Save size={14} />
+              </IconButton>
             </Box>
           );
         })}

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import {
   Bell,
@@ -123,7 +123,7 @@ export function TopNav({ title, onCreateLead }: TopNavProps) {
         </h1>
       </div>
 
-      <div className="flex-1 max-w-md mx-8">
+      {/* <div className="flex-1 max-w-md mx-8">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <input
@@ -141,10 +141,10 @@ export function TopNav({ title, onCreateLead }: TopNavProps) {
             }}
           />
         </div>
-      </div>
+      </div> */}
 
       <div className="flex items-center gap-3">
-        <button
+        {/* <button
           onClick={onCreateLead}
           className="flex items-center gap-2 px-4 py-2 rounded-lg text-white transition-all"
           style={{ backgroundColor: "var(--brand-green)", fontSize: "13px", fontWeight: 500 }}
@@ -159,7 +159,7 @@ export function TopNav({ title, onCreateLead }: TopNavProps) {
         >
           <Plus className="w-4 h-4" />
           New Lead
-        </button>
+        </button> */}
 
         <div className="relative" ref={panelRef}>
           <button

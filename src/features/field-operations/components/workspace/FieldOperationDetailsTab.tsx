@@ -69,7 +69,6 @@ export function FieldOperationDetailsTab({ project, fieldOps }: FieldOperationDe
   const crewMembers = useMemo(() => getCrewMembers(project), [project]);
   const jobSiteAddress = useMemo(() => getJobSiteAddress(project), [project]);
 
-  const pulledCount = fieldOps.pickList.filter((item) => item.pulledFromInventory).length;
   const completedActivities = fieldOps.activities.filter(
     (activity) => activity.status === "Completed"
   ).length;
@@ -184,15 +183,11 @@ export function FieldOperationDetailsTab({ project, fieldOps }: FieldOperationDe
 
       <Box>
         <SectionHeader title="Field Operations Status" icon={Package} />
-        <Box sx={{ display: "grid", gridTemplateColumns: { sm: "repeat(3, 1fr)" }, gap: 2 }}>
+        <Box sx={{ display: "grid", gridTemplateColumns: { sm: "repeat(2, 1fr)" }, gap: 2 }}>
           {[
             {
               label: "Documents & Guides",
               value: `${fieldOps.guideDocuments.length} uploaded`,
-            },
-            {
-              label: "Pick List",
-              value: `${pulledCount}/${fieldOps.pickList.length} pulled`,
             },
             {
               label: "Activities",
