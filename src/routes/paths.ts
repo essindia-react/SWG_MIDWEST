@@ -19,6 +19,7 @@ export const ROUTES = {
   siteMaterialRequestMobile: "/site-material-request/mobile",
   inventory: "/inventory",
   inventoryTab: (tab: string) => `/inventory?tab=${tab}`,
+  purchaseRequisition: "/purchase-requisition",
   settings: "/settings",
 } as const;
 
@@ -39,6 +40,7 @@ export const ROUTE_TITLES: Record<string, string> = {
   [ROUTES.mobile]: "Mobile Sales View",
   [ROUTES.siteMaterialRequest]: "Site Material Request",
   [ROUTES.inventory]: "Inventory Management",
+  [ROUTES.purchaseRequisition]: "Purchase Requisitions",
   [ROUTES.settings]: "Settings",
 };
 

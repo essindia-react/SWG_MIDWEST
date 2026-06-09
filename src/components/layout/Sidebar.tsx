@@ -17,6 +17,7 @@ import {
   BarChart3,
   Settings,
   Package,
+  ShoppingCart,
   Warehouse,
   Leaf,
   ChevronRight,
@@ -34,32 +35,17 @@ const navItems = [
   { to: ROUTES.projects, label: "Project Management", icon: FolderKanban },
   { to: ROUTES.fieldOperations, label: "Field Operations", icon: HardHat },
   { to: ROUTES.tasks, label: "Task Management", icon: CheckSquare },
-  // {
-  //   to: ROUTES.mobileTaskManagement,
-  //   label: "Mobile Task Management",
-  //   icon: Smartphone,
-  //   openMobileInNewTab: true,
-  //   mobileRoute: ROUTES.tasksMobile,
-  // },
   { to: ROUTES.calendar, label: "Calendar", icon: Calendar },
-  // { to: ROUTES.communications, label: "Communications", icon: MessageSquare },
-  // { to: ROUTES.quotes, label: "Quotes", icon: FileText },
   { to: ROUTES.invoicing, label: "Invoicing", icon: Receipt },
-  // { to: ROUTES.automations, label: "Automations", icon: Zap },
-  // { to: ROUTES.analytics, label: "Analytics", icon: BarChart3 },
   { to: ROUTES.inventory, label: "Inventory", icon: Warehouse, hasInventoryMenu: true },
   { to: ROUTES.siteMaterialRequest, label: "Site Material Request", icon: Package },
-  // { to: ROUTES.mobile, label: "Mobile View", icon: Smartphone },
-  // { to: ROUTES.settings, label: "Settings", icon: Settings },
+  { to: ROUTES.purchaseRequisition, label: "Purchase Requisition", icon: ShoppingCart },
 ];
 
 const EXPANDED_WIDTH = 240;
 const COLLAPSED_WIDTH = 72;
 const SIDEBAR_EXPAND_MS = 300;
 const SUBMENU_OPEN_DELAY_MS = 120;
-const STEP_ICON_SIZE = 32;
-const STEP_GAP = 10;
-const STEP_ROW_MIN_HEIGHT = 52;
 
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(false);
@@ -75,13 +61,67 @@ function useIsMobile() {
   return isMobile;
 }
 
+/**
+ * NavLabel — animates font-size from ~8px → target size and fades in when
+ * the sidebar opens, so the text "grows in" rather than snapping.
+ */
+function NavLabel({
+  isOpen,
+  isActive,
+  fontSize = 15,
+  children,
+}: {
+  isOpen: boolean;
+  isActive: boolean;
+  fontSize?: number;
+  children: React.ReactNode;
+}) {
+  return (
+    <span
+      style={{
+        // Clip so growing text never overflows during animation
+        overflow: "hidden",
+        whiteSpace: "nowrap",
+        display: "block",
+        // Animate both font-size and opacity together
+        fontSize: isOpen ? `${fontSize}px` : "8px",
+        fontWeight: isActive ? 600 : 400,
+        opacity: isOpen ? 1 : 0,
+        maxWidth: isOpen ? "160px" : "0px",
+        transition:
+          "font-size 280ms cubic-bezier(0.4,0,0.2,1), opacity 220ms ease, max-width 280ms cubic-bezier(0.4,0,0.2,1)",
+      }}
+    >
+      {children}
+    </span>
+  );
+}
+
+function SubLabel({
+  isOpen,
+  isActive,
+  children,
+}: {
+  isOpen: boolean;
+  isActive: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <NavLabel isOpen={isOpen} isActive={isActive} fontSize={13}>
+      {children}
+    </NavLabel>
+  );
+}
+
 function InventorySubMenu({
   activeTab,
   isVisible,
+  isOpen,
   onItemSelect,
 }: {
   activeTab: string;
   isVisible: boolean;
+  isOpen: boolean;
   onItemSelect: () => void;
 }) {
   return (
@@ -106,15 +146,9 @@ function InventorySubMenu({
                     opacity: isActive ? 1 : 0.88,
                   }}
                 >
-                  <span
-                    style={{
-                      fontSize: "13px",
-                      fontWeight: isActive ? 600 : 500,
-                      display: "block",
-                    }}
-                  >
+                  <SubLabel isOpen={isOpen} isActive={isActive}>
                     {tab.label}
-                  </span>
+                  </SubLabel>
                 </NavLink>
               );
             })}
@@ -128,10 +162,12 @@ function InventorySubMenu({
 function LeadWorkflowSubMenu({
   activeStep,
   isVisible,
+  isOpen,
   onItemSelect,
 }: {
   activeStep: string | null;
   isVisible: boolean;
+  isOpen: boolean;
   onItemSelect: () => void;
 }) {
   return (
@@ -156,15 +192,9 @@ function LeadWorkflowSubMenu({
                     opacity: isActive ? 1 : 0.88,
                   }}
                 >
-                  <span
-                    style={{
-                      fontSize: "13px",
-                      fontWeight: isActive ? 600 : 500,
-                      display: "block",
-                    }}
-                  >
+                  <SubLabel isOpen={isOpen} isActive={isActive}>
                     {section.label}
-                  </span>
+                  </SubLabel>
                 </NavLink>
               );
             })}
@@ -329,6 +359,30 @@ export function Sidebar() {
     handleNavSelect();
   };
 
+  // Chevron element — fades + scales in with the text
+  const ChevronLabel = ({
+    showDown,
+    isActive,
+  }: {
+    showDown?: boolean;
+    isActive: boolean;
+  }) => (
+    <span
+      className="ml-auto flex items-center flex-shrink-0"
+      style={{
+        opacity: isOpen ? 0.6 : 0,
+        transform: isOpen ? "scale(1)" : "scale(0.6)",
+        transition: "opacity 240ms ease, transform 260ms cubic-bezier(0.4,0,0.2,1)",
+      }}
+    >
+      {showDown ? (
+        <ChevronDown className="w-3.5 h-3.5" />
+      ) : (
+        <ChevronRight className="w-3.5 h-3.5" />
+      )}
+    </span>
+  );
+
   const renderNavItem = (item: (typeof navItems)[number]) => {
     const Icon = item.icon;
 
@@ -342,9 +396,9 @@ export function Sidebar() {
           <NavLink
             to={ROUTES.inventoryTab("master")}
             onClick={handleInventoryClick}
-            className={`w-full flex items-center gap-3 rounded-lg transition-all group no-underline ${
-              isOpen ? "px-3 py-2.5" : "px-0 py-2.5 justify-center"
-            } ${isInventorySection ? "" : "hover:bg-white/8"}`}
+            className={`w-full flex items-center gap-3 rounded-lg transition-all group no-underline px-3 py-2.5 ${
+              isInventorySection ? "" : "hover:bg-white/8"
+            }`}
             style={{
               backgroundColor: isInventorySection ? "rgba(255,255,255,0.15)" : "transparent",
               color: isInventorySection ? "#ffffff" : "rgba(255,255,255,0.65)",
@@ -352,25 +406,16 @@ export function Sidebar() {
             title={!isOpen ? item.label : undefined}
           >
             <Icon className="w-4 h-4 flex-shrink-0" />
-            {isOpen && (
-              <>
-                <span style={{ fontSize: "15px", fontWeight: isInventorySection ? 600 : 400 }}>
-                  {item.label}
-                </span>
-                <span className="ml-auto flex items-center">
-                  {showInventorySubmenu ? (
-                    <ChevronDown className="w-3.5 h-3.5 opacity-60" />
-                  ) : (
-                    <ChevronRight className="w-3.5 h-3.5 opacity-60" />
-                  )}
-                </span>
-              </>
-            )}
+            <NavLabel isOpen={isOpen} isActive={isInventorySection}>
+              {item.label}
+            </NavLabel>
+            <ChevronLabel showDown={showInventorySubmenu} isActive={isInventorySection} />
           </NavLink>
 
           <InventorySubMenu
             activeTab={activeInventoryTab}
             isVisible={showInventorySubmenu}
+            isOpen={isOpen}
             onItemSelect={handleNavSelect}
           />
         </div>
@@ -387,9 +432,9 @@ export function Sidebar() {
           <NavLink
             to={ROUTES.leads}
             onClick={handleLeadsClick}
-            className={`w-full flex items-center gap-3 rounded-lg transition-all group no-underline ${
-              isOpen ? "px-3 py-2.5" : "px-0 py-2.5 justify-center"
-            } ${isLeadsSection ? "" : "hover:bg-white/8"}`}
+            className={`w-full flex items-center gap-3 rounded-lg transition-all group no-underline px-3 py-2.5 ${
+              isLeadsSection ? "" : "hover:bg-white/8"
+            }`}
             style={{
               backgroundColor: isLeadsSection ? "rgba(255,255,255,0.15)" : "transparent",
               color: isLeadsSection ? "#ffffff" : "rgba(255,255,255,0.65)",
@@ -397,28 +442,11 @@ export function Sidebar() {
             title={!isOpen ? item.label : undefined}
           >
             <Icon className="w-4 h-4 flex-shrink-0" />
-            {isOpen && (
-              <>
-                <span style={{ fontSize: "15px", fontWeight: isLeadsSection ? 600 : 400 }}>
-                  {item.label}
-                </span>
-                <span className="ml-auto flex items-center">
-                  {/* {showLeadsSubmenu ? (
-                    <ChevronDown className="w-3.5 h-3.5 opacity-60" />
-                  ) : (
-                    <ChevronRight className="w-3.5 h-3.5 opacity-60" />
-                  )} */}
-                  <ChevronRight className="w-3.5 h-3.5 opacity-60" />
-                </span>
-              </>
-            )}
+            <NavLabel isOpen={isOpen} isActive={isLeadsSection}>
+              {item.label}
+            </NavLabel>
+            <ChevronLabel isActive={isLeadsSection} />
           </NavLink>
-
-          {/* <LeadWorkflowSubMenu
-            activeStep={activeStep}
-            isVisible={showLeadsSubmenu}
-            onItemSelect={handleNavSelect}
-          /> */}
         </div>
       );
     }
@@ -440,9 +468,9 @@ export function Sidebar() {
             navigate(item.to);
             handleNavSelect();
           }}
-          className={`w-full flex items-center gap-3 rounded-lg transition-all group no-underline ${
-            isOpen ? "px-3 py-2.5" : "px-0 py-2.5 justify-center"
-          } ${isActive ? "" : "hover:bg-white/8"}`}
+          className={`w-full flex items-center gap-3 rounded-lg transition-all group no-underline px-3 py-2.5 ${
+            isActive ? "" : "hover:bg-white/8"
+          }`}
           style={{
             backgroundColor: isActive ? "rgba(255,255,255,0.15)" : "transparent",
             color: isActive ? "#ffffff" : "rgba(255,255,255,0.65)",
@@ -450,14 +478,10 @@ export function Sidebar() {
           title={!isOpen ? item.label : undefined}
         >
           <Icon className="w-5 h-5 flex-shrink-0" />
-          {isOpen && (
-            <>
-              <span style={{ fontSize: "15px", fontWeight: isActive ? 600 : 400 }}>
-                {item.label}
-              </span>
-              {isActive && <ChevronRight className="w-3.5 h-3.5 ml-auto opacity-60" />}
-            </>
-          )}
+          <NavLabel isOpen={isOpen} isActive={isActive}>
+            {item.label}
+          </NavLabel>
+          {isActive && <ChevronLabel isActive={isActive} />}
         </NavLink>
       );
     }
@@ -469,9 +493,9 @@ export function Sidebar() {
         end={item.end}
         onClick={handleNavSelect}
         className={({ isActive }) =>
-          `w-full flex items-center gap-3 rounded-lg transition-all group no-underline ${
-            isOpen ? "px-3 py-2.5" : "px-0 py-2.5 justify-center"
-          } ${isActive ? "" : "hover:bg-white/8"}`
+          `w-full flex items-center gap-3 rounded-lg transition-all group no-underline px-3 py-2.5 ${
+            isActive ? "" : "hover:bg-white/8"
+          }`
         }
         style={({ isActive }) => ({
           backgroundColor: isActive ? "rgba(255,255,255,0.15)" : "transparent",
@@ -482,14 +506,10 @@ export function Sidebar() {
         {({ isActive }) => (
           <>
             <Icon className="w-5 h-5 flex-shrink-0" />
-            {isOpen && (
-              <>
-                <span style={{ fontSize: "15px", fontWeight: isActive ? 600 : 400 }}>
-                  {item.label}
-                </span>
-                {isActive && <ChevronRight className="w-3.5 h-3.5 ml-auto opacity-60" />}
-              </>
-            )}
+            <NavLabel isOpen={isOpen} isActive={isActive}>
+              {item.label}
+            </NavLabel>
+            {isActive && <ChevronLabel isActive={isActive} />}
           </>
         )}
       </NavLink>
@@ -506,48 +526,62 @@ export function Sidebar() {
         backgroundColor: "var(--brand-dark-green)",
       }}
     >
+      {/* Header */}
       <div
-        className={`flex items-center border-b ${
-          isOpen ? "justify-between gap-3 px-4 py-3" : "justify-center px-2 py-4"
-        }`}
+        className="flex items-center border-b px-3 py-3"
         style={{ borderColor: "rgba(255,255,255,0.12)" }}
       >
-        <div className={`flex items-center gap-3 min-w-0 ${isOpen ? "" : "justify-center"}`}>
+        <div className="flex items-center gap-3 min-w-0">
           <div
             className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
             style={{ backgroundColor: "rgba(255,255,255,0.15)" }}
           >
             <Leaf className="w-5 h-5 text-white" />
           </div>
-          {isOpen && (
-            <div className="min-w-0">
-              <div
-                className="text-white font-semibold leading-tight truncate"
-                style={{ fontSize: "13px" }}
-              >
-                Southwest Greens
-              </div>
-              <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.55)" }}>CRM Platform</div>
-            </div>
-          )}
-        </div>
 
+          {/* Brand text — same grow-in animation */}
+          <div
+            className="min-w-0 overflow-hidden"
+            style={{
+              maxWidth: isOpen ? "160px" : "0px",
+              opacity: isOpen ? 1 : 0,
+              transition: "max-width 280ms cubic-bezier(0.4,0,0.2,1), opacity 220ms ease",
+            }}
+          >
+            <div
+              className="text-white font-semibold leading-tight truncate"
+              style={{
+                fontSize: isOpen ? "13px" : "8px",
+                transition: "font-size 280ms cubic-bezier(0.4,0,0.2,1)",
+              }}
+            >
+              Southwest Greens
+            </div>
+            <div
+              style={{
+                fontSize: isOpen ? "11px" : "7px",
+                color: "rgba(255,255,255,0.55)",
+                transition: "font-size 280ms cubic-bezier(0.4,0,0.2,1)",
+              }}
+            >
+              CRM Platform
+            </div>
+          </div>
+        </div>
       </div>
 
-      <nav
-        className={`flex-1 py-4 space-y-0.5 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden ${isOpen ? "px-3" : "px-2"}`}
-      >
+      {/* Nav */}
+      <nav className="flex-1 py-4 space-y-0.5 overflow-y-auto px-2 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
         {navItems.map(renderNavItem)}
       </nav>
 
+      {/* Footer / User */}
       <div
-        className={`border-t pt-3 pb-4 ${isOpen ? "px-3" : "px-2"}`}
+        className="border-t pt-3 pb-4 px-2"
         style={{ borderColor: "rgba(255,255,255,0.12)" }}
       >
         <div
-          className={`flex items-center rounded-lg ${
-            isOpen ? "gap-3 px-3 py-2" : "justify-center px-0 py-2"
-          }`}
+          className="flex items-center rounded-lg gap-3 px-2 py-2"
           style={{ backgroundColor: "rgba(255,255,255,0.08)" }}
           title={!isOpen ? "Alex Johnson" : undefined}
         >
@@ -557,14 +591,35 @@ export function Sidebar() {
           >
             AJ
           </div>
-          {isOpen && (
-            <div className="flex-1 min-w-0">
-              <div className="text-white truncate" style={{ fontSize: "12px", fontWeight: 500 }}>
-                Alex Johnson
-              </div>
-              <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.5)" }}>Sales Manager</div>
+
+          <div
+            className="min-w-0 overflow-hidden"
+            style={{
+              maxWidth: isOpen ? "160px" : "0px",
+              opacity: isOpen ? 1 : 0,
+              transition: "max-width 280ms cubic-bezier(0.4,0,0.2,1), opacity 220ms ease",
+            }}
+          >
+            <div
+              className="text-white truncate"
+              style={{
+                fontSize: isOpen ? "12px" : "8px",
+                fontWeight: 500,
+                transition: "font-size 280ms cubic-bezier(0.4,0,0.2,1)",
+              }}
+            >
+              Alex Johnson
             </div>
-          )}
+            <div
+              style={{
+                fontSize: isOpen ? "11px" : "7px",
+                color: "rgba(255,255,255,0.5)",
+                transition: "font-size 280ms cubic-bezier(0.4,0,0.2,1)",
+              }}
+            >
+              Sales Manager
+            </div>
+          </div>
         </div>
       </div>
     </aside>
