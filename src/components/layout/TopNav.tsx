@@ -9,6 +9,7 @@ import {
   FileText,
   AlertCircle,
   CheckCheck,
+  Menu,
 } from "lucide-react";
 import { useNotifications } from "../../hooks/useNotifications";
 import { formatRelativeTime } from "../../lib/formatters";
@@ -18,6 +19,7 @@ import type { AppNotification, NotificationType } from "../../types/notification
 interface TopNavProps {
   title: string;
   onCreateLead?: () => void;
+  onMenuClick?: () => void;
 }
 
 const notificationIcons: Record<
@@ -82,7 +84,7 @@ function NotificationItem({
   );
 }
 
-export function TopNav({ title, onCreateLead }: TopNavProps) {
+export function TopNav({ title, onCreateLead, onMenuClick }: TopNavProps) {
   const navigate = useNavigate();
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
   const [panelOpen, setPanelOpen] = useState(false);
@@ -114,11 +116,22 @@ export function TopNav({ title, onCreateLead }: TopNavProps) {
 
   return (
     <header
-      className="flex items-center justify-between px-6 py-3 border-b bg-white"
+      className="flex items-center justify-between px-4 sm:px-6 py-3 border-b bg-white"
       style={{ borderColor: "var(--border)", minHeight: "56px" }}
     >
-      <div>
-        <h1 className="text-foreground" style={{ fontSize: "16px", fontWeight: 600 }}>
+      <div className="flex items-center gap-3 min-w-0 flex-1">
+        {onMenuClick && (
+          <button
+            type="button"
+            onClick={onMenuClick}
+            className="md:hidden flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center border transition-colors hover:bg-muted"
+            style={{ borderColor: "var(--border)" }}
+            aria-label="Open menu"
+          >
+            <Menu className="w-4 h-4 text-muted-foreground" />
+          </button>
+        )}
+        <h1 className="text-foreground truncate" style={{ fontSize: "16px", fontWeight: 600 }}>
           {title}
         </h1>
       </div>
@@ -143,7 +156,7 @@ export function TopNav({ title, onCreateLead }: TopNavProps) {
         </div>
       </div> */}
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
         {/* <button
           onClick={onCreateLead}
           className="flex items-center gap-2 px-4 py-2 rounded-lg text-white transition-all"
@@ -231,7 +244,7 @@ export function TopNav({ title, onCreateLead }: TopNavProps) {
         </div>
 
         <button
-          className="flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-colors hover:bg-muted"
+          className="flex items-center gap-2 px-2 sm:px-3 py-1.5 rounded-lg border transition-colors hover:bg-muted"
           style={{ borderColor: "var(--border)" }}
         >
           <div
@@ -240,8 +253,10 @@ export function TopNav({ title, onCreateLead }: TopNavProps) {
           >
             AJ
           </div>
-          <span style={{ fontSize: "13px", color: "var(--foreground)" }}>Alex J.</span>
-          <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
+          <span className="hidden sm:inline" style={{ fontSize: "13px", color: "var(--foreground)" }}>
+            Alex J.
+          </span>
+          <ChevronDown className="w-3.5 h-3.5 text-muted-foreground hidden sm:block" />
         </button>
       </div>
     </header>

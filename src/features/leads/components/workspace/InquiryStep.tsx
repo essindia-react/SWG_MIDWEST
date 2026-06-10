@@ -1,3 +1,4 @@
+import React from "react";
 import { Grid } from "@mui/material";
 import { ALL_US_STATES, SALES_REPS } from "../../../../lib/constants";
 import { WorkspaceSection } from "./WorkspaceSection";
@@ -239,7 +240,7 @@ export function InquiryStep({ values, onChange }: InquiryStepProps) {
         <Grid container spacing={3}>
           <Grid size={{ xs: 12, md: 6 }}>
             <MultiSelectField
-              label="Type of Installation"
+              label="Type of Area"
               value={values.installationTypes}
               onChange={(v) => onChange("installationTypes", v)}
               options={INSTALLATION_TYPES}

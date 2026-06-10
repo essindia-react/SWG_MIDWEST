@@ -15,8 +15,6 @@ import {
   Warehouse,
   Leaf,
   ChevronRight,
-  PanelLeft,
-  PanelLeftClose,
   UsersRound,
   Truck,
 } from "lucide-react";
@@ -27,15 +25,15 @@ const navItems = [
   { to: ROUTES.dashboard, label: "Dashboard", icon: LayoutDashboard, end: true },
   { to: ROUTES.calendar, label: "Calendar", icon: Calendar },
   { to: ROUTES.leads, label: "Leads", icon: Users },
-  { to: ROUTES.pipeline, label: "Pipeline", icon: GitBranch },
-  { to: ROUTES.fieldOperations, label: "Field Operations", icon: HardHat },
-  { to: ROUTES.tasks, label: "Task Management", icon: CheckSquare },
+  { to: ROUTES.pipeline, label: "WIP Leads", icon: GitBranch },
   { to: ROUTES.projects, label: "Project Management", icon: FolderKanban },
-  { to: ROUTES.employees, label: "HR & People", icon: UsersRound, hasHRMenu: true },
-  { to: ROUTES.siteMaterialRequest, label: "Site Material Request", icon: Package },
+  { to: ROUTES.tasks, label: "Task Management", icon: CheckSquare },
+  // { to: ROUTES.fieldOperations, label: "Field Operations", icon: HardHat },
+  { to: ROUTES.siteMaterialRequest, label: "Site Material Management", icon: Package },
   // { to: ROUTES.vehicleMaster, label: "Transportation", icon: Truck, hasTransportationMenu: true },
-  { to: ROUTES.invoicing, label: "Invoicing", icon: Receipt },
   { to: ROUTES.inventory, label: "Inventory", icon: Warehouse, hasInventoryMenu: true },
+  { to: ROUTES.invoicing, label: "Invoicing", icon: Receipt },
+  { to: ROUTES.employees, label: "HR & People", icon: UsersRound, hasHRMenu: true },
 ];
 
 const EXPANDED_WIDTH = 240;
@@ -51,7 +49,7 @@ type FlyoutItem = {
   isActive: boolean;
 };
 
-function useIsMobile() {
+export function useIsMobile() {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -63,6 +61,11 @@ function useIsMobile() {
   }, []);
 
   return isMobile;
+}
+
+interface SidebarProps {
+  mobileOpen?: boolean;
+  onMobileOpenChange?: (open: boolean) => void;
 }
 
 function NavLabel({
@@ -223,6 +226,35 @@ function FlyoutSubMenu({
   );
 }
 
+function MobileInlineSubMenu({
+  items,
+  onItemSelect,
+}: {
+  items: FlyoutItem[];
+  onItemSelect: () => void;
+}) {
+  return (
+    <div className="ml-3 mt-0.5 mb-1 space-y-0.5 border-l border-white/15 pl-2">
+      {items.map((item) => (
+        <NavLink
+          key={item.to}
+          to={item.to}
+          onClick={onItemSelect}
+          className="flex items-center no-underline px-3 py-2 rounded-md transition-colors hover:bg-white/12"
+          style={{
+            color: item.isActive ? "#ffffff" : "rgba(255,255,255,0.62)",
+            fontWeight: item.isActive ? 600 : 400,
+            fontSize: "13px",
+            backgroundColor: item.isActive ? "rgba(255,255,255,0.1)" : "transparent",
+          }}
+        >
+          {item.label}
+        </NavLink>
+      ))}
+    </div>
+  );
+}
+
 function SubmenuChevron({ sidebarOpen, isHovered }: { sidebarOpen: boolean; isHovered?: boolean }) {
   if (sidebarOpen) {
     return (
@@ -241,11 +273,14 @@ function SubmenuChevron({ sidebarOpen, isHovered }: { sidebarOpen: boolean; isHo
   );
 }
 
-export function Sidebar() {
+export function Sidebar({ mobileOpen: mobileOpenProp, onMobileOpenChange }: SidebarProps = {}) {
   const location = useLocation();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  const [collapsed, setCollapsed] = useState(true);
+  const [hovered, setHovered] = useState(false);
+  const [internalMobileOpen, setInternalMobileOpen] = useState(false);
+  const mobileOpen = mobileOpenProp ?? internalMobileOpen;
+  const setMobileOpen = onMobileOpenChange ?? setInternalMobileOpen;
   const [openFlyout, setOpenFlyout] = useState<FlyoutId | null>(null);
   const openFlyoutTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const closeFlyoutTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -271,8 +306,16 @@ export function Sidebar() {
     location.pathname === ROUTES.tripHistory;
 
   useEffect(() => {
-    if (isMobile) setCollapsed(true);
-  }, [isMobile]);
+    if (isMobile) setMobileOpen(false);
+  }, [isMobile, setMobileOpen]);
+
+  useEffect(() => {
+    if (isMobile) setMobileOpen(false);
+  }, [location.pathname, isMobile, setMobileOpen]);
+
+  useEffect(() => {
+    if (isMobile && !mobileOpen) setOpenFlyout(null);
+  }, [isMobile, mobileOpen]);
 
   useEffect(() => {
     return () => {
@@ -281,8 +324,20 @@ export function Sidebar() {
     };
   }, []);
 
-  const isOpen = !collapsed;
-  const sidebarWidth = isOpen ? EXPANDED_WIDTH : COLLAPSED_WIDTH;
+  const isOpen = isMobile ? mobileOpen : hovered;
+  const sidebarWidth = isMobile ? EXPANDED_WIDTH : isOpen ? EXPANDED_WIDTH : COLLAPSED_WIDTH;
+
+  const handleSidebarMouseEnter = () => {
+    if (!isMobile) setHovered(true);
+  };
+
+  const handleSidebarMouseLeave = () => {
+    if (!isMobile) {
+      setHovered(false);
+      clearFlyoutTimers();
+      setOpenFlyout(null);
+    }
+  };
 
   const clearFlyoutTimers = () => {
     if (openFlyoutTimerRef.current) {
@@ -318,13 +373,14 @@ export function Sidebar() {
   const handleNavSelect = () => {
     clearFlyoutTimers();
     setOpenFlyout(null);
-    if (isMobile) setCollapsed(true);
+    if (isMobile) setMobileOpen(false);
   };
 
-  const toggleSidebar = () => {
-    setCollapsed((value) => !value);
+  const handleSubmenuClick = (e: React.MouseEvent, id: FlyoutId) => {
+    if (!isMobile) return;
+    e.preventDefault();
     clearFlyoutTimers();
-    setOpenFlyout(null);
+    setOpenFlyout((current) => (current === id ? null : id));
   };
 
   const ChevronLabel = ({ isActive }: { isActive: boolean }) => (
@@ -348,7 +404,7 @@ export function Sidebar() {
 
   const hrFlyoutItems: FlyoutItem[] = [
     { to: ROUTES.employees, label: "Employee Records", isActive: location.pathname === ROUTES.employees },
-    { to: ROUTES.clockInOut, label: "Clock In / Out", isActive: location.pathname === ROUTES.clockInOut },
+    // { to: ROUTES.clockInOut, label: "Clock In / Out", isActive: location.pathname === ROUTES.clockInOut },
     {
       to: ROUTES.timesheetSummary,
       label: "Timesheet Summary",
@@ -382,12 +438,15 @@ export function Sidebar() {
         <div
           key={item.to}
           ref={transportationAnchorRef}
-          onMouseEnter={() => handleFlyoutEnter("transportation")}
-          onMouseLeave={handleFlyoutLeave}
+          onMouseEnter={!isMobile ? () => handleFlyoutEnter("transportation") : undefined}
+          onMouseLeave={!isMobile ? handleFlyoutLeave : undefined}
         >
           <NavLink
             to={ROUTES.vehicleMaster}
-            onClick={handleNavSelect}
+            onClick={(e) => {
+              if (isMobile) handleSubmenuClick(e, "transportation");
+              else handleNavSelect();
+            }}
             className={`relative w-full flex items-center ga rounded-lg transition-all group no-underline px-3 py-2.5 ${
               isTransportationSection ? "" : "hover:bg-white/8"
             }`}
@@ -410,15 +469,21 @@ export function Sidebar() {
             </NavLabel>
           </NavLink>
 
-          <FlyoutSubMenu
-            visible={openFlyout === "transportation"}
-            title="Transportation"
-            items={transportationFlyoutItems}
-            anchorRef={transportationAnchorRef}
-            onMouseEnter={() => handleFlyoutEnter("transportation")}
-            onMouseLeave={handleFlyoutLeave}
-            onItemSelect={handleNavSelect}
-          />
+          {isMobile && openFlyout === "transportation" && (
+            <MobileInlineSubMenu items={transportationFlyoutItems} onItemSelect={handleNavSelect} />
+          )}
+
+          {!isMobile && (
+            <FlyoutSubMenu
+              visible={openFlyout === "transportation"}
+              title="Transportation"
+              items={transportationFlyoutItems}
+              anchorRef={transportationAnchorRef}
+              onMouseEnter={() => handleFlyoutEnter("transportation")}
+              onMouseLeave={handleFlyoutLeave}
+              onItemSelect={handleNavSelect}
+            />
+          )}
         </div>
       );
     }
@@ -428,12 +493,15 @@ export function Sidebar() {
         <div
           key={item.to}
           ref={hrAnchorRef}
-          onMouseEnter={() => handleFlyoutEnter("hr")}
-          onMouseLeave={handleFlyoutLeave}
+          onMouseEnter={!isMobile ? () => handleFlyoutEnter("hr") : undefined}
+          onMouseLeave={!isMobile ? handleFlyoutLeave : undefined}
         >
           <NavLink
             to={ROUTES.employees}
-            onClick={handleNavSelect}
+            onClick={(e) => {
+              if (isMobile) handleSubmenuClick(e, "hr");
+              else handleNavSelect();
+            }}
             className={`relative w-full flex items-center gp-2 rounded-lg transition-all group no-underline px-3 py-2.5 ${
               isHRSection ? "" : "hover:bg-white/8"
             }`}
@@ -451,15 +519,21 @@ export function Sidebar() {
             </NavLabel>
           </NavLink>
 
-          <FlyoutSubMenu
-            visible={openFlyout === "hr"}
-            title="HR & People"
-            items={hrFlyoutItems}
-            anchorRef={hrAnchorRef}
-            onMouseEnter={() => handleFlyoutEnter("hr")}
-            onMouseLeave={handleFlyoutLeave}
-            onItemSelect={handleNavSelect}
-          />
+          {isMobile && openFlyout === "hr" && (
+            <MobileInlineSubMenu items={hrFlyoutItems} onItemSelect={handleNavSelect} />
+          )}
+
+          {!isMobile && (
+            <FlyoutSubMenu
+              visible={openFlyout === "hr"}
+              title="HR & People"
+              items={hrFlyoutItems}
+              anchorRef={hrAnchorRef}
+              onMouseEnter={() => handleFlyoutEnter("hr")}
+              onMouseLeave={handleFlyoutLeave}
+              onItemSelect={handleNavSelect}
+            />
+          )}
         </div>
       );
     }
@@ -469,12 +543,15 @@ export function Sidebar() {
         <div
           key={item.to}
           ref={inventoryAnchorRef}
-          onMouseEnter={() => handleFlyoutEnter("inventory")}
-          onMouseLeave={handleFlyoutLeave}
+          onMouseEnter={!isMobile ? () => handleFlyoutEnter("inventory") : undefined}
+          onMouseLeave={!isMobile ? handleFlyoutLeave : undefined}
         >
           <NavLink
             to={ROUTES.inventoryTab("master")}
-            onClick={handleNavSelect}
+            onClick={(e) => {
+              if (isMobile) handleSubmenuClick(e, "inventory");
+              else handleNavSelect();
+            }}
             className={`relative w-full flex items-center gp-2 rounded-lg transition-all group no-underline px-3 py-2.5 ${
               isInventorySection ? "" : "hover:bg-white/8"
             }`}
@@ -494,15 +571,21 @@ export function Sidebar() {
             </NavLabel>
           </NavLink>
 
-          <FlyoutSubMenu
-            visible={openFlyout === "inventory"}
-            title="Inventory"
-            items={inventoryFlyoutItems}
-            anchorRef={inventoryAnchorRef}
-            onMouseEnter={() => handleFlyoutEnter("inventory")}
-            onMouseLeave={handleFlyoutLeave}
-            onItemSelect={handleNavSelect}
-          />
+          {isMobile && openFlyout === "inventory" && (
+            <MobileInlineSubMenu items={inventoryFlyoutItems} onItemSelect={handleNavSelect} />
+          )}
+
+          {!isMobile && (
+            <FlyoutSubMenu
+              visible={openFlyout === "inventory"}
+              title="Inventory"
+              items={inventoryFlyoutItems}
+              anchorRef={inventoryAnchorRef}
+              onMouseEnter={() => handleFlyoutEnter("inventory")}
+              onMouseLeave={handleFlyoutLeave}
+              onItemSelect={handleNavSelect}
+            />
+          )}
         </div>
       );
     }
@@ -573,19 +656,37 @@ export function Sidebar() {
   };
 
   return (
-    <aside
-      className="flex flex-col min-h-screen flex-shrink-0 transition-all duration-300 ease-in-out"
-      style={{
-        width: sidebarWidth,
-        backgroundColor: "var(--brand-dark-green)",
-      }}
-    >
+    <>
+      {isMobile && isOpen && (
+        <button
+          type="button"
+          className="fixed inset-0 z-40 bg-black/40 md:hidden"
+          onClick={() => setMobileOpen(false)}
+          aria-label="Close sidebar"
+        />
+      )}
+
+      <aside
+        className={
+          isMobile
+            ? `fixed inset-y-0 left-0 z-50 flex flex-col min-h-screen flex-shrink-0 transition-transform duration-300 ease-in-out md:static md:translate-x-0 ${
+                isOpen ? "translate-x-0" : "-translate-x-full"
+              }`
+            : "flex flex-col min-h-screen flex-shrink-0 transition-all duration-300 ease-in-out"
+        }
+        onMouseEnter={handleSidebarMouseEnter}
+        onMouseLeave={handleSidebarMouseLeave}
+        style={{
+          width: sidebarWidth,
+          backgroundColor: "var(--brand-dark-green)",
+        }}
+      >
       {/* Header */}
       <div
-        className={`flex items-center border-b px-3 py-3 ${isOpen ? "justify-between gap-2" : "flex-col gap-2"}`}
+        className={`flex items-center border-b px-3 py-3 ${isOpen ? "gap-3" : "justify-center"}`}
         style={{ borderColor: "rgba(255,255,255,0.12)" }}
       >
-        <div className={`flex items-center gap-3 min-w-0 ${isOpen ? "flex-1" : "justify-center"}`}>
+        <div className={`flex items-center gap-3 min-w-0 ${isOpen ? "flex-1" : ""}`}>
           <div
             className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
             style={{ backgroundColor: "rgba(255,255,255,0.15)" }}
@@ -604,16 +705,6 @@ export function Sidebar() {
             </div>
           )}
         </div>
-
-        <button
-          type="button"
-          onClick={toggleSidebar}
-          className="flex-shrink-0 p-1.5 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors"
-          aria-label={isOpen ? "Collapse sidebar" : "Expand sidebar"}
-          title={isOpen ? "Collapse sidebar" : "Expand sidebar"}
-        >
-          {isOpen ? <PanelLeftClose className="w-4 h-4" /> : <PanelLeft className="w-4 h-4" />}
-        </button>
       </div>
 
       {/* Nav */}
@@ -669,5 +760,6 @@ export function Sidebar() {
         </div>
       </div>
     </aside>
+    </>
   );
 }

@@ -7,7 +7,15 @@ import {
   getProjectTypeLabel,
   getRepById,
 } from "./leadHelpers";
-import type { Lead, LeadFormInput, LeadSource, LeadStatus, PropertyType } from "../types/lead";
+import type {
+  Lead,
+  LeadFormInput,
+  LeadSource,
+  LeadStatus,
+  LeadUploadedImage,
+  LeadWorkflowData,
+  PropertyType,
+} from "../types/lead";
 import {
   EMPTY_WORKSPACE_FORM,
   type WorkspaceFormValues,
@@ -32,6 +40,12 @@ export interface LeadStageDetailField {
 export interface LeadStageDetailListItem {
   primary: string;
   secondary?: string;
+  imageUrl?: string;
+}
+
+export interface LeadStageGalleryImage {
+  url: string;
+  label: string;
 }
 
 export interface LeadStageDetail {
@@ -40,7 +54,14 @@ export interface LeadStageDetail {
   done: boolean;
   fields: LeadStageDetailField[];
   listItems?: LeadStageDetailListItem[];
+  galleryImages?: LeadStageGalleryImage[];
   emptyMessage?: string;
+}
+
+function toGalleryImages(images: LeadUploadedImage[] | undefined): LeadStageGalleryImage[] {
+  return (images ?? [])
+    .filter((img) => img.previewUrl)
+    .map((img) => ({ url: img.previewUrl!, label: img.fileName }));
 }
 
 export interface LeadProposalSummary {
@@ -91,7 +112,7 @@ export function getDefaultLeadStageIndex(lead: Lead): number {
     .map((step, index) => (step.done ? index : -1))
     .filter((index) => index >= 0)
     .pop();
-  return 0;
+  return lastDone ?? 0;
 }
 
 function displayValue(value: string | number | undefined | null, fallback = "—"): string {
@@ -148,7 +169,9 @@ export function getLeadStageDetail(lead: Lead, stageIndex: number): LeadStageDet
         listItems: wd.siteVisitImages?.map((img) => ({
           primary: img.fileName,
           secondary: img.uploadedAt ? formatDate(img.uploadedAt) : undefined,
+          imageUrl: img.previewUrl,
         })),
+        galleryImages: toGalleryImages(wd.siteVisitImages),
         emptyMessage: "No site visit scheduled yet.",
       };
 
@@ -171,7 +194,9 @@ export function getLeadStageDetail(lead: Lead, stageIndex: number): LeadStageDet
         listItems: designImages.map((img) => ({
           primary: img.fileName,
           secondary: img.uploadedAt ? formatDate(img.uploadedAt) : undefined,
+          imageUrl: img.previewUrl,
         })),
+        galleryImages: toGalleryImages(designImages),
         emptyMessage: "No design created for this lead yet.",
       };
     }

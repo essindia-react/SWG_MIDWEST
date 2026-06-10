@@ -109,7 +109,7 @@ const STEP_NEXT_LABELS: Record<number, string> = {
   0: "Schedule Site Visit",
   1: "Select Design",
   2: "Convert to Estimation",
-  3: "Convert to Customer",
+  3: "Generate Proposal",
 };
 
 function getNextStepLabel(activeStep: number): string {

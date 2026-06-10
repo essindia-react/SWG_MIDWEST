@@ -322,6 +322,41 @@ export function LeadDetailView({ leadId }: LeadDetailViewProps) {
                     </div>
                   </div>
 
+                  {stageDetail.galleryImages && stageDetail.galleryImages.length > 0 && (
+                    <div
+                      className="rounded-xl border p-4"
+                      style={{ borderColor: "var(--border)", backgroundColor: "white" }}
+                    >
+                      <p
+                        className="mb-3"
+                        style={{ fontSize: "12px", fontWeight: 600, color: "var(--foreground)" }}
+                      >
+                        {selectedStageIndex === 1 ? "Site Images" : selectedStageIndex === 2 ? "Design Images" : "Images"}
+                      </p>
+                      <div className="grid grid-cols-2 gap-3">
+                        {stageDetail.galleryImages.map((image) => (
+                          <div
+                            key={image.label}
+                            className="rounded-lg overflow-hidden border"
+                            style={{ borderColor: "var(--border)" }}
+                          >
+                            <img
+                              src={image.url}
+                              alt={image.label}
+                              className="w-full h-36 object-cover"
+                            />
+                            <p
+                              className="px-2 py-1.5 truncate"
+                              style={{ fontSize: "11px", color: "var(--muted-foreground)", backgroundColor: "#FAFAFA" }}
+                            >
+                              {image.label}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   {stageDetail.listItems && stageDetail.listItems.length > 0 && (
                     <div
                       className="rounded-xl border p-4"
@@ -340,12 +375,20 @@ export function LeadDetailView({ leadId }: LeadDetailViewProps) {
                             className="flex items-center gap-3 p-3 rounded-lg"
                             style={{ backgroundColor: "#FAFAFA" }}
                           >
-                            <div
-                              className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-                              style={{ backgroundColor: "var(--brand-light-green)" }}
-                            >
-                              <FileText className="w-4 h-4" style={{ color: "var(--brand-green)" }} />
-                            </div>
+                            {item.imageUrl ? (
+                              <img
+                                src={item.imageUrl}
+                                alt={item.primary}
+                                className="w-10 h-10 rounded-lg object-cover flex-shrink-0"
+                              />
+                            ) : (
+                              <div
+                                className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                                style={{ backgroundColor: "var(--brand-light-green)" }}
+                              >
+                                <FileText className="w-4 h-4" style={{ color: "var(--brand-green)" }} />
+                              </div>
+                            )}
                             <div className="min-w-0">
                               <p style={{ fontSize: "13px", fontWeight: 600 }} className="truncate">
                                 {item.primary}

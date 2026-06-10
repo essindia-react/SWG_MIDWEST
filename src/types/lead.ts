@@ -90,6 +90,8 @@ export interface LeadUploadedImage {
   fileName: string;
   fileSize: number;
   uploadedAt: string;
+  /** Resolved asset URL for bundled demo images */
+  previewUrl?: string;
 }
 
 export interface LeadEstimationArea {

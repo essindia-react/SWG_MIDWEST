@@ -242,14 +242,14 @@ export function DashboardView() {
   ];
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="grid grid-cols-4 gap-4">
+    <div className="min-w-0 p-4 sm:p-6 space-y-4 sm:space-y-6">
+      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
         {statCards.map((card) => {
           const Icon = card.icon;
           return (
             <div
               key={card.label}
-              className="bg-white rounded-xl p-4 border"
+              className="bg-white rounded-xl p-3 sm:p-4 border min-w-0"
               style={{ borderColor: "var(--border)", boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}
             >
               <div className="flex items-start justify-between mb-3">
@@ -272,7 +272,7 @@ export function DashboardView() {
                   {card.change}
                 </div>
               </div>
-              <div className="text-foreground" style={{ fontSize: "22px", fontWeight: 700, lineHeight: 1 }}>
+              <div className="text-foreground text-lg sm:text-xl lg:text-[22px] font-bold leading-none truncate">
                 {card.value}
               </div>
               <div className="mt-1" style={{ fontSize: "12px", color: "var(--muted-foreground)" }}>
@@ -285,10 +285,10 @@ export function DashboardView() {
 
       {recentNewLeads.length > 0 && (
         <div
-          className="bg-white rounded-xl p-5 border"
+          className="bg-white rounded-xl p-4 sm:p-5 border min-w-0"
           style={{ borderColor: "var(--border)", boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}
         >
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
             <div>
               <h3 className="text-foreground" style={{ fontSize: "14px", fontWeight: 600 }}>
                 New Leads
@@ -299,7 +299,7 @@ export function DashboardView() {
             </div>
             <Link
               to={ROUTES.leads}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border hover:bg-muted"
+              className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg border hover:bg-muted w-full sm:w-auto flex-shrink-0"
               style={{ fontSize: "12px", borderColor: "var(--border)", color: "var(--brand-green)", textDecoration: "none" }}
             >
               View all leads
@@ -360,12 +360,12 @@ export function DashboardView() {
         </div>
       )}
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div
-          className="col-span-2 bg-white rounded-xl p-5 border"
+          className="lg:col-span-2 bg-white rounded-xl p-4 sm:p-5 border min-w-0"
           style={{ borderColor: "var(--border)", boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}
         >
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-4">
             <div>
               <h3 className="text-foreground" style={{ fontSize: "14px", fontWeight: 600 }}>
                 Pipeline Performance
@@ -373,14 +373,14 @@ export function DashboardView() {
               <p style={{ fontSize: "12px", color: "var(--muted-foreground)" }}>Leads vs. Won vs. Revenue (6 months)</p>
             </div>
             <select
-              className="border rounded-lg px-3 py-1.5 text-foreground"
+              className="border rounded-lg px-3 py-1.5 text-foreground w-full sm:w-auto flex-shrink-0"
               style={{ fontSize: "12px", borderColor: "var(--border)" }}
             >
               <option>Last 6 Months</option>
               <option>Last 12 Months</option>
             </select>
           </div>
-          <ResponsiveContainer width="100%" height={220}>
+          <ResponsiveContainer width="100%" height={220} minHeight={180}>
             <AreaChart data={pipelineData} margin={{ top: 5, right: 5, left: -10, bottom: 0 }}>
               <defs>
                 <linearGradient id="leadsGrad" x1="0" y1="0" x2="0" y2="1">
@@ -411,7 +411,7 @@ export function DashboardView() {
         </div>
 
         <div
-          className="bg-white rounded-xl p-5 border"
+          className="bg-white rounded-xl p-4 sm:p-5 border min-w-0"
           style={{ borderColor: "var(--border)", boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}
         >
           <h3 className="text-foreground mb-1" style={{ fontSize: "14px", fontWeight: 600 }}>
@@ -420,7 +420,7 @@ export function DashboardView() {
           <p className="mb-4" style={{ fontSize: "12px", color: "var(--muted-foreground)" }}>
             This month
           </p>
-          <ResponsiveContainer width="100%" height={150}>
+          <ResponsiveContainer width="100%" height={150} minHeight={130}>
             <PieChart>
               <Pie
                 data={sourceData}
@@ -452,15 +452,15 @@ export function DashboardView() {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         <div
-          className="bg-white rounded-xl p-5 border"
+          className="bg-white rounded-xl p-4 sm:p-5 border min-w-0"
           style={{ borderColor: "var(--border)", boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}
         >
           <h3 className="text-foreground mb-4" style={{ fontSize: "14px", fontWeight: 600 }}>
             Sales Performance
           </h3>
-          <ResponsiveContainer width="100%" height={160}>
+          <ResponsiveContainer width="100%" height={160} minHeight={140}>
             <BarChart data={salesRepData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
               <XAxis dataKey="name" tick={{ fontSize: 11, fill: "#94A3B8" }} axisLine={false} tickLine={false} />
@@ -473,7 +473,7 @@ export function DashboardView() {
         </div>
 
         <div
-          className="bg-white rounded-xl p-5 border"
+          className="bg-white rounded-xl p-4 sm:p-5 border min-w-0"
           style={{ borderColor: "var(--border)", boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}
         >
           <h3 className="text-foreground mb-4" style={{ fontSize: "14px", fontWeight: 600 }}>
@@ -521,15 +521,15 @@ export function DashboardView() {
         </div>
 
         <div
-          className="bg-white rounded-xl p-5 border"
+          className="bg-white rounded-xl p-4 sm:p-5 border min-w-0 md:col-span-2 xl:col-span-1"
           style={{ borderColor: "var(--border)", boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}
         >
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
             <h3 className="text-foreground" style={{ fontSize: "14px", fontWeight: 600 }}>
               Upcoming Tasks
             </h3>
             <span
-              className="px-2 py-0.5 rounded-full"
+              className="px-2 py-0.5 rounded-full flex-shrink-0"
               style={{ backgroundColor: "#FEF2F2", color: "var(--status-red)", fontSize: "11px", fontWeight: 600 }}
             >
               12 overdue
@@ -539,7 +539,7 @@ export function DashboardView() {
             {upcomingTasks.map((task) => (
               <div
                 key={task.id}
-                className="flex items-center gap-3 p-2.5 rounded-lg border"
+                className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 p-2.5 rounded-lg border"
                 style={{ borderColor: "var(--border)", backgroundColor: "#FAFAFA" }}
               >
                 <div
@@ -556,7 +556,7 @@ export function DashboardView() {
                   </div>
                 </div>
                 <div
-                  className="px-2 py-0.5 rounded-full flex-shrink-0"
+                  className="px-2 py-0.5 rounded-full flex-shrink-0 self-start sm:self-center"
                   style={{
                     backgroundColor: priorityBg[task.priority],
                     color: priorityColors[task.priority],

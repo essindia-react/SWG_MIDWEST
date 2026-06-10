@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   Box,
   Button,
@@ -161,14 +161,14 @@ export function MaterialRequestApprovalView() {
               Crew members raise requests on mobile. Office reviews, approves, and triggers fulfillment.
             </Typography>
           </Box>
-          <Button
+          {/* <Button
             variant="outlined"
             startIcon={<ExternalLink size={16} />}
             onClick={openMobileDemo}
             sx={{ flexShrink: 0 }}
           >
             Open Mobile Demo
-          </Button>
+          </Button> */}
         </Box>
 
         <Box

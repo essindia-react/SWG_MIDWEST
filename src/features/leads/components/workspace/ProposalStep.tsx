@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Box, Button, Dialog, DialogContent, DialogTitle, Grid, IconButton, Typography } from "@mui/material";
 import { FileCheck, FileText, X } from "lucide-react";
-import proposalTemplateUrl from "../../../../SWG_Proposal_Template.pdf";
+import proposalTemplateUrl from "../../../../assets/SWG_Proposal_Template.pdf";
 import { WorkspaceSection } from "./WorkspaceSection";
 import { SelectField, TextFieldInput } from "./workspaceFields";
 import type { WorkspaceFormChange, WorkspaceFormValues } from "./types";

@@ -197,12 +197,12 @@ export function EstimationStep({ values, onChange }: EstimationStepProps) {
         </Button>
       </WorkspaceSection>
 
-      <WorkspaceSection title="Product Details">
+      <WorkspaceSection title="Material Details">
         <Box sx={{ border: 1, borderColor: "divider", borderRadius: 2, overflow: "hidden", bgcolor: "background.paper" }}>
           <Table size="small">
             <TableHead>
               <TableRow sx={{ bgcolor: "grey.50" }}>
-                {["Product Type", "Product", "Unit", "Qty/Rate", "Cost", "Action"].map((h) => (
+                {["Material Type", "Material Name", "Unit", "Qty/Rate", "Cost", "Action"].map((h) => (
                   <TableCell key={h} sx={{ fontSize: "0.75rem", color: "text.secondary", fontWeight: 600 }}>
                     {h}
                   </TableCell>
@@ -213,7 +213,7 @@ export function EstimationStep({ values, onChange }: EstimationStepProps) {
               {values.estimationProducts.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} sx={{ textAlign: "center", color: "text.secondary", py: 3 }}>
-                    No products added yet
+                    No materials added yet
                   </TableCell>
                 </TableRow>
               ) : (
@@ -232,7 +232,7 @@ export function EstimationStep({ values, onChange }: EstimationStepProps) {
                     <TableCell>
                       <TextFieldInput
                         label=""
-                        placeholder="Product name"
+                        placeholder="Material name"
                         value={product.productName}
                         onChange={(v) =>
                           onChange("estimationProducts", updateProduct(values.estimationProducts, product.id, "productName", v))
@@ -288,7 +288,7 @@ export function EstimationStep({ values, onChange }: EstimationStepProps) {
           </Table>
           <Box sx={{ p: 2 }}>
             <Button startIcon={<Plus size={16} />} onClick={addProduct} sx={{ color: "primary.main", fontWeight: 600, fontSize: "0.8125rem" }}>
-              Add Product Item
+              Add Material Item
             </Button>
           </Box>
         </Box>

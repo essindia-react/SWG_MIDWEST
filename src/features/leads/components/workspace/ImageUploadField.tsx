@@ -7,6 +7,7 @@ export interface UploadedImage {
   fileName: string;
   fileSize: number;
   uploadedAt: string;
+  previewUrl?: string;
 }
 
 interface ImageUploadFieldProps {
@@ -63,36 +64,45 @@ export function ImageUploadField({ label, image, onUpload, onRemove }: ImageUplo
             border: 1,
             borderColor: "primary.main",
             borderRadius: 2,
-            p: 2,
-            display: "flex",
-            alignItems: "center",
-            gap: 1.5,
+            overflow: "hidden",
             bgcolor: "rgba(46,125,50,0.04)",
             cursor: "pointer",
             "&:hover": { bgcolor: "rgba(46,125,50,0.08)" },
           }}
         >
-          <Box
-            sx={{
-              width: 40,
-              height: 40,
-              borderRadius: 1.5,
-              bgcolor: "#E8F5E9",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flexShrink: 0,
-            }}
-          >
-            <FileText size={20} color="#2E7D32" />
-          </Box>
-          <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography sx={{ fontSize: "0.8125rem", fontWeight: 600 }} noWrap>
-              {image.fileName}
-            </Typography>
-            <Typography sx={{ fontSize: "0.6875rem", color: "text.secondary" }}>
-              {formatFileSize(image.fileSize)} · Click to replace
-            </Typography>
+          {image.previewUrl ? (
+            <Box
+              component="img"
+              src={image.previewUrl}
+              alt={image.fileName}
+              sx={{ width: "100%", height: 140, objectFit: "cover", display: "block" }}
+            />
+          ) : null}
+          <Box sx={{ p: 2, display: "flex", alignItems: "center", gap: 1.5 }}>
+            {!image.previewUrl && (
+              <Box
+                sx={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 1.5,
+                  bgcolor: "#E8F5E9",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                }}
+              >
+                <FileText size={20} color="#2E7D32" />
+              </Box>
+            )}
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <Typography sx={{ fontSize: "0.8125rem", fontWeight: 600 }} noWrap>
+                {image.fileName}
+              </Typography>
+              <Typography sx={{ fontSize: "0.6875rem", color: "text.secondary" }}>
+                {formatFileSize(image.fileSize)} · Click to replace
+              </Typography>
+            </Box>
           </Box>
         </Box>
       ) : (
