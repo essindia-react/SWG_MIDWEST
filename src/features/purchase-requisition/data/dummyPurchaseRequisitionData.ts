@@ -7,7 +7,7 @@ export const DUMMY_PURCHASE_REQUISITIONS: PurchaseRequisition[] = [
     poDate: "2026-06-01",
     poType: "Materials",
     linkedProjectId: "proj-001",
-    linkedProjectName: "Green Valley HOA Turf",
+    linkedProjectName: "Green Valley",
     linkedMaterialRequestNumber: "MR-INV-2026-0045",
     vendorName: "Southwest Turf Supply",
     vendorContact: "Mike Rivera",

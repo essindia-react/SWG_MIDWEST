@@ -23,7 +23,7 @@ type MobileView = "today" | "lead" | "calllog" | "notes";
 
 const todayTasks = [
   { id: "1", title: "Site visit — Henderson Estate", time: "10:00 AM", type: "visit", lead: "Henderson Estate", done: false, priority: "high" },
-  { id: "2", title: "Follow-up call — Riverside HOA board", time: "11:30 AM", type: "call", lead: "Riverside HOA", done: false, priority: "high" },
+  // { id: "2", title: "Follow-up call — Riverside HOA board", time: "11:30 AM", type: "call", lead: "Riverside HOA", done: false, priority: "high" },
   { id: "3", title: "Send revised quote to Park Estates", time: "1:00 PM", type: "email", lead: "Park Estates Dev.", done: false, priority: "medium" },
   { id: "4", title: "Call Thornton re: site visit scheduling", time: "2:30 PM", type: "call", lead: "Thornton Family", done: true, priority: "low" },
   { id: "5", title: "Check on Martinez installation progress", time: "4:00 PM", type: "followup", lead: "Martinez Residence", done: false, priority: "medium" },
@@ -31,14 +31,14 @@ const todayTasks = [
 
 const myLeads = [
   { id: "1", name: "Henderson Estate", value: 54000, stage: "Site Visit", lastContact: "2h ago", priority: "high" },
-  { id: "2", name: "Riverside HOA", value: 210000, stage: "Negotiation", lastContact: "4h ago", priority: "high" },
+  // { id: "2", name: "Riverside HOA", value: 210000, stage: "Negotiation", lastContact: "4h ago", priority: "high" },
   { id: "3", name: "Park Estates Dev.", value: 178000, stage: "Estimate Sent", lastContact: "Yesterday", priority: "medium" },
   { id: "4", name: "Thornton Family", value: 22000, stage: "Qualified", lastContact: "2 days ago", priority: "low" },
 ];
 
 const callLog = [
   { id: "1", name: "Robert Henderson", phone: "(602) 555-0187", time: "Today 10:34 AM", duration: "14 min", outcome: "Connected — Site visit confirmed for tomorrow", type: "outbound" },
-  { id: "2", name: "HOA Board (Riverside)", phone: "(480) 555-0522", time: "Today 9:10 AM", duration: "—", outcome: "Voicemail left — callback requested", type: "outbound" },
+  // { id: "2", name: "HOA Board (Riverside)", phone: "(480) 555-0522", time: "Today 9:10 AM", duration: "—", outcome: "Voicemail left — callback requested", type: "outbound" },
   { id: "3", name: "Karen Thornton", phone: "(480) 555-0198", time: "Yesterday 3:45 PM", duration: "8 min", outcome: "Connected — Interested, scheduling site visit", type: "inbound" },
   { id: "4", name: "Park Estates Dev.", phone: "(623) 555-0601", time: "Yesterday 11:20 AM", duration: "22 min", outcome: "Connected — Contract language discussed, legal review underway", type: "outbound" },
 ];

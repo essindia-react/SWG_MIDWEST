@@ -104,7 +104,7 @@ export interface ProjectBudget {
 export type FieldDocumentType =
   | "Installation Guide"
   | "Safety Guide"
-  | "HOA Rules"
+  | "Municipal Rules"
   | "Design Drawing"
   | "Pre-Site Photo"
   | "Other";

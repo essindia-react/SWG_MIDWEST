@@ -683,7 +683,7 @@ export function Sidebar({ mobileOpen: mobileOpenProp, onMobileOpenChange }: Side
       >
       {/* Header */}
       <div
-        className={`flex items-center border-b px-3 py-3 ${isOpen ? "gap-3" : "justify-center"}`}
+        className={`flex items-center border-b px-3 py-3.5 ${isOpen ? "gap-3" : "justify-center"}`}
         style={{ borderColor: "rgba(255,255,255,0.12)" }}
       >
         <div className={`flex items-center gap-3 min-w-0 ${isOpen ? "flex-1" : ""}`}>
@@ -708,7 +708,7 @@ export function Sidebar({ mobileOpen: mobileOpenProp, onMobileOpenChange }: Side
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 py-4 space-y-0.5 overflow-y-auto px-2 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+      <nav className="flex-1 py-4 space-y-0.5 overflow-y-auto px-4.5 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
         {navItems.map(renderNavItem)}
       </nav>
 
@@ -718,7 +718,7 @@ export function Sidebar({ mobileOpen: mobileOpenProp, onMobileOpenChange }: Side
         style={{ borderColor: "rgba(255,255,255,0.12)" }}
       >
         <div
-          className="flex items-center rounded-lg gap-3 px-2 py-2"
+          className="flex items-center justify-center rounded-lg gap-3  py-2"
           style={{ backgroundColor: "rgba(255,255,255,0.08)" }}
           title={!isOpen ? "Alex Johnson" : undefined}
         >
@@ -730,7 +730,7 @@ export function Sidebar({ mobileOpen: mobileOpenProp, onMobileOpenChange }: Side
           </div>
 
           <div
-            className="min-w-0 overflow-hidden"
+            className="min-w-0 hidden"
             style={{
               maxWidth: isOpen ? "160px" : "0px",
               opacity: isOpen ? 1 : 0,

@@ -22,7 +22,6 @@ export interface FieldOperationsTab {
 export const FIELD_DOCUMENT_TYPES: FieldDocumentType[] = [
   "Installation Guide",
   "Safety Guide",
-  "HOA Rules",
   "Design Drawing",
   "Pre-Site Photo",
   "Other",

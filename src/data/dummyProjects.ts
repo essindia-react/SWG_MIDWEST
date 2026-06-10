@@ -17,7 +17,7 @@ export const DUMMY_PROJECTS: Project[] = [
     status: "in-progress",
     projectValue: 28500,
     projectManager: "Maria S.",
-    remarks: "HOA approval received. Material ordered.",
+    remarks: "",
     teamAssignments: [
       {
         id: "team-1",
@@ -121,7 +121,7 @@ export const DUMMY_PROJECTS: Project[] = [
     projectCode: "SWG-PROJ-2026-102",
     projectDate: "2026-04-01",
     customerId: "cust-1088",
-    customerName: "Green Valley HOA",
+    customerName: "Green Valley",
     plannedStartDate: "2026-05-01",
     plannedEndDate: "2026-07-15",
     description: "Community common area putting green and walkway turf.",
@@ -137,7 +137,7 @@ export const DUMMY_PROJECTS: Project[] = [
       {
         id: "ms-3",
         name: "Design & Approval",
-        description: "Finalize putting green layout and obtain HOA sign-off.",
+        description: "Finalize putting green layout.",
         assignedTo: "Emily C.",
         plannedStartDate: "2026-04-01",
         plannedEndDate: "2026-04-30",
@@ -153,16 +153,6 @@ export const DUMMY_PROJECTS: Project[] = [
             plannedEndDate: "2026-04-10",
             assignedTo: "Emily C.",
             status: "in-progress",
-          },
-          {
-            id: "task-6",
-            milestoneId: "ms-3",
-            name: "Submit HOA approval package",
-            estimateEffortHrs: 4,
-            plannedStartDate: "2026-04-11",
-            plannedEndDate: "2026-04-15",
-            assignedTo: "Emily C.",
-            status: "not-started",
           },
         ],
       },

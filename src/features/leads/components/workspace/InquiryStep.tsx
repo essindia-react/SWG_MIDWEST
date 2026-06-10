@@ -24,14 +24,13 @@ const LEAD_SOURCES = [
   "Other",
 ] as const;
 
-const LEAD_TYPES = ["Residential", "Commercial", "HOA", "Municipal", "Sports Field"] as const;
+const LEAD_TYPES = ["Residential", "Commercial", "Municipal", "Sports Field"] as const;
 
 const CONTACT_METHODS = ["Call", "Text", "Email"] as const;
 
 const JOB_SITE_PROPERTY_TYPES = [
   "Residential",
   "Commercial",
-  "HOA",
   "Sports Facility",
   "Municipal",
 ] as const;
@@ -69,7 +68,6 @@ const PRIORITIES = ["High", "Medium", "Low"] as const;
 
 const EXISTING_CUSTOMERS = [
   "John Smith — SWG-CUST-1024",
-  "Green Valley HOA — SWG-CUST-1088",
   "Park Estates Dev. — SWG-CUST-1156",
 ] as const;
 

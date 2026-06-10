@@ -70,17 +70,17 @@ const salesRepData = [
 
 const recentActivities = [
   { id: 1, type: "call", user: "Maria S.", lead: "Henderson Residence", time: "8m ago", detail: "Completed site visit call" },
-  { id: 2, type: "email", user: "Alex J.", lead: "Riverside HOA", time: "23m ago", detail: "Sent proposal — $48,500" },
+  // { id: 2, type: "email", user: "Alex J.", lead: "Riverside HOA", time: "23m ago", detail: "Sent proposal — $48,500" },
   { id: 3, type: "note", user: "Emily C.", lead: "Park Estates Dev.", time: "1h ago", detail: "Client requested 3-phase install" },
   { id: 4, type: "won", user: "Chris W.", lead: "Sunbelt Properties", time: "2h ago", detail: "Deal closed — $72,000" },
   { id: 5, type: "task", user: "Maria S.", lead: "Thornton Family", time: "3h ago", detail: "Follow-up call scheduled Fri 2pm" },
-  { id: 6, type: "email", user: "Alex J.", lead: "Desert Vista HOA", time: "4h ago", detail: "Quote follow-up sent" },
+  // { id: 6, type: "email", user: "Alex J.", lead: "Desert Vista HOA", time: "4h ago", detail: "Quote follow-up sent" },
 ];
 
 const upcomingTasks = [
   { id: 1, title: "Site visit — Martinez Residence", due: "Today 10:00 AM", priority: "high", lead: "Martinez Residence" },
   { id: 2, title: "Call back Henderson re: pricing", due: "Today 2:00 PM", priority: "medium", lead: "Henderson Estate" },
-  { id: 3, title: "Send revised quote to Riverside HOA", due: "Tomorrow 9:00 AM", priority: "high", lead: "Riverside HOA" },
+  // { id: 3, title: "Send revised quote to Riverside HOA", due: "Tomorrow 9:00 AM", priority: "high", lead: "Riverside HOA" },
   { id: 4, title: "Follow up with Park Estates", due: "Jun 7, 11:00 AM", priority: "medium", lead: "Park Estates Dev." },
   { id: 5, title: "Review installation plans", due: "Jun 8, 3:00 PM", priority: "low", lead: "Sunbelt Properties" },
 ];

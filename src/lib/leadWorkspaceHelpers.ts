@@ -343,7 +343,7 @@ const API_TO_PROPERTY_TYPE: Record<PropertyType, string> = {
   residential: "Residential",
   commercial: "Commercial",
   industrial: "Commercial",
-  municipal: "HOA",
+  municipal: "Municipal",
 };
 
 const API_TO_LEAD_STATUS: Record<LeadStatus, string> = {
@@ -465,7 +465,6 @@ export function workspaceFormToLeadInput(
   const JOB_SITE_PROPERTY_TO_API: Record<string, PropertyType> = {
     Residential: "residential",
     Commercial: "commercial",
-    HOA: "municipal",
     "Sports Facility": "commercial",
     Municipal: "municipal",
   };
@@ -553,7 +552,7 @@ export function workspaceFormToLeadInput(
     drainageRequired: values.drainage === "Poor",
     removeExistingGrass: values.surfaceType === "Grass",
     hoaApprovalRequired:
-      values.leadType === "HOA" || values.jobSitePropertyType === "HOA",
+      values.jobSitePropertyType === "Municipal",
     workflowData,
   };
 }

@@ -68,14 +68,6 @@ export const PROJECT_CUSTOMERS = [
     address: "4521 Oak Ridge Dr, Columbus, OH 43220",
   },
   {
-    id: "cust-1088",
-    name: "Green Valley HOA",
-    code: "SWG-CUST-1088",
-    email: "board@greenvalleyhoa.org",
-    phone: "(440) 555-0198",
-    address: "1200 Valley View Ln, Cleveland, OH 44122",
-  },
-  {
     id: "cust-1156",
     name: "Park Estates Dev.",
     code: "SWG-CUST-1156",
@@ -86,12 +78,6 @@ export const PROJECT_CUSTOMERS = [
 ] as const;
 
 export const PROJECT_PROPOSALS = [
-  {
-    id: "PRP-9901",
-    name: "Proposal - Green Valley HOA Turf",
-    customerId: "cust-1088",
-    status: "Accepted",
-  },
   {
     id: "PRP-9902",
     name: "Proposal - John Smith Backyard",

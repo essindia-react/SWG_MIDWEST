@@ -72,7 +72,6 @@ const LEAD_SOURCE_TO_API: Record<string, LeadSource> = {
 const JOB_SITE_PROPERTY_TO_API: Record<string, PropertyType> = {
   Residential: "residential",
   Commercial: "commercial",
-  HOA: "municipal",
   "Sports Facility": "commercial",
   Municipal: "municipal",
 };
@@ -470,9 +469,9 @@ export function LeadWorkspace({ onBack, leadId }: LeadWorkspaceProps) {
                 flexShrink: 0,
               }}
             >
-              <Typography variant="body2" color="text.secondary">
+              {/* <Typography variant="body2" color="text.secondary">
                 Unsaved changes will be lost.
-              </Typography>
+              </Typography> */}
               <Box sx={{ display: "flex", gap: 1.5 }}>
                 <Button
                   variant="outlined"
