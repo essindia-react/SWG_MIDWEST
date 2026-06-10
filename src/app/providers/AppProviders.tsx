@@ -6,6 +6,8 @@ import { LeadsProvider } from "../../hooks/useLeads";
 import { InvoicesProvider } from "../../hooks/useInvoices";
 import { ProjectsProvider } from "../../hooks/useProjects";
 import { NotificationsProvider } from "../../hooks/useNotifications";
+import { HRProvider } from "../../hooks/useHR";
+import { TransportationProvider } from "../../hooks/useTransportation";
 import { theme } from "../../theme/theme";
 
 export function AppProviders({ children }: { children: ReactNode }) {
@@ -15,7 +17,11 @@ export function AppProviders({ children }: { children: ReactNode }) {
         <ProjectsProvider>
           <InvoicesProvider>
             <CalendarEventsProvider>
-              <NotificationsProvider>{children}</NotificationsProvider>
+              <HRProvider>
+                <TransportationProvider>
+                  <NotificationsProvider>{children}</NotificationsProvider>
+                </TransportationProvider>
+              </HRProvider>
             </CalendarEventsProvider>
           </InvoicesProvider>
         </ProjectsProvider>

@@ -21,6 +21,13 @@ export const ROUTES = {
   inventoryTab: (tab: string) => `/inventory?tab=${tab}`,
   purchaseRequisition: "/purchase-requisition",
   settings: "/settings",
+  employees: "/hr/employees",
+  clockInOut: "/hr/clock-in-out",
+  timesheetSummary: "/hr/timesheets",
+  vehicleMaster: "/transportation/vehicles",
+  gpsDashboard: "/transportation/dashboard",
+  tripHistory: "/transportation/trips",
+  vehicleDetail: (id: string) => `/transportation/vehicles/${id}`,
 } as const;
 
 export const ROUTE_TITLES: Record<string, string> = {
@@ -42,6 +49,12 @@ export const ROUTE_TITLES: Record<string, string> = {
   [ROUTES.inventory]: "Inventory Management",
   [ROUTES.purchaseRequisition]: "Purchase Requisitions",
   [ROUTES.settings]: "Settings",
+  [ROUTES.employees]: "Employee Records",
+  [ROUTES.clockInOut]: "Clock In / Out",
+  [ROUTES.timesheetSummary]: "Timesheet Summary",
+  [ROUTES.vehicleMaster]: "Vehicle / Asset Master",
+  [ROUTES.gpsDashboard]: "GPS Tracking Dashboard",
+  [ROUTES.tripHistory]: "Trip History",
 };
 
 const LEAD_WORKFLOW_TITLES: Record<string, string> = {
@@ -63,6 +76,9 @@ const INVENTORY_TAB_TITLES: Record<string, string> = {
 export function getPageTitle(pathname: string, search = ""): string {
   if (/^\/leads\/[^/]+$/.test(pathname)) {
     return "Lead Detail";
+  }
+  if (/^\/transportation\/vehicles\/[^/]+$/.test(pathname)) {
+    return "Vehicle Details";
   }
   if (pathname === ROUTES.leads) {
     const step = new URLSearchParams(search).get("step");

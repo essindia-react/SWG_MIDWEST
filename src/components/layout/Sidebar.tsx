@@ -23,6 +23,8 @@ import {
   ChevronRight,
   ChevronDown,
   Smartphone,
+  UsersRound,
+  Truck,
 } from "lucide-react";
 import { INVENTORY_TABS } from "../../features/inventory/constants/inventoryConstants";
 import { LEAD_WORKFLOW_SECTIONS } from "../../features/leads/constants/leadWorkflowSections";
@@ -33,6 +35,8 @@ const navItems = [
   { to: ROUTES.leads, label: "Leads", icon: Users, hasWorkflowMenu: true },
   { to: ROUTES.pipeline, label: "Pipeline", icon: GitBranch },
   { to: ROUTES.projects, label: "Project Management", icon: FolderKanban },
+  { to: ROUTES.employees, label: "HR & People", icon: UsersRound, hasHRMenu: true },
+  { to: ROUTES.vehicleMaster, label: "Transportation", icon: Truck, hasTransportationMenu: true },
   { to: ROUTES.fieldOperations, label: "Field Operations", icon: HardHat },
   { to: ROUTES.tasks, label: "Task Management", icon: CheckSquare },
   { to: ROUTES.calendar, label: "Calendar", icon: Calendar },
@@ -205,6 +209,110 @@ function LeadWorkflowSubMenu({
   );
 }
 
+function HRSubMenu({
+  isVisible,
+  isOpen,
+  onItemSelect,
+  pathname,
+}: {
+  isVisible: boolean;
+  isOpen: boolean;
+  onItemSelect: () => void;
+  pathname: string;
+}) {
+  const items = [
+    { to: ROUTES.employees, label: "Employee Records" },
+    { to: ROUTES.clockInOut, label: "Clock In / Out" },
+    { to: ROUTES.timesheetSummary, label: "Timesheet Summary" },
+  ];
+
+  return (
+    <div
+      className="grid transition-[grid-template-rows] duration-200 ease-out"
+      style={{ gridTemplateRows: isVisible ? "1fr" : "0fr" }}
+    >
+      <div className="min-h-0 overflow-hidden">
+        <div className="ml-1 pr-1">
+          <div className="flex flex-col gap-1 ml-5">
+            {items.map((item) => {
+              const isActive = pathname === item.to;
+
+              return (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  onClick={onItemSelect}
+                  className="flex items-center no-underline rounded-lg px-3 py-1.5 transition-colors hover:bg-white/8"
+                  style={{
+                    color: isActive ? "#ffffff" : "rgba(255,255,255,0.55)",
+                    opacity: isActive ? 1 : 0.88,
+                  }}
+                >
+                  <SubLabel isOpen={isOpen} isActive={isActive}>
+                    {item.label}
+                  </SubLabel>
+                </NavLink>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TransportationSubMenu({
+  isVisible,
+  isOpen,
+  onItemSelect,
+  pathname,
+}: {
+  isVisible: boolean;
+  isOpen: boolean;
+  onItemSelect: () => void;
+  pathname: string;
+}) {
+  const items = [
+    { to: ROUTES.vehicleMaster, label: "Vehicle Master" },
+    { to: ROUTES.gpsDashboard, label: "GPS Dashboard" },
+    { to: ROUTES.tripHistory, label: "Trip History" },
+  ];
+
+  return (
+    <div
+      className="grid transition-[grid-template-rows] duration-200 ease-out"
+      style={{ gridTemplateRows: isVisible ? "1fr" : "0fr" }}
+    >
+      <div className="min-h-0 overflow-hidden">
+        <div className="ml-1 pr-1">
+          <div className="flex flex-col gap-1 ml-5">
+            {items.map((item) => {
+              const isActive = pathname === item.to;
+
+              return (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  onClick={onItemSelect}
+                  className="flex items-center no-underline rounded-lg px-3 py-1.5 transition-colors hover:bg-white/8"
+                  style={{
+                    color: isActive ? "#ffffff" : "rgba(255,255,255,0.55)",
+                    opacity: isActive ? 1 : 0.88,
+                  }}
+                >
+                  <SubLabel isOpen={isOpen} isActive={isActive}>
+                    {item.label}
+                  </SubLabel>
+                </NavLink>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function Sidebar() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -215,8 +323,14 @@ export function Sidebar() {
   const [leadsSubmenuVisible, setLeadsSubmenuVisible] = useState(false);
   const [inventoryExpanded, setInventoryExpanded] = useState(true);
   const [inventorySubmenuVisible, setInventorySubmenuVisible] = useState(false);
+  const [hrExpanded, setHrExpanded] = useState(true);
+  const [hrSubmenuVisible, setHrSubmenuVisible] = useState(false);
+  const [transportationExpanded, setTransportationExpanded] = useState(true);
+  const [transportationSubmenuVisible, setTransportationSubmenuVisible] = useState(false);
   const submenuTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inventorySubmenuTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hrSubmenuTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const transportationSubmenuTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isLeadsPage = location.pathname === ROUTES.leads;
   const isLeadsSection =
@@ -226,6 +340,18 @@ export function Sidebar() {
   const isInventoryPage = location.pathname === ROUTES.inventory;
   const isInventorySection = isInventoryPage;
   const activeInventoryTab = new URLSearchParams(location.search).get("tab") ?? "master";
+
+  const isHRSection =
+    location.pathname.startsWith("/hr") ||
+    location.pathname === ROUTES.employees ||
+    location.pathname === ROUTES.clockInOut ||
+    location.pathname === ROUTES.timesheetSummary;
+
+  const isTransportationSection =
+    location.pathname.startsWith("/transportation") ||
+    location.pathname === ROUTES.vehicleMaster ||
+    location.pathname === ROUTES.gpsDashboard ||
+    location.pathname === ROUTES.tripHistory;
 
   useEffect(() => {
     if (isMobile) setCollapsed(true);
@@ -240,9 +366,19 @@ export function Sidebar() {
   }, [isInventorySection]);
 
   useEffect(() => {
+    if (isHRSection) setHrExpanded(true);
+  }, [isHRSection]);
+
+  useEffect(() => {
+    if (isTransportationSection) setTransportationExpanded(true);
+  }, [isTransportationSection]);
+
+  useEffect(() => {
     return () => {
       if (submenuTimerRef.current) clearTimeout(submenuTimerRef.current);
       if (inventorySubmenuTimerRef.current) clearTimeout(inventorySubmenuTimerRef.current);
+      if (hrSubmenuTimerRef.current) clearTimeout(hrSubmenuTimerRef.current);
+      if (transportationSubmenuTimerRef.current) clearTimeout(transportationSubmenuTimerRef.current);
     };
   }, []);
 
@@ -252,6 +388,10 @@ export function Sidebar() {
     isOpen && ((isLeadsSection && leadsExpanded) || leadsSubmenuVisible);
   const showInventorySubmenu =
     isOpen && ((isInventorySection && inventoryExpanded) || inventorySubmenuVisible);
+  const showHRSubmenu =
+    isOpen && ((isHRSection && hrExpanded) || hrSubmenuVisible);
+  const showTransportationSubmenu =
+    isOpen && ((isTransportationSection && transportationExpanded) || transportationSubmenuVisible);
 
   const clearSubmenuTimer = () => {
     if (submenuTimerRef.current) {
@@ -297,6 +437,50 @@ export function Sidebar() {
     }
   };
 
+  const clearHRSubmenuTimer = () => {
+    if (hrSubmenuTimerRef.current) {
+      clearTimeout(hrSubmenuTimerRef.current);
+      hrSubmenuTimerRef.current = null;
+    }
+  };
+
+  const scheduleHRSubmenuOpen = (wasCollapsed: boolean) => {
+    clearHRSubmenuTimer();
+    const delay = wasCollapsed ? SIDEBAR_EXPAND_MS : SUBMENU_OPEN_DELAY_MS;
+    hrSubmenuTimerRef.current = setTimeout(() => {
+      setHrSubmenuVisible(true);
+    }, delay);
+  };
+
+  const resetHRSubmenu = () => {
+    clearHRSubmenuTimer();
+    if (!isHRSection) {
+      setHrSubmenuVisible(false);
+    }
+  };
+
+  const clearTransportationSubmenuTimer = () => {
+    if (transportationSubmenuTimerRef.current) {
+      clearTimeout(transportationSubmenuTimerRef.current);
+      transportationSubmenuTimerRef.current = null;
+    }
+  };
+
+  const scheduleTransportationSubmenuOpen = (wasCollapsed: boolean) => {
+    clearTransportationSubmenuTimer();
+    const delay = wasCollapsed ? SIDEBAR_EXPAND_MS : SUBMENU_OPEN_DELAY_MS;
+    transportationSubmenuTimerRef.current = setTimeout(() => {
+      setTransportationSubmenuVisible(true);
+    }, delay);
+  };
+
+  const resetTransportationSubmenu = () => {
+    clearTransportationSubmenuTimer();
+    if (!isTransportationSection) {
+      setTransportationSubmenuVisible(false);
+    }
+  };
+
   const handleSidebarMouseEnter = () => {
     if (!isMobile && hoverExpandEnabled) {
       setCollapsed(false);
@@ -308,6 +492,8 @@ export function Sidebar() {
     setCollapsed(true);
     resetLeadsSubmenu();
     resetInventorySubmenu();
+    resetHRSubmenu();
+    resetTransportationSubmenu();
   };
 
   const handleNavSelect = () => {
@@ -315,6 +501,8 @@ export function Sidebar() {
     setHoverExpandEnabled(false);
     resetLeadsSubmenu();
     resetInventorySubmenu();
+    resetHRSubmenu();
+    resetTransportationSubmenu();
   };
 
   const handleLeadsMouseEnter = () => {
@@ -359,6 +547,48 @@ export function Sidebar() {
     handleNavSelect();
   };
 
+  const handleHRMouseEnter = () => {
+    const wasCollapsed = collapsed;
+    if (!isMobile && hoverExpandEnabled) {
+      setCollapsed(false);
+    }
+    scheduleHRSubmenuOpen(wasCollapsed);
+  };
+
+  const handleHRMouseLeave = () => {
+    resetHRSubmenu();
+  };
+
+  const handleHRClick = (e: MouseEvent) => {
+    if (isHRSection) {
+      e.preventDefault();
+      setHrExpanded((value) => !value);
+      return;
+    }
+    handleNavSelect();
+  };
+
+  const handleTransportationMouseEnter = () => {
+    const wasCollapsed = collapsed;
+    if (!isMobile && hoverExpandEnabled) {
+      setCollapsed(false);
+    }
+    scheduleTransportationSubmenuOpen(wasCollapsed);
+  };
+
+  const handleTransportationMouseLeave = () => {
+    resetTransportationSubmenu();
+  };
+
+  const handleTransportationClick = (e: MouseEvent) => {
+    if (isTransportationSection) {
+      e.preventDefault();
+      setTransportationExpanded((value) => !value);
+      return;
+    }
+    handleNavSelect();
+  };
+
   // Chevron element — fades + scales in with the text
   const ChevronLabel = ({
     showDown,
@@ -385,6 +615,78 @@ export function Sidebar() {
 
   const renderNavItem = (item: (typeof navItems)[number]) => {
     const Icon = item.icon;
+
+    if ("hasTransportationMenu" in item && item.hasTransportationMenu) {
+      return (
+        <div
+          key={item.to}
+          onMouseEnter={handleTransportationMouseEnter}
+          onMouseLeave={handleTransportationMouseLeave}
+        >
+          <NavLink
+            to={ROUTES.vehicleMaster}
+            onClick={handleTransportationClick}
+            className={`w-full flex items-center gap-3 rounded-lg transition-all group no-underline px-3 py-2.5 ${
+              isTransportationSection ? "" : "hover:bg-white/8"
+            }`}
+            style={{
+              backgroundColor: isTransportationSection ? "rgba(255,255,255,0.15)" : "transparent",
+              color: isTransportationSection ? "#ffffff" : "rgba(255,255,255,0.65)",
+            }}
+            title={!isOpen ? item.label : undefined}
+          >
+            <Icon className="w-4 h-4 flex-shrink-0" />
+            <NavLabel isOpen={isOpen} isActive={isTransportationSection}>
+              {item.label}
+            </NavLabel>
+            <ChevronLabel showDown={showTransportationSubmenu} isActive={isTransportationSection} />
+          </NavLink>
+
+          <TransportationSubMenu
+            isVisible={showTransportationSubmenu}
+            isOpen={isOpen}
+            onItemSelect={handleNavSelect}
+            pathname={location.pathname}
+          />
+        </div>
+      );
+    }
+
+    if ("hasHRMenu" in item && item.hasHRMenu) {
+      return (
+        <div
+          key={item.to}
+          onMouseEnter={handleHRMouseEnter}
+          onMouseLeave={handleHRMouseLeave}
+        >
+          <NavLink
+            to={ROUTES.employees}
+            onClick={handleHRClick}
+            className={`w-full flex items-center gap-3 rounded-lg transition-all group no-underline px-3 py-2.5 ${
+              isHRSection ? "" : "hover:bg-white/8"
+            }`}
+            style={{
+              backgroundColor: isHRSection ? "rgba(255,255,255,0.15)" : "transparent",
+              color: isHRSection ? "#ffffff" : "rgba(255,255,255,0.65)",
+            }}
+            title={!isOpen ? item.label : undefined}
+          >
+            <Icon className="w-4 h-4 flex-shrink-0" />
+            <NavLabel isOpen={isOpen} isActive={isHRSection}>
+              {item.label}
+            </NavLabel>
+            <ChevronLabel showDown={showHRSubmenu} isActive={isHRSection} />
+          </NavLink>
+
+          <HRSubMenu
+            isVisible={showHRSubmenu}
+            isOpen={isOpen}
+            onItemSelect={handleNavSelect}
+            pathname={location.pathname}
+          />
+        </div>
+      );
+    }
 
     if ("hasInventoryMenu" in item && item.hasInventoryMenu) {
       return (

@@ -21,6 +21,13 @@ import { SettingsPage } from "../pages/settings/SettingsPage";
 import { TasksPage } from "../pages/tasks/TasksPage";
 import { TasksMobilePage } from "../pages/tasks/TasksMobilePage";
 import { MobileTaskManagementPage } from "../pages/tasks/MobileTaskManagementPage";
+import { EmployeeRecordsPage } from "../pages/hr/EmployeeRecordsPage";
+import { ClockInOutPage } from "../pages/hr/ClockInOutPage";
+import { TimesheetSummaryPage } from "../pages/hr/TimesheetSummaryPage";
+import { VehicleMasterPage } from "../pages/transportation/VehicleMasterPage";
+import { GPSDashboardPage } from "../pages/transportation/GPSDashboardPage";
+import { TripHistoryPage } from "../pages/transportation/TripHistoryPage";
+import { VehicleDetailPage } from "../pages/transportation/VehicleDetailPage";
 import { ROUTES } from "./paths";
 
 export function AppRoutes() {
@@ -47,6 +54,13 @@ export function AppRoutes() {
         <Route path={ROUTES.siteMaterialRequest} element={<SiteMaterialRequestPage />} />
         <Route path={ROUTES.inventory} element={<InventoryPage />} />
         <Route path={ROUTES.purchaseRequisition} element={<PurchaseRequisitionPage />} />
+        <Route path={ROUTES.employees} element={<EmployeeRecordsPage />} />
+        <Route path={ROUTES.clockInOut} element={<ClockInOutPage />} />
+        <Route path={ROUTES.timesheetSummary} element={<TimesheetSummaryPage />} />
+        <Route path={ROUTES.vehicleMaster} element={<VehicleMasterPage />} />
+        <Route path={ROUTES.gpsDashboard} element={<GPSDashboardPage />} />
+        <Route path={ROUTES.tripHistory} element={<TripHistoryPage />} />
+        <Route path="/transportation/vehicles/:id" element={<VehicleDetailPage />} />
         <Route path={ROUTES.settings} element={<SettingsPage />} />
         <Route path="*" element={<Navigate to={ROUTES.dashboard} replace />} />
       </Route>
