@@ -2,6 +2,10 @@ import React, { useCallback, useEffect, useState } from "react";
 import {
   Box,
   Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   IconButton,
   ThemeProvider,
   Typography,
@@ -10,6 +14,7 @@ import {
   ArrowLeft,
   ArrowRight,
   CheckCircle,
+  Clock,
   X,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -206,7 +211,7 @@ function toWorkflowData(
     estimationCustomerName: values.estimationCustomerName || customerName,
     areaName: values.estimationAreas[0]?.areaName || values.areaName || undefined,
     siteVisitImages: values.siteVisitImages.length ? values.siteVisitImages : undefined,
-    designImage: values.designImage,
+    designImages: values.designImages.length ? values.designImages : undefined,
     estimationAreas: values.estimationAreas,
     estimationProducts: values.estimationProducts,
     estimationOverheads: values.estimationOverheads,
@@ -264,6 +269,7 @@ export function LeadWorkspace({ onBack, leadId }: LeadWorkspaceProps) {
   const { addNotification } = useNotifications();
   const { addEventFromLead } = useCalendarEvents();
   const [activeStep, setActiveStep] = useState(0);
+  const [followUpOpen, setFollowUpOpen] = useState(false);
   const [form, setForm] = useState<WorkspaceFormValues>(() => {
     if (editingLead) return leadToWorkspaceForm(editingLead);
     return { ...EMPTY_WORKSPACE_FORM, leadNo: generateLeadNumber() };
@@ -391,8 +397,6 @@ export function LeadWorkspace({ onBack, leadId }: LeadWorkspaceProps) {
         return <EstimationStep values={form} onChange={handleChange} />;
       case 5:
         return <ProposalStep values={form} leadNumber={form.leadNo} onChange={handleChange} />;
-      case 6:
-        return <FollowUpStep values={form} onChange={handleChange} />;
       case 7:
         return <DocumentsStep values={form} onChange={handleChange} />;
       default:
@@ -422,6 +426,17 @@ export function LeadWorkspace({ onBack, leadId }: LeadWorkspaceProps) {
             <Typography variant="h6" sx={{ fontWeight: 700, fontSize: "1.125rem" }}>
               {headerTitle}
             </Typography>
+            {(activeStep > 0 || isEditing) && (
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<Clock size={16} />}
+                onClick={() => setFollowUpOpen(true)}
+                sx={{ ml: 1, fontWeight: 600, textTransform: "none" }}
+              >
+                Follow Up
+              </Button>
+            )}
           </Box>
           <IconButton onClick={onBack} size="small">
             <X size={20} />
@@ -492,6 +507,45 @@ export function LeadWorkspace({ onBack, leadId }: LeadWorkspaceProps) {
             </Box>
           </Box>
         </Box>
+
+        <Dialog
+          open={followUpOpen}
+          onClose={() => setFollowUpOpen(false)}
+          maxWidth="md"
+          fullWidth
+          scroll="paper"
+        >
+          <DialogTitle
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              fontWeight: 700,
+            }}
+          >
+            Follow Up — {headerTitle}
+            <IconButton onClick={() => setFollowUpOpen(false)} size="small" aria-label="Close">
+              <X size={18} />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent dividers sx={{ p: 3 }}>
+            <FollowUpStep values={form} onChange={handleChange} />
+          </DialogContent>
+          <DialogActions sx={{ px: 3, py: 2 }}>
+            <Button variant="outlined" color="inherit" onClick={() => setFollowUpOpen(false)}>
+              Close
+            </Button>
+            <Button
+              variant="contained"
+              onClick={() => {
+                persistLead(false);
+                setFollowUpOpen(false);
+              }}
+            >
+              Save
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Box>
     </ThemeProvider>
   );

@@ -68,7 +68,8 @@ const LEAD_WORKFLOW_TITLES: Record<string, string> = {
 const INVENTORY_TAB_TITLES: Record<string, string> = {
   master: "Products",
   "stock-ledger": "Stock Ledger",
-  "material-requests": "Material Requests",
+  "purchase-requisition": "Purchase Requisitions",
+  "purchase-order": "Purchase Orders",
   "product-swaps": "Product Swaps",
   reports: "Inventory Reports",
 };

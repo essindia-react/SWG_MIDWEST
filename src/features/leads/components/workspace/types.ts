@@ -79,7 +79,7 @@ export interface WorkspaceFormValues {
   designCreatedBy: string;
   designCreatedDate: string;
   designLastUpdated: string;
-  designImage?: LeadUploadedImage;
+  designImages: LeadUploadedImage[];
   // Estimation
   estimationNo: string;
   estimationDate: string;
@@ -170,6 +170,7 @@ export const EMPTY_WORKSPACE_FORM: WorkspaceFormValues = {
   designCreatedBy: "Carlos Ruiz",
   designCreatedDate: "2026-06-02",
   designLastUpdated: "2026-06-02 14:30",
+  designImages: [],
   estimationNo: "EST-5510",
   estimationDate: new Date().toISOString().slice(0, 10),
   estimationCustomerName: "",

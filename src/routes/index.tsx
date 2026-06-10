@@ -16,7 +16,6 @@ import { ProjectsPage } from "../pages/projects/ProjectsPage";
 import { InvoicingPage } from "../pages/invoicing/InvoicingPage";
 import { QuotesPage } from "../pages/quotes/QuotesPage";
 import { InventoryPage } from "../pages/inventory/InventoryPage";
-import { PurchaseRequisitionPage } from "../pages/purchase-requisition/PurchaseRequisitionPage";
 import { SettingsPage } from "../pages/settings/SettingsPage";
 import { TasksPage } from "../pages/tasks/TasksPage";
 import { TasksMobilePage } from "../pages/tasks/TasksMobilePage";
@@ -53,7 +52,10 @@ export function AppRoutes() {
         <Route path={ROUTES.mobile} element={<MobilePage />} />
         <Route path={ROUTES.siteMaterialRequest} element={<SiteMaterialRequestPage />} />
         <Route path={ROUTES.inventory} element={<InventoryPage />} />
-        <Route path={ROUTES.purchaseRequisition} element={<PurchaseRequisitionPage />} />
+        <Route
+          path={ROUTES.purchaseRequisition}
+          element={<Navigate to={ROUTES.inventoryTab("purchase-requisition")} replace />}
+        />
         <Route path={ROUTES.employees} element={<EmployeeRecordsPage />} />
         <Route path={ROUTES.clockInOut} element={<ClockInOutPage />} />
         <Route path={ROUTES.timesheetSummary} element={<TimesheetSummaryPage />} />

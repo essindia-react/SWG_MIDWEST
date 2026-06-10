@@ -15,6 +15,11 @@ import {
   formatProjectDate,
   getProjectStatusConfig,
 } from "../../../../lib/projectHelpers";
+import {
+  calculateBudgetSummary,
+  formatBudgetCurrency,
+  formatBudgetPercent,
+} from "../../../../lib/budgetHelpers";
 import { formatCurrency } from "../../../../lib/formatters";
 import {
   displayValue,
@@ -98,6 +103,8 @@ export function ProjectDetailsTab({ project, onEditProject }: ProjectDetailsTabP
   );
   const statusConfig = getProjectStatusConfig(project.status);
   const timeline = useMemo(() => buildProjectTimeline(project), [project]);
+  const budgetSummary = useMemo(() => calculateBudgetSummary(project), [project]);
+  const hasBudgetData = budgetSummary.totalEstimatedBudget > 0;
 
   const uploadedDocuments = useMemo(
     () => project.documents.filter((doc) => doc.uploaded),
@@ -229,6 +236,56 @@ export function ProjectDetailsTab({ project, onEditProject }: ProjectDetailsTabP
           </Box>
         </Box>
       )}
+
+      <Box>
+        <SectionHeader title="Budgeting" />
+        {hasBudgetData ? (
+          <Box sx={{ bgcolor: "grey.50", borderRadius: 2, px: 2.5, py: 0.5 }}>
+            <InfoRow
+              label="Materials Cost"
+              value={formatBudgetCurrency(budgetSummary.totalMaterialCost)}
+            />
+            <InfoRow
+              label="Labor Cost"
+              value={formatBudgetCurrency(budgetSummary.totalLaborCost)}
+            />
+            <InfoRow
+              label="Equipment Cost"
+              value={formatBudgetCurrency(budgetSummary.totalEquipmentCost)}
+            />
+            <InfoRow
+              label="Overhead Expenses"
+              value={formatBudgetCurrency(budgetSummary.totalOtherExpenses)}
+            />
+            <InfoRow
+              label="Total Estimated Budget"
+              value={formatBudgetCurrency(budgetSummary.totalEstimatedBudget)}
+            />
+            <InfoRow
+              label="Contract Value"
+              value={
+                budgetSummary.contractValue > 0
+                  ? formatBudgetCurrency(budgetSummary.contractValue)
+                  : SECTION_PLACEHOLDERS.project
+              }
+            />
+            <InfoRow
+              label="Estimated Gross Profit"
+              value={formatBudgetCurrency(budgetSummary.estimatedGrossProfit)}
+            />
+            <InfoRow
+              label="Estimated Profit Margin"
+              value={
+                budgetSummary.contractValue > 0
+                  ? formatBudgetPercent(budgetSummary.estimatedProfitMargin)
+                  : SECTION_PLACEHOLDERS.project
+              }
+            />
+          </Box>
+        ) : (
+          <PlaceholderText>{SECTION_PLACEHOLDERS.budget}</PlaceholderText>
+        )}
+      </Box>
 
       <Box>
         <SectionHeader title="Assigned Team" />

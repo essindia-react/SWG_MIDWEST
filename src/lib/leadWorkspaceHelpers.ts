@@ -52,6 +52,10 @@ export interface LeadProposalSummary {
   updatedAt?: string;
 }
 
+function getDesignImages(wd: LeadWorkflowData): LeadUploadedImage[] {
+  return wd.designImages ?? (wd.designImage ? [wd.designImage] : []);
+}
+
 function isWorkspaceStepComplete(stepIndex: number, lead: Lead): boolean {
   const wd = lead.workflowData ?? {};
 
@@ -67,8 +71,6 @@ function isWorkspaceStepComplete(stepIndex: number, lead: Lead): boolean {
     case 4:
       return Boolean(wd.proposalId || wd.proposalName);
     case 5:
-      return Boolean(lead.nextFollowUpDate);
-    case 6:
       return Boolean((wd.documents?.length ?? 0) > 0 || (wd.documentCount ?? 0) > 0);
     default:
       return false;
@@ -150,7 +152,8 @@ export function getLeadStageDetail(lead: Lead, stageIndex: number): LeadStageDet
         emptyMessage: "No site visit scheduled yet.",
       };
 
-    case 2:
+    case 2: {
+      const designImages = getDesignImages(wd);
       return {
         index: stageIndex,
         label: step.label,
@@ -160,10 +163,18 @@ export function getLeadStageDetail(lead: Lead, stageIndex: number): LeadStageDet
           { label: "Design Name", value: displayValue(wd.designName) },
           { label: "Design Status", value: displayValue(wd.designStatus, "Draft") },
           { label: "Created By", value: displayValue(wd.designCreatedBy, rep.name) },
-          { label: "Design Image", value: wd.designImage?.fileName ?? "—" },
+          {
+            label: "Design Images",
+            value: designImages.length ? `${designImages.length} uploaded` : "—",
+          },
         ],
+        listItems: designImages.map((img) => ({
+          primary: img.fileName,
+          secondary: img.uploadedAt ? formatDate(img.uploadedAt) : undefined,
+        })),
         emptyMessage: "No design created for this lead yet.",
       };
+    }
 
     case 3: {
       const areas = wd.estimationAreas ?? [];
@@ -220,21 +231,7 @@ export function getLeadStageDetail(lead: Lead, stageIndex: number): LeadStageDet
         emptyMessage: "No proposal created for this lead yet.",
       };
 
-    case 5:
-      return {
-        index: stageIndex,
-        label: step.label,
-        done,
-        fields: [
-          { label: "Customer", value: displayValue(wd.estimationCustomerName, customerName) },
-          { label: "Proposal Ref", value: displayValue(wd.proposalId) },
-          { label: "Next Follow-up", value: lead.nextFollowUpDate ? formatDate(lead.nextFollowUpDate) : "—" },
-          { label: "Assigned Rep", value: wd.assignedSalesRepName ?? rep.name },
-        ],
-        emptyMessage: "No follow-up scheduled yet.",
-      };
-
-    case 6: {
+    case 5: {
       const docs = wd.documents ?? [];
       return {
         index: stageIndex,
@@ -391,7 +388,7 @@ export function leadToWorkspaceForm(lead: Lead): WorkspaceFormValues {
     designName: wd.designName ?? "",
     designStatus: wd.designStatus ?? "Draft",
     designCreatedBy: wd.designCreatedBy ?? EMPTY_WORKSPACE_FORM.designCreatedBy,
-    designImage: wd.designImage,
+    designImages: getDesignImages(wd),
     estimationNo: wd.estimationNo ?? EMPTY_WORKSPACE_FORM.estimationNo,
     estimationDate: wd.estimationDate ?? new Date().toISOString().slice(0, 10),
     estimationCustomerName: wd.estimationCustomerName ?? customerName,
@@ -474,7 +471,7 @@ export function workspaceFormToLeadInput(
     designName: values.designName || undefined,
     designStatus: values.designStatus || undefined,
     designCreatedBy: values.designCreatedBy || undefined,
-    designImage: values.designImage,
+    designImages: values.designImages.length ? values.designImages : undefined,
     estimationNo: values.estimationNo || undefined,
     estimationDate: values.estimationDate || undefined,
     estimationCustomerName: values.estimationCustomerName || customerName,
@@ -487,6 +484,7 @@ export function workspaceFormToLeadInput(
     proposalName: values.proposalName || `Proposal - ${customerName}`,
     documents: values.uploadedDocuments.length ? values.uploadedDocuments : undefined,
     documentCount: values.uploadedDocuments.length || values.documentCount,
+    followUpActivities: existing?.workflowData?.followUpActivities,
   };
 
   return {

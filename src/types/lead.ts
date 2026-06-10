@@ -117,6 +117,15 @@ export interface LeadEstimationOverhead {
   unit: string;
 }
 
+export interface LeadFollowUpActivity {
+  id: string;
+  title: string;
+  description: string;
+  date: string;
+  proposalRef?: string;
+  statusUpdate?: string;
+}
+
 export interface LeadWorkflowData {
   visitDate?: string;
   visitTime?: string;
@@ -130,7 +139,9 @@ export interface LeadWorkflowData {
   designName?: string;
   designStatus?: string;
   designCreatedBy?: string;
+  /** @deprecated use designImages */
   designImage?: LeadUploadedImage;
+  designImages?: LeadUploadedImage[];
   estimationNo?: string;
   estimationDate?: string;
   estimationCustomerName?: string;
@@ -143,6 +154,7 @@ export interface LeadWorkflowData {
   proposalName?: string;
   documents?: LeadUploadedDocument[];
   documentCount?: number;
+  followUpActivities?: LeadFollowUpActivity[];
 }
 
 export interface Lead {

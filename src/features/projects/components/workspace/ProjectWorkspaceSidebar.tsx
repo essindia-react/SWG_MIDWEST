@@ -11,6 +11,8 @@ interface ProjectWorkspaceSidebarProps {
   onTabClick: (tabId: string) => void;
   onSaveSection: (tabId: string) => void;
   projectName: string;
+  disabledTabIds?: string[];
+  hideSaveButtons?: boolean;
 }
 
 export function ProjectWorkspaceSidebar({
@@ -19,6 +21,8 @@ export function ProjectWorkspaceSidebar({
   onTabClick,
   onSaveSection,
   projectName,
+  disabledTabIds = [],
+  hideSaveButtons = false,
 }: ProjectWorkspaceSidebarProps) {
   return (
     <Box
@@ -65,6 +69,7 @@ export function ProjectWorkspaceSidebar({
           const { tab } = item;
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
+          const isDisabled = disabledTabIds.includes(tab.id);
 
           return (
             <Box
@@ -75,16 +80,24 @@ export function ProjectWorkspaceSidebar({
                 gap: 0.5,
                 borderRadius: 2,
                 bgcolor: isActive ? "rgba(46, 125, 50, 0.1)" : "transparent",
+                opacity: isDisabled ? 0.45 : 1,
                 transition: "all 0.2s",
                 "&:hover": {
-                  bgcolor: isActive ? "rgba(46, 125, 50, 0.12)" : "action.hover",
+                  bgcolor: isDisabled
+                    ? "transparent"
+                    : isActive
+                      ? "rgba(46, 125, 50, 0.12)"
+                      : "action.hover",
                 },
               }}
             >
               <Box
                 component="button"
                 type="button"
-                onClick={() => onTabClick(tab.id)}
+                disabled={isDisabled}
+                onClick={() => {
+                  if (!isDisabled) onTabClick(tab.id);
+                }}
                 sx={{
                   flex: 1,
                   display: "flex",
@@ -93,7 +106,7 @@ export function ProjectWorkspaceSidebar({
                   px: 2,
                   py: 1.5,
                   border: "none",
-                  cursor: "pointer",
+                  cursor: isDisabled ? "not-allowed" : "pointer",
                   textAlign: "left",
                   bgcolor: "transparent",
                   color: isActive ? BRAND_GREEN : "text.secondary",
@@ -111,22 +124,24 @@ export function ProjectWorkspaceSidebar({
                   {tab.label}
                 </Typography>
               </Box>
-              <IconButton
-                size="small"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onSaveSection(tab.id);
-                }}
-                aria-label={`Save ${tab.label}`}
-                title={`Save ${tab.label}`}
-                sx={{
-                  mr: 0.5,
-                  color: isActive ? BRAND_GREEN : "text.secondary",
-                  "&:hover": { bgcolor: "rgba(46, 125, 50, 0.12)" },
-                }}
-              >
-                <Save size={14} />
-              </IconButton>
+              {!isDisabled && !hideSaveButtons && (
+                <IconButton
+                  size="small"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSaveSection(tab.id);
+                  }}
+                  aria-label={`Save ${tab.label}`}
+                  title={`Save ${tab.label}`}
+                  sx={{
+                    mr: 0.5,
+                    color: isActive ? BRAND_GREEN : "text.secondary",
+                    "&:hover": { bgcolor: "rgba(46, 125, 50, 0.12)" },
+                  }}
+                >
+                  <Save size={14} />
+                </IconButton>
+              )}
             </Box>
           );
         })}

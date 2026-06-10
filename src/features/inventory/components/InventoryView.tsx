@@ -1,8 +1,9 @@
 import React from "react";
 import { Box } from "@mui/material";
 import { useSearchParams } from "react-router";
+import { PurchaseOrderListView } from "../../purchase-requisition/components/PurchaseOrderListView";
+import { PurchaseRequisitionView } from "../../purchase-requisition/components/PurchaseRequisitionView";
 import type { InventoryTabId } from "../constants/inventoryConstants";
-import { MaterialRequestsTab } from "./material-requests/MaterialRequestsTab";
 import { ProductsTab } from "./products/ProductsTab";
 import { ProductSwapsTab } from "./product-swaps/ProductSwapsTab";
 import { InventoryReportsTab } from "./reports/InventoryReportsTab";
@@ -11,7 +12,8 @@ import { StockLedgerTab } from "./stock-ledger/StockLedgerTab";
 const VALID_TABS: InventoryTabId[] = [
   "master",
   "stock-ledger",
-  "material-requests",
+  "purchase-requisition",
+  "purchase-order",
   "product-swaps",
   "reports",
 ];
@@ -33,8 +35,10 @@ export function InventoryView() {
         return <ProductsTab />;
       case "stock-ledger":
         return <StockLedgerTab />;
-      case "material-requests":
-        return <MaterialRequestsTab />;
+      case "purchase-requisition":
+        return <PurchaseRequisitionView />;
+      case "purchase-order":
+        return <PurchaseOrderListView />;
       case "product-swaps":
         return <ProductSwapsTab />;
       case "reports":

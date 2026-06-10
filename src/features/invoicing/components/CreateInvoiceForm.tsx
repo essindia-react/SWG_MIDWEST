@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { useInvoices } from "../../../hooks/useInvoices";
 import {
   buildLineItems,
+  calculateDueDate,
   formatInvoiceCurrency,
   formatInvoiceDate,
   getAmountPreviouslyPaid,
@@ -52,7 +53,7 @@ export function CreateInvoiceForm({
   onSaved,
   onSent,
 }: CreateInvoiceFormProps) {
-  const { invoices, createInvoice, updateInvoiceStatus } = useInvoices();
+  const { invoices, createInvoice, updateInvoice, updateInvoiceStatus } = useInvoices();
 
   const [taxPercent, setTaxPercent] = useState(String(invoice?.taxPercent ?? DEFAULT_TAX_PERCENT));
   const [paymentTerms, setPaymentTerms] = useState<PaymentTerm>(invoice?.paymentTerms ?? "Net 15");
@@ -93,15 +94,58 @@ export function CreateInvoiceForm({
     completionRecord: { ...completionRecord, completionPct: 100 },
   });
 
+  const applyDraftUpdates = (draft: Invoice): Invoice => {
+    const input = buildInput();
+    const lineItems = buildLineItems(project, milestone);
+    const subtotal = lineItems.reduce((sum, li) => sum + li.amount, 0);
+    const tax = Math.round(subtotal * (input.taxPercent / 100) * 100) / 100;
+    const total = Math.round((subtotal + tax) * 100) / 100;
+    const previouslyPaid = getAmountPreviouslyPaid(
+      project.id,
+      milestone.id,
+      invoices.filter((inv) => inv.id !== draft.id)
+    );
+    const balance = Math.max(0, Math.round((total - previouslyPaid) * 100) / 100);
+
+    const updates = {
+      taxPercent: input.taxPercent,
+      paymentTerms: input.paymentTerms,
+      paymentMethods: input.paymentMethods,
+      notesToClient: input.notesToClient,
+      internalNotes: input.internalNotes,
+      completionRecord: input.completionRecord,
+      lineItems,
+      subtotal,
+      taxAmount: tax,
+      totalDue: total,
+      amountPreviouslyPaid: previouslyPaid,
+      balanceRemaining: balance,
+      dueDate: calculateDueDate(draft.invoiceDate, input.paymentTerms),
+    };
+
+    updateInvoice(draft.id, updates);
+    return { ...draft, ...updates };
+  };
+
   const handleSaveDraft = () => {
-    if (invoice?.status === "draft" || invoice?.status === "sent") {
+    const input = buildInput();
+
+    if (invoice?.status === "draft") {
+      const updated = applyDraftUpdates(invoice);
+      onSaved(updated);
+      onClose();
+      toast.success(`Invoice ${invoice.invoiceNumber} saved as draft`);
+      return;
+    }
+
+    if (invoice?.status === "sent") {
       onSaved(invoice);
       onClose();
       toast.success(`Invoice ${invoice.invoiceNumber} saved`);
       return;
     }
 
-    const created = createInvoice(buildInput());
+    const created = createInvoice(input);
     if (created) {
       onSaved(created);
       onClose();
@@ -115,6 +159,8 @@ export function CreateInvoiceForm({
     if (!target) {
       target = createInvoice(buildInput());
       if (!target) return;
+    } else if (target.status === "draft") {
+      target = applyDraftUpdates(target);
     }
 
     updateInvoiceStatus(target.id, "sent");

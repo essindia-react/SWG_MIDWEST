@@ -28,7 +28,12 @@ import {
   DollarSign,
   FileCheck,
   ChevronRight,
+  Clock,
 } from "lucide-react";
+import { LeadActivityTimeline } from "./LeadActivityTimeline";
+import { createFollowUpActivity } from "./LeadFollowUpForm";
+import { buildLeadInputWithFollowUp } from "../lib/leadActivityHelpers";
+import { toast } from "sonner";
 
 interface LeadDetailViewProps {
   leadId: string;
@@ -36,11 +41,12 @@ interface LeadDetailViewProps {
 
 export function LeadDetailView({ leadId }: LeadDetailViewProps) {
   const navigate = useNavigate();
-  const { getLeadById } = useLeads();
+  const { getLeadById, updateLead } = useLeads();
   const lead = getLeadById(leadId);
 
   const stageProgress = useMemo(() => (lead ? getLeadWorkspaceStepProgress(lead) : []), [lead]);
   const [selectedStageIndex, setSelectedStageIndex] = useState(0);
+  const [showFollowUp, setShowFollowUp] = useState(false);
 
   useEffect(() => {
     if (lead) {
@@ -79,6 +85,12 @@ export function LeadDetailView({ leadId }: LeadDetailViewProps) {
   const priorityConfig = PRIORITY_CONFIG[lead.priority];
   const tags = leadToTags(lead);
   const leadName = getLeadFullName(lead);
+
+  const handleAddFollowUp = (values: Parameters<typeof createFollowUpActivity>[0]) => {
+    const entry = createFollowUpActivity(values);
+    updateLead(leadId, buildLeadInputWithFollowUp(lead, entry, values.nextFollowUpDate || undefined));
+    toast.success("Follow-up added to timeline");
+  };
 
   return (
     <div className="flex h-full overflow-hidden">
@@ -203,10 +215,37 @@ export function LeadDetailView({ leadId }: LeadDetailViewProps) {
         </div>
       </div>
 
-      {/* Center Panel — Stage Details */}
+      {/* Center Panel — Stage Details / Follow Up Timeline */}
       <div className="flex-1 overflow-y-auto bg-emerald-50">
         <div className="mx-auto p-6">
-          {stageDetail && (
+          {showFollowUp ? (
+            <>
+              <div className="flex items-center justify-between mb-6 mx-3">
+                <div>
+                  <h3 className="text-foreground" style={{ fontSize: "16px", fontWeight: 600 }}>
+                    Activity Timeline
+                  </h3>
+                  <p style={{ fontSize: "12px", color: "var(--muted-foreground)", marginTop: "2px" }}>
+                    Follow-up history for {leadName}
+                    {lead.nextFollowUpDate ? ` · Next follow-up ${formatDate(lead.nextFollowUpDate)}` : ""}
+                  </p>
+                </div>
+                <span
+                  className="px-2.5 py-1 rounded-full"
+                  style={{
+                    backgroundColor: "var(--brand-light-green)",
+                    color: "var(--brand-green)",
+                    fontSize: "11px",
+                    fontWeight: 600,
+                  }}
+                >
+                  Follow Up
+                </span>
+              </div>
+              <LeadActivityTimeline lead={lead} onAddFollowUp={handleAddFollowUp} />
+            </>
+          ) : (
+            stageDetail && (
             <>
               <div className="flex items-center justify-between mb-6 mx-3">
                 <div>
@@ -325,6 +364,7 @@ export function LeadDetailView({ leadId }: LeadDetailViewProps) {
                 </div>
               )}
             </>
+            )
           )}
         </div>
       </div>
@@ -358,12 +398,15 @@ export function LeadDetailView({ leadId }: LeadDetailViewProps) {
           </p>
           <div className="space-y-1.5">
             {stageProgress.map((step) => {
-              const isSelected = selectedStageIndex === step.index;
+              const isSelected = !showFollowUp && selectedStageIndex === step.index;
               return (
                 <button
                   key={step.index}
                   type="button"
-                  onClick={() => setSelectedStageIndex(step.index)}
+                  onClick={() => {
+                    setShowFollowUp(false);
+                    setSelectedStageIndex(step.index);
+                  }}
                   className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg transition-colors text-left"
                   style={{
                     backgroundColor: isSelected ? "var(--brand-light-green)" : "transparent",
@@ -407,6 +450,24 @@ export function LeadDetailView({ leadId }: LeadDetailViewProps) {
               );
             })}
           </div>
+
+          <button
+            type="button"
+            onClick={() => setShowFollowUp(true)}
+            className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg transition-all hover:opacity-90 active:scale-[0.98]"
+            style={{
+              backgroundColor: showFollowUp ? "var(--brand-dark-green)" : "var(--brand-green)",
+              fontSize: "13px",
+              fontWeight: 600,
+              boxShadow: showFollowUp
+                ? "0 0 0 2px rgba(46, 125, 50, 0.3)"
+                : "0 2px 8px rgba(46, 125, 50, 0.25)",
+              color: "white",
+            }}
+          >
+            <Clock className="w-4 h-4" />
+            Follow Up
+          </button>
         </div>
       </div>
     </div>

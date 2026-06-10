@@ -1,3 +1,4 @@
+import React, { useState } from "react";
 import { Grid } from "@mui/material";
 import { WorkspaceSection } from "./WorkspaceSection";
 import { SelectField, TextFieldInput } from "./workspaceFields";
@@ -13,6 +14,31 @@ interface DesignStepProps {
 }
 
 export function DesignStep({ values, leadNumber, onChange }: DesignStepProps) {
+  const [emptySlots, setEmptySlots] = useState(
+    Math.max(1, values.designImages.length === 0 ? 1 : 0)
+  );
+
+  const totalSlots = values.designImages.length + emptySlots;
+
+  const handleUploadAt = (slotIndex: number, file: File) => {
+    const uploaded = fileToUploadedImage(file);
+    if (slotIndex < values.designImages.length) {
+      const next = [...values.designImages];
+      next[slotIndex] = uploaded;
+      onChange("designImages", next);
+    } else {
+      onChange("designImages", [...values.designImages, uploaded]);
+      setEmptySlots((n) => Math.max(1, n));
+    }
+  };
+
+  const handleRemoveAt = (slotIndex: number) => {
+    onChange(
+      "designImages",
+      values.designImages.filter((_, i) => i !== slotIndex)
+    );
+  };
+
   return (
     <>
       <WorkspaceSection title="Design Details">
@@ -41,16 +67,22 @@ export function DesignStep({ values, leadNumber, onChange }: DesignStepProps) {
         </Grid>
       </WorkspaceSection>
 
-      <WorkspaceSection title="Design Image">
-        <Grid container spacing={3}>
-          <Grid size={{ xs: 12, md: 6 }}>
-            <ImageUploadField
-              label="Upload Design Image"
-              image={values.designImage}
-              onUpload={(file) => onChange("designImage", fileToUploadedImage(file))}
-              onRemove={() => onChange("designImage", undefined)}
-            />
-          </Grid>
+      <WorkspaceSection title="Design Images">
+        <Grid container spacing={2}>
+          {Array.from({ length: totalSlots }).map((_, index) => (
+            <Grid key={`design-img-${index}`} size={{ xs: 12, md: 6, lg: 4 }}>
+              <ImageUploadField
+                label={`Design Image ${index + 1}`}
+                image={index < values.designImages.length ? values.designImages[index] : undefined}
+                onUpload={(file) => handleUploadAt(index, file)}
+                onRemove={
+                  index < values.designImages.length
+                    ? () => handleRemoveAt(index)
+                    : undefined
+                }
+              />
+            </Grid>
+          ))}
         </Grid>
       </WorkspaceSection>
     </>

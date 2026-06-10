@@ -1,6 +1,6 @@
 // sideNave 1
 import React from "react";
-import { useEffect, useRef, useState, type MouseEvent } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router";
 import {
   LayoutDashboard,
@@ -10,46 +10,46 @@ import {
   HardHat,
   CheckSquare,
   Calendar,
-  MessageSquare,
-  FileText,
   Receipt,
-  Zap,
-  BarChart3,
-  Settings,
   Package,
-  ShoppingCart,
   Warehouse,
   Leaf,
   ChevronRight,
-  ChevronDown,
-  Smartphone,
+  PanelLeft,
+  PanelLeftClose,
   UsersRound,
   Truck,
 } from "lucide-react";
 import { INVENTORY_TABS } from "../../features/inventory/constants/inventoryConstants";
-import { LEAD_WORKFLOW_SECTIONS } from "../../features/leads/constants/leadWorkflowSections";
 import { ROUTES } from "../../routes/paths";
 
 const navItems = [
   { to: ROUTES.dashboard, label: "Dashboard", icon: LayoutDashboard, end: true },
-  { to: ROUTES.leads, label: "Leads", icon: Users, hasWorkflowMenu: true },
+  { to: ROUTES.calendar, label: "Calendar", icon: Calendar },
+  { to: ROUTES.leads, label: "Leads", icon: Users },
   { to: ROUTES.pipeline, label: "Pipeline", icon: GitBranch },
-  { to: ROUTES.projects, label: "Project Management", icon: FolderKanban },
-  { to: ROUTES.employees, label: "HR & People", icon: UsersRound, hasHRMenu: true },
-  { to: ROUTES.vehicleMaster, label: "Transportation", icon: Truck, hasTransportationMenu: true },
   { to: ROUTES.fieldOperations, label: "Field Operations", icon: HardHat },
   { to: ROUTES.tasks, label: "Task Management", icon: CheckSquare },
-  { to: ROUTES.calendar, label: "Calendar", icon: Calendar },
+  { to: ROUTES.projects, label: "Project Management", icon: FolderKanban },
+  { to: ROUTES.employees, label: "HR & People", icon: UsersRound, hasHRMenu: true },
+  { to: ROUTES.siteMaterialRequest, label: "Site Material Request", icon: Package },
+  // { to: ROUTES.vehicleMaster, label: "Transportation", icon: Truck, hasTransportationMenu: true },
   { to: ROUTES.invoicing, label: "Invoicing", icon: Receipt },
   { to: ROUTES.inventory, label: "Inventory", icon: Warehouse, hasInventoryMenu: true },
-  { to: ROUTES.siteMaterialRequest, label: "Site Material Request", icon: Package },
-  { to: ROUTES.purchaseRequisition, label: "Purchase Requisition", icon: ShoppingCart },
 ];
 
 const EXPANDED_WIDTH = 240;
 const COLLAPSED_WIDTH = 72;
-const SIDEBAR_EXPAND_MS = 300;
 const SUBMENU_OPEN_DELAY_MS = 120;
+const SUBMENU_CLOSE_DELAY_MS = 150;
+
+type FlyoutId = "inventory" | "hr" | "transportation";
+
+type FlyoutItem = {
+  to: string;
+  label: string;
+  isActive: boolean;
+};
 
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(false);
@@ -65,10 +65,6 @@ function useIsMobile() {
   return isMobile;
 }
 
-/**
- * NavLabel — animates font-size from ~8px → target size and fades in when
- * the sidebar opens, so the text "grows in" rather than snapping.
- */
 function NavLabel({
   isOpen,
   isActive,
@@ -83,11 +79,9 @@ function NavLabel({
   return (
     <span
       style={{
-        // Clip so growing text never overflows during animation
         overflow: "hidden",
         whiteSpace: "nowrap",
         display: "block",
-        // Animate both font-size and opacity together
         fontSize: isOpen ? `${fontSize}px` : "8px",
         fontWeight: isActive ? 600 : 400,
         opacity: isOpen ? 1 : 0,
@@ -101,215 +95,149 @@ function NavLabel({
   );
 }
 
-function SubLabel({
-  isOpen,
-  isActive,
-  children,
-}: {
-  isOpen: boolean;
-  isActive: boolean;
-  children: React.ReactNode;
-}) {
-  return (
-    <NavLabel isOpen={isOpen} isActive={isActive} fontSize={13}>
-      {children}
-    </NavLabel>
-  );
-}
+const FLYOUT_VIEWPORT_MARGIN = 8;
 
-function InventorySubMenu({
-  activeTab,
-  isVisible,
-  isOpen,
+function FlyoutSubMenu({
+  visible,
+  title,
+  items,
+  anchorRef,
+  onMouseEnter,
+  onMouseLeave,
   onItemSelect,
 }: {
-  activeTab: string;
-  isVisible: boolean;
-  isOpen: boolean;
+  visible: boolean;
+  title: string;
+  items: FlyoutItem[];
+  anchorRef: RefObject<HTMLDivElement | null>;
+  onMouseEnter: () => void;
+  onMouseLeave: () => void;
   onItemSelect: () => void;
 }) {
+  const flyoutRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLDivElement>(null);
+  const [position, setPosition] = useState({ top: 0, left: 0 });
+  const [listMaxHeight, setListMaxHeight] = useState<number | undefined>(undefined);
+
+  useLayoutEffect(() => {
+    if (!visible || !anchorRef.current) return;
+
+    const updatePosition = () => {
+      const anchor = anchorRef.current;
+      const flyout = flyoutRef.current;
+      if (!anchor) return;
+
+      const rect = anchor.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      const maxPanelHeight = viewportHeight - FLYOUT_VIEWPORT_MARGIN * 2;
+      const headerHeight = headerRef.current?.offsetHeight ?? 42;
+
+      let top = rect.top;
+      let listMax: number | undefined;
+
+      if (flyout) {
+        const panelHeight = flyout.offsetHeight;
+
+        if (panelHeight > maxPanelHeight) {
+          top = FLYOUT_VIEWPORT_MARGIN;
+          listMax = Math.max(120, maxPanelHeight - headerHeight);
+        } else if (panelHeight > 0 && top + panelHeight > viewportHeight - FLYOUT_VIEWPORT_MARGIN) {
+          top = Math.max(FLYOUT_VIEWPORT_MARGIN, viewportHeight - panelHeight - FLYOUT_VIEWPORT_MARGIN);
+        }
+      }
+
+      setPosition({ top, left: rect.right });
+      setListMaxHeight(listMax);
+    };
+
+    updatePosition();
+    const raf = requestAnimationFrame(updatePosition);
+
+    const flyout = flyoutRef.current;
+    const resizeObserver =
+      flyout && typeof ResizeObserver !== "undefined"
+        ? new ResizeObserver(updatePosition)
+        : null;
+    if (flyout) resizeObserver?.observe(flyout);
+
+    window.addEventListener("scroll", updatePosition, true);
+    window.addEventListener("resize", updatePosition);
+    return () => {
+      cancelAnimationFrame(raf);
+      resizeObserver?.disconnect();
+      window.removeEventListener("scroll", updatePosition, true);
+      window.removeEventListener("resize", updatePosition);
+    };
+  }, [visible, anchorRef, items]);
+
+  if (!visible) return null;
+
   return (
     <div
-      className="grid transition-[grid-template-rows] duration-200 ease-out"
-      style={{ gridTemplateRows: isVisible ? "1fr" : "0fr" }}
+      ref={flyoutRef}
+      className="fixed z-50 min-w-[210px] rounded-lg overflow-hidden flex flex-col"
+      style={{
+        top: position.top,
+        left: position.left + 4,
+        maxHeight: `calc(100vh - ${FLYOUT_VIEWPORT_MARGIN * 2}px)`,
+        backgroundColor: "#256829",
+        border: "1px solid rgba(255,255,255,0.14)",
+        boxShadow:
+          "0 12px 40px rgba(0,0,0,0.38), 0 4px 12px rgba(0,0,0,0.22), 0 0 0 1px rgba(0,0,0,0.06)",
+      }}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
     >
-      <div className="min-h-0 overflow-hidden">
-        <div className="ml-1 pr-1">
-          <div className="flex flex-col gap-1 ml-5">
-            {INVENTORY_TABS.map((tab) => {
-              const isActive = activeTab === tab.id;
-
-              return (
-                <NavLink
-                  key={tab.id}
-                  to={ROUTES.inventoryTab(tab.id)}
-                  onClick={onItemSelect}
-                  className="flex items-center no-underline rounded-lg px-3 py-1.5 transition-colors hover:bg-white/8"
-                  style={{
-                    color: isActive ? "#ffffff" : "rgba(255,255,255,0.55)",
-                    opacity: isActive ? 1 : 0.88,
-                  }}
-                >
-                  <SubLabel isOpen={isOpen} isActive={isActive}>
-                    {tab.label}
-                  </SubLabel>
-                </NavLink>
-              );
-            })}
-          </div>
-        </div>
+      <div
+        ref={headerRef}
+        className="px-4 py-2.5 text-white font-semibold text-sm flex-shrink-0"
+        style={{
+          backgroundColor: "rgba(0,0,0,0.12)",
+          borderBottom: "1px solid rgba(255,255,255,0.1)",
+        }}
+      >
+        {title}
+      </div>
+      <div
+        className="flex flex-col py-1.5 overflow-y-auto [scrollbar-width:thin] [-ms-overflow-style:none] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-white/25"
+        style={listMaxHeight ? { maxHeight: listMaxHeight } : undefined}
+      >
+        {items.map((item) => (
+          <NavLink
+            key={item.to}
+            to={item.to}
+            onClick={onItemSelect}
+            className="flex items-center no-underline px-4 py-2 mx-1.5 rounded-md transition-colors hover:bg-white/12"
+            style={{
+              color: item.isActive ? "#ffffff" : "rgba(255,255,255,0.62)",
+              fontWeight: item.isActive ? 600 : 400,
+              fontSize: "13px",
+              backgroundColor: item.isActive ? "rgba(255,255,255,0.1)" : "transparent",
+            }}
+          >
+            {item.label}
+          </NavLink>
+        ))}
       </div>
     </div>
   );
 }
 
-function LeadWorkflowSubMenu({
-  activeStep,
-  isVisible,
-  isOpen,
-  onItemSelect,
-}: {
-  activeStep: string | null;
-  isVisible: boolean;
-  isOpen: boolean;
-  onItemSelect: () => void;
-}) {
-  return (
-    <div
-      className="grid transition-[grid-template-rows] duration-200 ease-out"
-      style={{ gridTemplateRows: isVisible ? "1fr" : "0fr" }}
-    >
-      <div className="min-h-0 overflow-hidden">
-        <div className="ml-1 pr-1">
-          <div className="flex flex-col gap-2 ml-5">
-            {LEAD_WORKFLOW_SECTIONS.map((section) => {
-              const isActive = activeStep === section.id;
-
-              return (
-                <NavLink
-                  key={section.id}
-                  to={`${ROUTES.leads}?step=${section.id}`}
-                  onClick={onItemSelect}
-                  className="flex items-center no-underline rounded-lg px-3 py-1.5 transition-colors hover:bg-white/8"
-                  style={{
-                    color: isActive ? "#ffffff" : "rgba(255,255,255,0.55)",
-                    opacity: isActive ? 1 : 0.88,
-                  }}
-                >
-                  <SubLabel isOpen={isOpen} isActive={isActive}>
-                    {section.label}
-                  </SubLabel>
-                </NavLink>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function HRSubMenu({
-  isVisible,
-  isOpen,
-  onItemSelect,
-  pathname,
-}: {
-  isVisible: boolean;
-  isOpen: boolean;
-  onItemSelect: () => void;
-  pathname: string;
-}) {
-  const items = [
-    { to: ROUTES.employees, label: "Employee Records" },
-    { to: ROUTES.clockInOut, label: "Clock In / Out" },
-    { to: ROUTES.timesheetSummary, label: "Timesheet Summary" },
-  ];
+function SubmenuChevron({ sidebarOpen, isHovered }: { sidebarOpen: boolean; isHovered?: boolean }) {
+  if (sidebarOpen) {
+    return (
+      <ChevronRight
+        className="w-3.5 h-3.5 flex-shrink-0 transition-opacity"
+        style={{ opacity: isHovered ? 0.85 : 0.45 }}
+      />
+    );
+  }
 
   return (
-    <div
-      className="grid transition-[grid-template-rows] duration-200 ease-out"
-      style={{ gridTemplateRows: isVisible ? "1fr" : "0fr" }}
-    >
-      <div className="min-h-0 overflow-hidden">
-        <div className="ml-1 pr-1">
-          <div className="flex flex-col gap-1 ml-5">
-            {items.map((item) => {
-              const isActive = pathname === item.to;
-
-              return (
-                <NavLink
-                  key={item.to}
-                  to={item.to}
-                  onClick={onItemSelect}
-                  className="flex items-center no-underline rounded-lg px-3 py-1.5 transition-colors hover:bg-white/8"
-                  style={{
-                    color: isActive ? "#ffffff" : "rgba(255,255,255,0.55)",
-                    opacity: isActive ? 1 : 0.88,
-                  }}
-                >
-                  <SubLabel isOpen={isOpen} isActive={isActive}>
-                    {item.label}
-                  </SubLabel>
-                </NavLink>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function TransportationSubMenu({
-  isVisible,
-  isOpen,
-  onItemSelect,
-  pathname,
-}: {
-  isVisible: boolean;
-  isOpen: boolean;
-  onItemSelect: () => void;
-  pathname: string;
-}) {
-  const items = [
-    { to: ROUTES.vehicleMaster, label: "Vehicle Master" },
-    { to: ROUTES.gpsDashboard, label: "GPS Dashboard" },
-    { to: ROUTES.tripHistory, label: "Trip History" },
-  ];
-
-  return (
-    <div
-      className="grid transition-[grid-template-rows] duration-200 ease-out"
-      style={{ gridTemplateRows: isVisible ? "1fr" : "0fr" }}
-    >
-      <div className="min-h-0 overflow-hidden">
-        <div className="ml-1 pr-1">
-          <div className="flex flex-col gap-1 ml-5">
-            {items.map((item) => {
-              const isActive = pathname === item.to;
-
-              return (
-                <NavLink
-                  key={item.to}
-                  to={item.to}
-                  onClick={onItemSelect}
-                  className="flex items-center no-underline rounded-lg px-3 py-1.5 transition-colors hover:bg-white/8"
-                  style={{
-                    color: isActive ? "#ffffff" : "rgba(255,255,255,0.55)",
-                    opacity: isActive ? 1 : 0.88,
-                  }}
-                >
-                  <SubLabel isOpen={isOpen} isActive={isActive}>
-                    {item.label}
-                  </SubLabel>
-                </NavLink>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-    </div>
+    <ChevronRight
+      className="absolute right-1 top-1/2 -translate-y-1/2 w-2.5 h-2.5 flex-shrink-0 pointer-events-none"
+      style={{ opacity: isHovered ? 0.9 : 0.55 }}
+    />
   );
 }
 
@@ -318,24 +246,13 @@ export function Sidebar() {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [collapsed, setCollapsed] = useState(true);
-  const [hoverExpandEnabled, setHoverExpandEnabled] = useState(true);
-  const [leadsExpanded, setLeadsExpanded] = useState(true);
-  const [leadsSubmenuVisible, setLeadsSubmenuVisible] = useState(false);
-  const [inventoryExpanded, setInventoryExpanded] = useState(true);
-  const [inventorySubmenuVisible, setInventorySubmenuVisible] = useState(false);
-  const [hrExpanded, setHrExpanded] = useState(true);
-  const [hrSubmenuVisible, setHrSubmenuVisible] = useState(false);
-  const [transportationExpanded, setTransportationExpanded] = useState(true);
-  const [transportationSubmenuVisible, setTransportationSubmenuVisible] = useState(false);
-  const submenuTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const inventorySubmenuTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const hrSubmenuTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const transportationSubmenuTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [openFlyout, setOpenFlyout] = useState<FlyoutId | null>(null);
+  const openFlyoutTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const closeFlyoutTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const isLeadsPage = location.pathname === ROUTES.leads;
-  const isLeadsSection =
-    isLeadsPage || /^\/leads\/[^/]+$/.test(location.pathname);
-  const activeStep = new URLSearchParams(location.search).get("step");
+  const inventoryAnchorRef = useRef<HTMLDivElement>(null);
+  const hrAnchorRef = useRef<HTMLDivElement>(null);
+  const transportationAnchorRef = useRef<HTMLDivElement>(null);
 
   const isInventoryPage = location.pathname === ROUTES.inventory;
   const isInventorySection = isInventoryPage;
@@ -358,245 +275,59 @@ export function Sidebar() {
   }, [isMobile]);
 
   useEffect(() => {
-    if (isLeadsSection) setLeadsExpanded(true);
-  }, [isLeadsSection]);
-
-  useEffect(() => {
-    if (isInventorySection) setInventoryExpanded(true);
-  }, [isInventorySection]);
-
-  useEffect(() => {
-    if (isHRSection) setHrExpanded(true);
-  }, [isHRSection]);
-
-  useEffect(() => {
-    if (isTransportationSection) setTransportationExpanded(true);
-  }, [isTransportationSection]);
-
-  useEffect(() => {
     return () => {
-      if (submenuTimerRef.current) clearTimeout(submenuTimerRef.current);
-      if (inventorySubmenuTimerRef.current) clearTimeout(inventorySubmenuTimerRef.current);
-      if (hrSubmenuTimerRef.current) clearTimeout(hrSubmenuTimerRef.current);
-      if (transportationSubmenuTimerRef.current) clearTimeout(transportationSubmenuTimerRef.current);
+      if (openFlyoutTimerRef.current) clearTimeout(openFlyoutTimerRef.current);
+      if (closeFlyoutTimerRef.current) clearTimeout(closeFlyoutTimerRef.current);
     };
   }, []);
 
   const isOpen = !collapsed;
   const sidebarWidth = isOpen ? EXPANDED_WIDTH : COLLAPSED_WIDTH;
-  const showLeadsSubmenu =
-    isOpen && ((isLeadsSection && leadsExpanded) || leadsSubmenuVisible);
-  const showInventorySubmenu =
-    isOpen && ((isInventorySection && inventoryExpanded) || inventorySubmenuVisible);
-  const showHRSubmenu =
-    isOpen && ((isHRSection && hrExpanded) || hrSubmenuVisible);
-  const showTransportationSubmenu =
-    isOpen && ((isTransportationSection && transportationExpanded) || transportationSubmenuVisible);
 
-  const clearSubmenuTimer = () => {
-    if (submenuTimerRef.current) {
-      clearTimeout(submenuTimerRef.current);
-      submenuTimerRef.current = null;
+  const clearFlyoutTimers = () => {
+    if (openFlyoutTimerRef.current) {
+      clearTimeout(openFlyoutTimerRef.current);
+      openFlyoutTimerRef.current = null;
+    }
+    if (closeFlyoutTimerRef.current) {
+      clearTimeout(closeFlyoutTimerRef.current);
+      closeFlyoutTimerRef.current = null;
     }
   };
 
-  const scheduleLeadsSubmenuOpen = (wasCollapsed: boolean) => {
-    clearSubmenuTimer();
-    const delay = wasCollapsed ? SIDEBAR_EXPAND_MS : SUBMENU_OPEN_DELAY_MS;
-    submenuTimerRef.current = setTimeout(() => {
-      setLeadsSubmenuVisible(true);
-    }, delay);
-  };
-
-  const resetLeadsSubmenu = () => {
-    clearSubmenuTimer();
-    if (!isLeadsSection) {
-      setLeadsSubmenuVisible(false);
+  const handleFlyoutEnter = (id: FlyoutId) => {
+    if (closeFlyoutTimerRef.current) {
+      clearTimeout(closeFlyoutTimerRef.current);
+      closeFlyoutTimerRef.current = null;
     }
+    openFlyoutTimerRef.current = setTimeout(() => {
+      setOpenFlyout(id);
+    }, SUBMENU_OPEN_DELAY_MS);
   };
 
-  const clearInventorySubmenuTimer = () => {
-    if (inventorySubmenuTimerRef.current) {
-      clearTimeout(inventorySubmenuTimerRef.current);
-      inventorySubmenuTimerRef.current = null;
+  const handleFlyoutLeave = () => {
+    if (openFlyoutTimerRef.current) {
+      clearTimeout(openFlyoutTimerRef.current);
+      openFlyoutTimerRef.current = null;
     }
-  };
-
-  const scheduleInventorySubmenuOpen = (wasCollapsed: boolean) => {
-    clearInventorySubmenuTimer();
-    const delay = wasCollapsed ? SIDEBAR_EXPAND_MS : SUBMENU_OPEN_DELAY_MS;
-    inventorySubmenuTimerRef.current = setTimeout(() => {
-      setInventorySubmenuVisible(true);
-    }, delay);
-  };
-
-  const resetInventorySubmenu = () => {
-    clearInventorySubmenuTimer();
-    if (!isInventorySection) {
-      setInventorySubmenuVisible(false);
-    }
-  };
-
-  const clearHRSubmenuTimer = () => {
-    if (hrSubmenuTimerRef.current) {
-      clearTimeout(hrSubmenuTimerRef.current);
-      hrSubmenuTimerRef.current = null;
-    }
-  };
-
-  const scheduleHRSubmenuOpen = (wasCollapsed: boolean) => {
-    clearHRSubmenuTimer();
-    const delay = wasCollapsed ? SIDEBAR_EXPAND_MS : SUBMENU_OPEN_DELAY_MS;
-    hrSubmenuTimerRef.current = setTimeout(() => {
-      setHrSubmenuVisible(true);
-    }, delay);
-  };
-
-  const resetHRSubmenu = () => {
-    clearHRSubmenuTimer();
-    if (!isHRSection) {
-      setHrSubmenuVisible(false);
-    }
-  };
-
-  const clearTransportationSubmenuTimer = () => {
-    if (transportationSubmenuTimerRef.current) {
-      clearTimeout(transportationSubmenuTimerRef.current);
-      transportationSubmenuTimerRef.current = null;
-    }
-  };
-
-  const scheduleTransportationSubmenuOpen = (wasCollapsed: boolean) => {
-    clearTransportationSubmenuTimer();
-    const delay = wasCollapsed ? SIDEBAR_EXPAND_MS : SUBMENU_OPEN_DELAY_MS;
-    transportationSubmenuTimerRef.current = setTimeout(() => {
-      setTransportationSubmenuVisible(true);
-    }, delay);
-  };
-
-  const resetTransportationSubmenu = () => {
-    clearTransportationSubmenuTimer();
-    if (!isTransportationSection) {
-      setTransportationSubmenuVisible(false);
-    }
-  };
-
-  const handleSidebarMouseEnter = () => {
-    if (!isMobile && hoverExpandEnabled) {
-      setCollapsed(false);
-    }
-  };
-
-  const handleSidebarMouseLeave = () => {
-    setHoverExpandEnabled(true);
-    setCollapsed(true);
-    resetLeadsSubmenu();
-    resetInventorySubmenu();
-    resetHRSubmenu();
-    resetTransportationSubmenu();
+    closeFlyoutTimerRef.current = setTimeout(() => {
+      setOpenFlyout(null);
+    }, SUBMENU_CLOSE_DELAY_MS);
   };
 
   const handleNavSelect = () => {
-    setCollapsed(true);
-    setHoverExpandEnabled(false);
-    resetLeadsSubmenu();
-    resetInventorySubmenu();
-    resetHRSubmenu();
-    resetTransportationSubmenu();
+    clearFlyoutTimers();
+    setOpenFlyout(null);
+    if (isMobile) setCollapsed(true);
   };
 
-  const handleLeadsMouseEnter = () => {
-    const wasCollapsed = collapsed;
-    if (!isMobile && hoverExpandEnabled) {
-      setCollapsed(false);
-    }
-    scheduleLeadsSubmenuOpen(wasCollapsed);
+  const toggleSidebar = () => {
+    setCollapsed((value) => !value);
+    clearFlyoutTimers();
+    setOpenFlyout(null);
   };
 
-  const handleLeadsMouseLeave = () => {
-    resetLeadsSubmenu();
-  };
-
-  const handleLeadsClick = (e: MouseEvent) => {
-    if (isLeadsPage && !activeStep) {
-      e.preventDefault();
-      setLeadsExpanded((value) => !value);
-      return;
-    }
-    handleNavSelect();
-  };
-
-  const handleInventoryMouseEnter = () => {
-    const wasCollapsed = collapsed;
-    if (!isMobile && hoverExpandEnabled) {
-      setCollapsed(false);
-    }
-    scheduleInventorySubmenuOpen(wasCollapsed);
-  };
-
-  const handleInventoryMouseLeave = () => {
-    resetInventorySubmenu();
-  };
-
-  const handleInventoryClick = (e: MouseEvent) => {
-    if (isInventoryPage) {
-      e.preventDefault();
-      setInventoryExpanded((value) => !value);
-      return;
-    }
-    handleNavSelect();
-  };
-
-  const handleHRMouseEnter = () => {
-    const wasCollapsed = collapsed;
-    if (!isMobile && hoverExpandEnabled) {
-      setCollapsed(false);
-    }
-    scheduleHRSubmenuOpen(wasCollapsed);
-  };
-
-  const handleHRMouseLeave = () => {
-    resetHRSubmenu();
-  };
-
-  const handleHRClick = (e: MouseEvent) => {
-    if (isHRSection) {
-      e.preventDefault();
-      setHrExpanded((value) => !value);
-      return;
-    }
-    handleNavSelect();
-  };
-
-  const handleTransportationMouseEnter = () => {
-    const wasCollapsed = collapsed;
-    if (!isMobile && hoverExpandEnabled) {
-      setCollapsed(false);
-    }
-    scheduleTransportationSubmenuOpen(wasCollapsed);
-  };
-
-  const handleTransportationMouseLeave = () => {
-    resetTransportationSubmenu();
-  };
-
-  const handleTransportationClick = (e: MouseEvent) => {
-    if (isTransportationSection) {
-      e.preventDefault();
-      setTransportationExpanded((value) => !value);
-      return;
-    }
-    handleNavSelect();
-  };
-
-  // Chevron element — fades + scales in with the text
-  const ChevronLabel = ({
-    showDown,
-    isActive,
-  }: {
-    showDown?: boolean;
-    isActive: boolean;
-  }) => (
+  const ChevronLabel = ({ isActive }: { isActive: boolean }) => (
     <span
       className="ml-auto flex items-center flex-shrink-0"
       style={{
@@ -605,13 +336,43 @@ export function Sidebar() {
         transition: "opacity 240ms ease, transform 260ms cubic-bezier(0.4,0,0.2,1)",
       }}
     >
-      {showDown ? (
-        <ChevronDown className="w-3.5 h-3.5" />
-      ) : (
-        <ChevronRight className="w-3.5 h-3.5" />
-      )}
+      <ChevronRight className="w-3.5 h-3.5" />
     </span>
   );
+
+  const inventoryFlyoutItems: FlyoutItem[] = INVENTORY_TABS.map((tab) => ({
+    to: ROUTES.inventoryTab(tab.id),
+    label: tab.label,
+    isActive: activeInventoryTab === tab.id,
+  }));
+
+  const hrFlyoutItems: FlyoutItem[] = [
+    { to: ROUTES.employees, label: "Employee Records", isActive: location.pathname === ROUTES.employees },
+    { to: ROUTES.clockInOut, label: "Clock In / Out", isActive: location.pathname === ROUTES.clockInOut },
+    {
+      to: ROUTES.timesheetSummary,
+      label: "Timesheet Summary",
+      isActive: location.pathname === ROUTES.timesheetSummary,
+    },
+  ];
+
+  const transportationFlyoutItems: FlyoutItem[] = [
+    {
+      to: ROUTES.vehicleMaster,
+      label: "Vehicle Master",
+      isActive: location.pathname === ROUTES.vehicleMaster,
+    },
+    {
+      to: ROUTES.gpsDashboard,
+      label: "GPS Dashboard",
+      isActive: location.pathname === ROUTES.gpsDashboard,
+    },
+    {
+      to: ROUTES.tripHistory,
+      label: "Trip History",
+      isActive: location.pathname === ROUTES.tripHistory,
+    },
+  ];
 
   const renderNavItem = (item: (typeof navItems)[number]) => {
     const Icon = item.icon;
@@ -620,33 +381,43 @@ export function Sidebar() {
       return (
         <div
           key={item.to}
-          onMouseEnter={handleTransportationMouseEnter}
-          onMouseLeave={handleTransportationMouseLeave}
+          ref={transportationAnchorRef}
+          onMouseEnter={() => handleFlyoutEnter("transportation")}
+          onMouseLeave={handleFlyoutLeave}
         >
           <NavLink
             to={ROUTES.vehicleMaster}
-            onClick={handleTransportationClick}
-            className={`w-full flex items-center gap-3 rounded-lg transition-all group no-underline px-3 py-2.5 ${
+            onClick={handleNavSelect}
+            className={`relative w-full flex items-center ga rounded-lg transition-all group no-underline px-3 py-2.5 ${
               isTransportationSection ? "" : "hover:bg-white/8"
             }`}
             style={{
-              backgroundColor: isTransportationSection ? "rgba(255,255,255,0.15)" : "transparent",
+              backgroundColor:
+                isTransportationSection || openFlyout === "transportation"
+                  ? "rgba(255,255,255,0.15)"
+                  : "transparent",
               color: isTransportationSection ? "#ffffff" : "rgba(255,255,255,0.65)",
             }}
             title={!isOpen ? item.label : undefined}
           >
             <Icon className="w-4 h-4 flex-shrink-0" />
+            <SubmenuChevron
+              sidebarOpen={isOpen}
+              isHovered={openFlyout === "transportation"}
+            />
             <NavLabel isOpen={isOpen} isActive={isTransportationSection}>
               {item.label}
             </NavLabel>
-            <ChevronLabel showDown={showTransportationSubmenu} isActive={isTransportationSection} />
           </NavLink>
 
-          <TransportationSubMenu
-            isVisible={showTransportationSubmenu}
-            isOpen={isOpen}
+          <FlyoutSubMenu
+            visible={openFlyout === "transportation"}
+            title="Transportation"
+            items={transportationFlyoutItems}
+            anchorRef={transportationAnchorRef}
+            onMouseEnter={() => handleFlyoutEnter("transportation")}
+            onMouseLeave={handleFlyoutLeave}
             onItemSelect={handleNavSelect}
-            pathname={location.pathname}
           />
         </div>
       );
@@ -656,33 +427,38 @@ export function Sidebar() {
       return (
         <div
           key={item.to}
-          onMouseEnter={handleHRMouseEnter}
-          onMouseLeave={handleHRMouseLeave}
+          ref={hrAnchorRef}
+          onMouseEnter={() => handleFlyoutEnter("hr")}
+          onMouseLeave={handleFlyoutLeave}
         >
           <NavLink
             to={ROUTES.employees}
-            onClick={handleHRClick}
-            className={`w-full flex items-center gap-3 rounded-lg transition-all group no-underline px-3 py-2.5 ${
+            onClick={handleNavSelect}
+            className={`relative w-full flex items-center gp-2 rounded-lg transition-all group no-underline px-3 py-2.5 ${
               isHRSection ? "" : "hover:bg-white/8"
             }`}
             style={{
-              backgroundColor: isHRSection ? "rgba(255,255,255,0.15)" : "transparent",
+              backgroundColor:
+                isHRSection || openFlyout === "hr" ? "rgba(255,255,255,0.15)" : "transparent",
               color: isHRSection ? "#ffffff" : "rgba(255,255,255,0.65)",
             }}
             title={!isOpen ? item.label : undefined}
           >
             <Icon className="w-4 h-4 flex-shrink-0" />
+            <SubmenuChevron sidebarOpen={isOpen} isHovered={openFlyout === "hr"} />
             <NavLabel isOpen={isOpen} isActive={isHRSection}>
               {item.label}
             </NavLabel>
-            <ChevronLabel showDown={showHRSubmenu} isActive={isHRSection} />
           </NavLink>
 
-          <HRSubMenu
-            isVisible={showHRSubmenu}
-            isOpen={isOpen}
+          <FlyoutSubMenu
+            visible={openFlyout === "hr"}
+            title="HR & People"
+            items={hrFlyoutItems}
+            anchorRef={hrAnchorRef}
+            onMouseEnter={() => handleFlyoutEnter("hr")}
+            onMouseLeave={handleFlyoutLeave}
             onItemSelect={handleNavSelect}
-            pathname={location.pathname}
           />
         </div>
       );
@@ -692,63 +468,41 @@ export function Sidebar() {
       return (
         <div
           key={item.to}
-          onMouseEnter={handleInventoryMouseEnter}
-          onMouseLeave={handleInventoryMouseLeave}
+          ref={inventoryAnchorRef}
+          onMouseEnter={() => handleFlyoutEnter("inventory")}
+          onMouseLeave={handleFlyoutLeave}
         >
           <NavLink
             to={ROUTES.inventoryTab("master")}
-            onClick={handleInventoryClick}
-            className={`w-full flex items-center gap-3 rounded-lg transition-all group no-underline px-3 py-2.5 ${
+            onClick={handleNavSelect}
+            className={`relative w-full flex items-center gp-2 rounded-lg transition-all group no-underline px-3 py-2.5 ${
               isInventorySection ? "" : "hover:bg-white/8"
             }`}
             style={{
-              backgroundColor: isInventorySection ? "rgba(255,255,255,0.15)" : "transparent",
+              backgroundColor:
+                isInventorySection || openFlyout === "inventory"
+                  ? "rgba(255,255,255,0.15)"
+                  : "transparent",
               color: isInventorySection ? "#ffffff" : "rgba(255,255,255,0.65)",
             }}
             title={!isOpen ? item.label : undefined}
           >
             <Icon className="w-4 h-4 flex-shrink-0" />
+            <SubmenuChevron sidebarOpen={isOpen} isHovered={openFlyout === "inventory"} />
             <NavLabel isOpen={isOpen} isActive={isInventorySection}>
               {item.label}
             </NavLabel>
-            <ChevronLabel showDown={showInventorySubmenu} isActive={isInventorySection} />
           </NavLink>
 
-          <InventorySubMenu
-            activeTab={activeInventoryTab}
-            isVisible={showInventorySubmenu}
-            isOpen={isOpen}
+          <FlyoutSubMenu
+            visible={openFlyout === "inventory"}
+            title="Inventory"
+            items={inventoryFlyoutItems}
+            anchorRef={inventoryAnchorRef}
+            onMouseEnter={() => handleFlyoutEnter("inventory")}
+            onMouseLeave={handleFlyoutLeave}
             onItemSelect={handleNavSelect}
           />
-        </div>
-      );
-    }
-
-    if (item.hasWorkflowMenu) {
-      return (
-        <div
-          key={item.to}
-          onMouseEnter={handleLeadsMouseEnter}
-          onMouseLeave={handleLeadsMouseLeave}
-        >
-          <NavLink
-            to={ROUTES.leads}
-            onClick={handleLeadsClick}
-            className={`w-full flex items-center gap-3 rounded-lg transition-all group no-underline px-3 py-2.5 ${
-              isLeadsSection ? "" : "hover:bg-white/8"
-            }`}
-            style={{
-              backgroundColor: isLeadsSection ? "rgba(255,255,255,0.15)" : "transparent",
-              color: isLeadsSection ? "#ffffff" : "rgba(255,255,255,0.65)",
-            }}
-            title={!isOpen ? item.label : undefined}
-          >
-            <Icon className="w-4 h-4 flex-shrink-0" />
-            <NavLabel isOpen={isOpen} isActive={isLeadsSection}>
-              {item.label}
-            </NavLabel>
-            <ChevronLabel isActive={isLeadsSection} />
-          </NavLink>
         </div>
       );
     }
@@ -821,8 +575,6 @@ export function Sidebar() {
   return (
     <aside
       className="flex flex-col min-h-screen flex-shrink-0 transition-all duration-300 ease-in-out"
-      onMouseEnter={handleSidebarMouseEnter}
-      onMouseLeave={handleSidebarMouseLeave}
       style={{
         width: sidebarWidth,
         backgroundColor: "var(--brand-dark-green)",
@@ -830,10 +582,10 @@ export function Sidebar() {
     >
       {/* Header */}
       <div
-        className="flex items-center border-b px-3 py-3"
+        className={`flex items-center border-b px-3 py-3 ${isOpen ? "justify-between gap-2" : "flex-col gap-2"}`}
         style={{ borderColor: "rgba(255,255,255,0.12)" }}
       >
-        <div className="flex items-center gap-3 min-w-0">
+        <div className={`flex items-center gap-3 min-w-0 ${isOpen ? "flex-1" : "justify-center"}`}>
           <div
             className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
             style={{ backgroundColor: "rgba(255,255,255,0.15)" }}
@@ -841,35 +593,27 @@ export function Sidebar() {
             <Leaf className="w-5 h-5 text-white" />
           </div>
 
-          {/* Brand text — same grow-in animation */}
-          <div
-            className="min-w-0 overflow-hidden"
-            style={{
-              maxWidth: isOpen ? "160px" : "0px",
-              opacity: isOpen ? 1 : 0,
-              transition: "max-width 280ms cubic-bezier(0.4,0,0.2,1), opacity 220ms ease",
-            }}
-          >
-            <div
-              className="text-white font-semibold leading-tight truncate"
-              style={{
-                fontSize: isOpen ? "13px" : "8px",
-                transition: "font-size 280ms cubic-bezier(0.4,0,0.2,1)",
-              }}
-            >
-              Southwest Greens
+          {isOpen && (
+            <div className="min-w-0 overflow-hidden flex-1">
+              <div className="text-white font-semibold leading-tight truncate text-[13px]">
+                Southwest Greens
+              </div>
+              <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.55)" }}>
+                CRM Platform
+              </div>
             </div>
-            <div
-              style={{
-                fontSize: isOpen ? "11px" : "7px",
-                color: "rgba(255,255,255,0.55)",
-                transition: "font-size 280ms cubic-bezier(0.4,0,0.2,1)",
-              }}
-            >
-              CRM Platform
-            </div>
-          </div>
+          )}
         </div>
+
+        <button
+          type="button"
+          onClick={toggleSidebar}
+          className="flex-shrink-0 p-1.5 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+          aria-label={isOpen ? "Collapse sidebar" : "Expand sidebar"}
+          title={isOpen ? "Collapse sidebar" : "Expand sidebar"}
+        >
+          {isOpen ? <PanelLeftClose className="w-4 h-4" /> : <PanelLeft className="w-4 h-4" />}
+        </button>
       </div>
 
       {/* Nav */}

@@ -16,25 +16,37 @@ import { EquipmentCostTab } from "./EquipmentCostTab";
 import { MaterialsCostTab } from "./MaterialsCostTab";
 import { OverheadExpensesTab } from "./OverheadExpensesTab";
 import { ProjectDocumentsTab } from "./ProjectDocumentsTab";
+import { ProjectCreateTab } from "./ProjectCreateTab";
 import { ProjectEditTab } from "./ProjectEditTab";
 import { ProjectWorkspaceSidebar } from "./ProjectWorkspaceSidebar";
 
-interface ProjectWorkspacePanelProps {
-  projectId: string;
+interface ProjectWorkspacePanelBaseProps {
   initialTab?: ProjectWorkspaceTabId;
   onClose: () => void;
 }
+
+interface ProjectWorkspaceViewProps extends ProjectWorkspacePanelBaseProps {
+  mode?: "view";
+  projectId: string;
+}
+
+interface ProjectWorkspaceCreateProps extends ProjectWorkspacePanelBaseProps {
+  mode: "create";
+  onCreated: (projectId: string) => void;
+}
+
+type ProjectWorkspacePanelProps = ProjectWorkspaceViewProps | ProjectWorkspaceCreateProps;
 
 export interface ProjectWorkspaceFocus {
   milestoneId?: string;
   taskId?: string;
 }
 
-export function ProjectWorkspacePanel({
-  projectId,
-  initialTab = "details",
-  onClose,
-}: ProjectWorkspacePanelProps) {
+export function ProjectWorkspacePanel(props: ProjectWorkspacePanelProps) {
+  const { initialTab = "details", onClose } = props;
+  const [createdProjectId, setCreatedProjectId] = useState<string | null>(null);
+  const isCreateMode = props.mode === "create" && !createdProjectId;
+
   const {
     getProjectById,
     updateProject,
@@ -48,10 +60,29 @@ export function ProjectWorkspacePanel({
     updateTask,
     removeTask,
   } = useProjects();
-  const project = getProjectById(projectId);
+  const projectId =
+    createdProjectId ?? (props.mode === "create" ? undefined : props.projectId);
+  const project = projectId ? getProjectById(projectId) : undefined;
   const [activeTab, setActiveTab] = useState<ProjectWorkspaceTabId>(initialTab);
   const [focus, setFocus] = useState<ProjectWorkspaceFocus>({});
   const [isVisible, setIsVisible] = useState(false);
+
+  const onCreatedCallback = props.mode === "create" ? props.onCreated : undefined;
+
+  const handleCreated = useCallback(
+    (id: string) => {
+      setCreatedProjectId(id);
+      setActiveTab("details");
+      onCreatedCallback?.(id);
+    },
+    [onCreatedCallback]
+  );
+
+  const disabledTabIds = isCreateMode
+    ? PROJECT_WORKSPACE_SIDEBAR.filter(
+        (item) => item.type === "tab" && item.tab.id !== "details"
+      ).map((item) => (item.type === "tab" ? item.tab.id : ""))
+    : [];
 
   useEffect(() => {
     requestAnimationFrame(() => setIsVisible(true));
@@ -66,7 +97,7 @@ export function ProjectWorkspacePanel({
     setFocus({});
   }, []);
 
-  if (!project) {
+  if (!isCreateMode && !project) {
     return null;
   }
 
@@ -92,16 +123,24 @@ export function ProjectWorkspacePanel({
   };
 
   const handleDocumentsChange = (documents: ProjectDocument[]) => {
+    if (!projectId) return;
     updateProject(projectId, { documents });
   };
 
   const handleBudgetChange = (budget: ProjectBudget) => {
+    if (!projectId) return;
     updateProject(projectId, { budget });
   };
 
   const sidebarItems = PROJECT_WORKSPACE_SIDEBAR;
 
   const renderTabContent = () => {
+    if (isCreateMode) {
+      return <ProjectCreateTab onCreated={handleCreated} onCancel={handleClose} />;
+    }
+
+    if (!project) return null;
+
     switch (activeTab) {
       case "details":
         return (
@@ -115,6 +154,7 @@ export function ProjectWorkspacePanel({
           <ProjectEditTab
             project={project}
             onSave={(updates) => {
+              if (!projectId) return;
               updateProject(projectId, updates);
               setActiveTab("details");
             }}
@@ -124,11 +164,18 @@ export function ProjectWorkspacePanel({
         return (
           <AssignTeamsTab
             project={project}
-            onAddAssignment={(input) => addTeamAssignment(projectId, input)}
-            onUpdateAssignment={(id, updates) =>
-              updateTeamAssignment(projectId, id, updates)
-            }
-            onRemoveAssignment={(id) => removeTeamAssignment(projectId, id)}
+            onAddAssignment={(input) => {
+              if (!projectId) return;
+              addTeamAssignment(projectId, input);
+            }}
+            onUpdateAssignment={(id, updates) => {
+              if (!projectId) return;
+              updateTeamAssignment(projectId, id, updates);
+            }}
+            onRemoveAssignment={(id) => {
+              if (!projectId) return;
+              removeTeamAssignment(projectId, id);
+            }}
           />
         );
       case "milestones":
@@ -138,16 +185,30 @@ export function ProjectWorkspacePanel({
             focusMilestoneId={focus.milestoneId}
             focusTaskId={focus.taskId}
             onFocusHandled={clearFocus}
-            onAddMilestone={(input) => addMilestone(projectId, input)}
-            onUpdateMilestone={(id, updates) => updateMilestone(projectId, id, updates)}
-            onRemoveMilestone={(id) => removeMilestone(projectId, id)}
-            onAddTask={(input) => addTask(projectId, input)}
-            onUpdateTask={(milestoneId, taskId, updates) =>
-              updateTask(projectId, milestoneId, taskId, updates)
-            }
-            onRemoveTask={(milestoneId, taskId) =>
-              removeTask(projectId, milestoneId, taskId)
-            }
+            onAddMilestone={(input) => {
+              if (!projectId) return;
+              addMilestone(projectId, input);
+            }}
+            onUpdateMilestone={(id, updates) => {
+              if (!projectId) return;
+              updateMilestone(projectId, id, updates);
+            }}
+            onRemoveMilestone={(id) => {
+              if (!projectId) return;
+              removeMilestone(projectId, id);
+            }}
+            onAddTask={(input) => {
+              if (!projectId) return;
+              addTask(projectId, input);
+            }}
+            onUpdateTask={(milestoneId, taskId, updates) => {
+              if (!projectId) return;
+              updateTask(projectId, milestoneId, taskId, updates);
+            }}
+            onRemoveTask={(milestoneId, taskId) => {
+              if (!projectId) return;
+              removeTask(projectId, milestoneId, taskId);
+            }}
           />
         );
       case "documents":
@@ -250,10 +311,16 @@ export function ProjectWorkspacePanel({
               </IconButton>
               <Box>
                 <Typography variant="h6" sx={{ fontWeight: 700, fontSize: "1.125rem" }}>
-                  {activeTab === "edit" ? "Edit Project" : project.projectCode}
+                  {isCreateMode
+                    ? "Create New Project"
+                    : activeTab === "edit"
+                      ? "Edit Project"
+                      : project?.projectCode}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  {project.customerName}
+                  {isCreateMode
+                    ? "Fill in project details to get started"
+                    : project?.customerName}
                 </Typography>
               </Box>
             </Box>
@@ -284,7 +351,9 @@ export function ProjectWorkspacePanel({
                   setActiveTab(tabId as ProjectWorkspaceTabId);
                 }}
                 onSaveSection={handleSaveSection}
-                projectName={project.customerName}
+                projectName={isCreateMode ? "New Project" : project!.customerName}
+                disabledTabIds={disabledTabIds}
+                hideSaveButtons={isCreateMode}
               />
             )}
 

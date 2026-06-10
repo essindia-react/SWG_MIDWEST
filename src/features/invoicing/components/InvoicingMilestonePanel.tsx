@@ -23,6 +23,7 @@ import type { Invoice, MilestoneCompletionRecord } from "../../../types/invoice"
 import type { Project, ProjectMilestone } from "../../../types/project";
 import { DEPARTMENT_CHECKLIST_ITEMS } from "../constants/invoicingConstants";
 import { CreateInvoiceForm } from "./CreateInvoiceForm";
+import { InvoiceDraftList } from "./InvoiceDraftList";
 import { InvoiceStatusFlow } from "./InvoiceStatusFlow";
 import { TextFieldInput } from "../../leads/components/workspace/workspaceFields";
 
@@ -54,7 +55,7 @@ export function InvoicingMilestonePanel({
   milestone,
   onClose,
 }: InvoicingMilestonePanelProps) {
-  const { getLatestInvoiceForMilestone } = useInvoices();
+  const { getInvoicesForMilestone } = useInvoices();
   const { requestConfirm, confirmDialog } = useConfirmDialog();
   const [isVisible, setIsVisible] = useState(false);
   const [showInvoiceForm, setShowInvoiceForm] = useState(false);
@@ -62,7 +63,12 @@ export function InvoicingMilestonePanel({
   const [formInvoice, setFormInvoice] = useState<Invoice | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const existingInvoice = getLatestInvoiceForMilestone(project.id, milestone.id);
+  const existingInvoice = getInvoicesForMilestone(project.id, milestone.id).find(
+    (inv) => resolveInvoiceStatus(inv) !== "draft"
+  );
+  const milestoneDrafts = getInvoicesForMilestone(project.id, milestone.id).filter(
+    (inv) => resolveInvoiceStatus(inv) === "draft"
+  );
   const completionPct = getMilestoneCompletionPct(milestone);
 
   const [completionRecord, setCompletionRecord] = useState<MilestoneCompletionRecord>(() => ({
@@ -146,6 +152,13 @@ export function InvoicingMilestonePanel({
     setShowInvoiceForm(true);
   };
 
+  const handleDraftClick = (draft: Invoice) => {
+    setFormInvoice(draft);
+    setActiveInvoice(draft);
+    setShowInvoiceForm(true);
+    setCompletionRecord(draft.completionRecord);
+  };
+
   const handleDownload = () => {
     if (!existingInvoice) return;
     toast.success(`Downloading invoice ${existingInvoice.invoiceNumber}.pdf`);
@@ -159,7 +172,7 @@ export function InvoicingMilestonePanel({
     setActiveInvoice(invoice);
   };
 
-  const currentInvoice = activeInvoice ?? existingInvoice;
+  const currentInvoice = activeInvoice ?? existingInvoice ?? milestoneDrafts[0] ?? null;
 
   return (
     <Box
@@ -406,6 +419,13 @@ export function InvoicingMilestonePanel({
                 onSent={handleInvoiceSent}
               />
             )}
+
+            <InvoiceDraftList
+              invoices={milestoneDrafts}
+              projects={[project]}
+              onDraftClick={handleDraftClick}
+              selectedDraftId={formInvoice?.status === "draft" ? formInvoice.id : undefined}
+            />
           </Box>
         </Box>
       </ThemeProvider>

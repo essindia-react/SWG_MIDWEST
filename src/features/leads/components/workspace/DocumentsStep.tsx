@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 import { Box, Button, Grid, IconButton, Typography } from "@mui/material";
 import { FileText, Paperclip, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
@@ -63,10 +63,10 @@ export function DocumentsStep({ values, onChange }: DocumentsStepProps) {
     <WorkspaceSection title="Documents">
       <Grid container spacing={3}>
         <Grid size={{ xs: 12, md: 6 }}>
-          <TextFieldInput label="Customer Name" value={customerName} onChange={() => {}} disabled />
+          <TextFieldInput label="Customer ID" value={customerId} onChange={() => {}} disabled />
         </Grid>
         <Grid size={{ xs: 12, md: 6 }}>
-          <TextFieldInput label="Customer ID" value={customerId} onChange={() => {}} disabled />
+          <TextFieldInput label="Customer Name" value={customerName} onChange={() => {}} disabled />
         </Grid>
         <Grid size={{ xs: 12, md: 6 }}>
           <SelectField

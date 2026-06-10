@@ -1,16 +1,18 @@
 import {
   ArrowLeftRight,
   BarChart3,
-  ClipboardList,
   Package,
   ScrollText,
+  ShoppingCart,
+  ClipboardList,
   type LucideIcon,
 } from "lucide-react";
 
 export type InventoryTabId =
   | "master"
   | "stock-ledger"
-  | "material-requests"
+  | "purchase-requisition"
+  | "purchase-order"
   | "product-swaps"
   | "reports";
 
@@ -27,7 +29,8 @@ export type InventorySidebarItem =
 export const INVENTORY_TABS: InventoryTab[] = [
   { id: "master", label: "Master", icon: Package },
   { id: "stock-ledger", label: "Stock Ledger", icon: ScrollText },
-  { id: "material-requests", label: "Material Requests", icon: ClipboardList },
+  { id: "purchase-requisition", label: "Purchase Requisition", icon: ShoppingCart },
+  { id: "purchase-order", label: "Purchase Order", icon: ClipboardList },
   { id: "product-swaps", label: "Product Swaps", icon: ArrowLeftRight },
   { id: "reports", label: "Inventory Reports", icon: BarChart3 },
 ];
