@@ -1,20 +1,10 @@
 import React, { useEffect, useState } from "react";
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  Grid,
-  Typography,
-  Box,
-  Divider,
-} from "@mui/material";
-import { X } from "lucide-react";
+import { Button, Grid, Typography, Box, Divider } from "@mui/material";
 import {
   TextFieldInput,
   SelectField,
 } from "../../leads/components/workspace/workspaceFields";
+import { InventorySlideDrawer } from "../../inventory/components/shared/InventorySlideDrawer";
 import { Employee, EmployeeRole, EmploymentType, PayType, TaxFilingStatus, EmployeeStatus } from "../../../types/hr";
 
 interface EmployeeFormProps {
@@ -80,160 +70,174 @@ export function EmployeeForm({ open, onClose, onSubmit, initialData, title }: Em
     onSubmit(form);
   };
 
+  if (!open) return null;
+
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontWeight: 700 }}>
-        {title}
-        <Button onClick={onClose} color="inherit" sx={{ minWidth: "auto", p: 0.5 }}>
-          <X size={20} />
-        </Button>
-      </DialogTitle>
-      <DialogContent dividers>
-        <Box sx={{ py: 1 }}>
-          <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2, color: "primary.main" }}>
-            Personal Information
-          </Typography>
-          <Grid container spacing={2}>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextFieldInput
-                label="First Name"
-                value={form.firstName}
-                onChange={(v) => handleChange("firstName", v)}
-                required
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextFieldInput
-                label="Last Name"
-                value={form.lastName}
-                onChange={(v) => handleChange("lastName", v)}
-                required
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextFieldInput
-                label="Email"
-                type="email"
-                value={form.email}
-                onChange={(v) => handleChange("email", v)}
-                required
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextFieldInput
-                label="Phone"
-                value={form.phone}
-                onChange={(v) => handleChange("phone", v)}
-                required
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextFieldInput
-                label="State"
-                value={form.state}
-                onChange={(v) => handleChange("state", v)}
-                required
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextFieldInput
-                label="Start Date"
-                type="date"
-                value={form.startDate}
-                onChange={(v) => handleChange("startDate", v)}
-                required
-              />
-            </Grid>
+    <InventorySlideDrawer
+      title={title}
+      subtitle={
+        initialData
+          ? `${initialData.firstName} ${initialData.lastName} · ${initialData.employeeId}`
+          : undefined
+      }
+      onClose={onClose}
+      width={600}
+    >
+      <Box sx={{ py: 1 }}>
+        <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2, color: "primary.main" }}>
+          Personal Information
+        </Typography>
+        <Grid container spacing={2}>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <TextFieldInput
+              label="First Name"
+              value={form.firstName}
+              onChange={(v) => handleChange("firstName", v)}
+              required
+            />
           </Grid>
-
-          <Divider sx={{ my: 3 }} />
-
-          <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2, color: "primary.main" }}>
-            Employment & Pay
-          </Typography>
-          <Grid container spacing={2}>
-            <Grid size={{ xs: 12, sm: 4 }}>
-              <SelectField
-                label="Role"
-                value={form.role}
-                onChange={(v) => handleChange("role", v)}
-                options={ROLES}
-                required
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 4 }}>
-              <SelectField
-                label="Employment Type"
-                value={form.employmentType}
-                onChange={(v) => handleChange("employmentType", v)}
-                options={EMPLOYMENT_TYPES}
-                required
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 4 }}>
-              <SelectField
-                label="Status"
-                value={form.status}
-                onChange={(v) => handleChange("status", v)}
-                options={STATUSES}
-                required
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 4 }}>
-              <SelectField
-                label="Pay Type"
-                value={form.payType}
-                onChange={(v) => handleChange("payType", v)}
-                options={PAY_TYPES}
-                required
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 4 }}>
-              <TextFieldInput
-                label={`Pay Rate (${form.payType === "Hourly" ? "$/hr" : "$/yr"})`}
-                type="number"
-                value={String(form.payRate)}
-                onChange={(v) => handleChange("payRate", Number(v))}
-                required
-              />
-            </Grid>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <TextFieldInput
+              label="Last Name"
+              value={form.lastName}
+              onChange={(v) => handleChange("lastName", v)}
+              required
+            />
           </Grid>
-
-          <Divider sx={{ my: 3 }} />
-
-          <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2, color: "primary.main" }}>
-            Tax & Banking
-          </Typography>
-          <Grid container spacing={2}>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <SelectField
-                label="Tax Filing Status"
-                value={form.taxFilingStatus}
-                onChange={(v) => handleChange("taxFilingStatus", v)}
-                options={TAX_FILING_STATUSES}
-                required
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextFieldInput
-                label="Banking Details (Bank - Last 4 Digits)"
-                value={form.bankingDetails}
-                onChange={(v) => handleChange("bankingDetails", v)}
-                placeholder="e.g. Chase - 1234"
-                required
-              />
-            </Grid>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <TextFieldInput
+              label="Email"
+              type="email"
+              value={form.email}
+              onChange={(v) => handleChange("email", v)}
+              required
+            />
           </Grid>
-        </Box>
-      </DialogContent>
-      <DialogActions sx={{ p: 3 }}>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <TextFieldInput
+              label="Phone"
+              value={form.phone}
+              onChange={(v) => handleChange("phone", v)}
+              required
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <TextFieldInput
+              label="State"
+              value={form.state}
+              onChange={(v) => handleChange("state", v)}
+              required
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <TextFieldInput
+              label="Start Date"
+              type="date"
+              value={form.startDate}
+              onChange={(v) => handleChange("startDate", v)}
+              required
+            />
+          </Grid>
+        </Grid>
+
+        <Divider sx={{ my: 3 }} />
+
+        <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2, color: "primary.main" }}>
+          Employment & Pay
+        </Typography>
+        <Grid container spacing={2}>
+          <Grid size={{ xs: 12, sm: 4 }}>
+            <SelectField
+              label="Role"
+              value={form.role}
+              onChange={(v) => handleChange("role", v)}
+              options={ROLES}
+              required
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 4 }}>
+            <SelectField
+              label="Employment Type"
+              value={form.employmentType}
+              onChange={(v) => handleChange("employmentType", v)}
+              options={EMPLOYMENT_TYPES}
+              required
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 4 }}>
+            <SelectField
+              label="Status"
+              value={form.status}
+              onChange={(v) => handleChange("status", v)}
+              options={STATUSES}
+              required
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 4 }}>
+            <SelectField
+              label="Pay Type"
+              value={form.payType}
+              onChange={(v) => handleChange("payType", v)}
+              options={PAY_TYPES}
+              required
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 4 }}>
+            <TextFieldInput
+              label={`Pay Rate (${form.payType === "Hourly" ? "$/hr" : "$/yr"})`}
+              type="number"
+              value={String(form.payRate)}
+              onChange={(v) => handleChange("payRate", Number(v))}
+              required
+            />
+          </Grid>
+        </Grid>
+
+        <Divider sx={{ my: 3 }} />
+
+        <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2, color: "primary.main" }}>
+          Tax & Banking
+        </Typography>
+        <Grid container spacing={2}>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <SelectField
+              label="Tax Filing Status"
+              value={form.taxFilingStatus}
+              onChange={(v) => handleChange("taxFilingStatus", v)}
+              options={TAX_FILING_STATUSES}
+              required
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <TextFieldInput
+              label="Banking Details (Bank - Last 4 Digits)"
+              value={form.bankingDetails}
+              onChange={(v) => handleChange("bankingDetails", v)}
+              placeholder="e.g. Chase - 1234"
+              required
+            />
+          </Grid>
+        </Grid>
+      </Box>
+
+      <Box
+        sx={{
+          display: "flex",
+          gap: 1.5,
+          justifyContent: "flex-end",
+          mt: 3,
+          pt: 2,
+          borderTop: 1,
+          borderColor: "divider",
+        }}
+      >
         <Button onClick={onClose} variant="outlined" color="inherit">
           Cancel
         </Button>
         <Button onClick={handleSubmit} variant="contained" color="primary">
           {initialData ? "Save Changes" : "Add Employee"}
         </Button>
-      </DialogActions>
-    </Dialog>
+      </Box>
+    </InventorySlideDrawer>
   );
 }

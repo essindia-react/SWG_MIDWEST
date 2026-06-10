@@ -12,6 +12,8 @@ import {
   loadCalendarEvents,
   saveCalendarEvents,
 } from "../lib/calendarStorage";
+import { EVENT_TYPE_CONFIG } from "../features/calendar/constants/calendarConstants";
+import type { CalendarEventFormData } from "../features/calendar/components/CalendarEventForm";
 import type { CalendarEvent } from "../types/calendar";
 import type { Lead } from "../types/lead";
 import { useLeads } from "./useLeads";
@@ -19,6 +21,40 @@ import { useLeads } from "./useLeads";
 interface CalendarEventsContextValue {
   events: CalendarEvent[];
   addEventFromLead: (lead: Lead) => CalendarEvent | null;
+  addManualEvent: (data: CalendarEventFormData) => CalendarEvent;
+}
+
+function isManualEvent(event: CalendarEvent): boolean {
+  return event.id.startsWith("manual-");
+}
+
+function parseTimeToHour(time: string): number {
+  const [hours, minutes] = time.split(":").map(Number);
+  if (Number.isNaN(hours)) return 9;
+  return hours + (minutes && !Number.isNaN(minutes) ? minutes / 60 : 0);
+}
+
+export function createManualEvent(data: CalendarEventFormData): CalendarEvent {
+  const id = `manual-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+  const config = EVENT_TYPE_CONFIG[data.type];
+  const startHour = parseTimeToHour(data.startTime);
+  const endHour = parseTimeToHour(data.endTime);
+  const duration = Math.max(0.5, endHour - startHour);
+
+  return {
+    id,
+    title: config.label,
+    lead: "",
+    leadId: id,
+    rep: "—",
+    repInitials: "—",
+    type: data.type,
+    date: data.date,
+    startHour,
+    duration,
+    color: config.color,
+    bg: config.bg,
+  };
 }
 
 const CalendarEventsContext = createContext<CalendarEventsContextValue | null>(
@@ -71,7 +107,10 @@ export function CalendarEventsProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const fromLeads = buildEventsFromLeads(leads);
-    setEvents(fromLeads);
+    setEvents((prev) => {
+      const manualEvents = prev.filter(isManualEvent);
+      return [...fromLeads, ...manualEvents];
+    });
   }, [leads]);
 
   useEffect(() => {
@@ -83,15 +122,22 @@ export function CalendarEventsProvider({ children }: { children: ReactNode }) {
     if (!event) return null;
 
     setEvents((prev) => {
-      const withoutDuplicate = prev.filter((e) => e.leadId !== lead.id);
-      return [...withoutDuplicate, event];
+      const manualEvents = prev.filter(isManualEvent);
+      const leadEvents = prev.filter((e) => !isManualEvent(e) && e.leadId !== lead.id);
+      return [...leadEvents, event, ...manualEvents];
     });
     return event;
   }, []);
 
+  const addManualEvent = useCallback((data: CalendarEventFormData) => {
+    const event = createManualEvent(data);
+    setEvents((prev) => [...prev, event]);
+    return event;
+  }, []);
+
   const value = useMemo(
-    () => ({ events, addEventFromLead }),
-    [events, addEventFromLead]
+    () => ({ events, addEventFromLead, addManualEvent }),
+    [events, addEventFromLead, addManualEvent]
   );
 
   return (

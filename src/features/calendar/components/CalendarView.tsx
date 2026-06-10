@@ -8,12 +8,15 @@ import {
   Users,
   Calendar,
 } from "lucide-react";
+import { toast } from "sonner";
 import { useCalendarEvents } from "../../../hooks/useCalendarEvents";
 import {
   isSameLocalDay,
   parseLocalDateString,
 } from "../../../lib/dateHelpers";
 import type { CalendarEvent } from "../../../types/calendar";
+import { EVENT_TYPE_CONFIG } from "../constants/calendarConstants";
+import { CalendarEventForm, type CalendarEventFormData } from "./CalendarEventForm";
 
 type CalView = "month" | "week" | "day";
 
@@ -76,11 +79,26 @@ function formatWeekLabel(days: Date[]) {
   return `${startLabel}–${endLabel}`;
 }
 
+function formatDateInputValue(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+const eventTypeLegend = Object.values(EVENT_TYPE_CONFIG).map((config) => ({
+  type: config.label,
+  color: config.color,
+  bg: config.bg,
+}));
+
 export function CalendarView() {
-  const { events } = useCalendarEvents();
+  const { events, addManualEvent } = useCalendarEvents();
   const [view, setView] = useState<CalView>("week");
   const [currentDate, setCurrentDate] = useState(() => new Date());
   const [focusedEventDate, setFocusedEventDate] = useState(false);
+  const [formOpen, setFormOpen] = useState(false);
+  const [prefillDate, setPrefillDate] = useState<string | null>(null);
 
   useEffect(() => {
     if (!focusedEventDate && events.length > 0) {
@@ -121,6 +139,23 @@ export function CalendarView() {
       }));
   };
 
+  const openNewEventForm = (date?: Date) => {
+    setPrefillDate(date ? formatDateInputValue(date) : null);
+    setFormOpen(true);
+  };
+
+  const handleDateClick = (date: Date) => {
+    setCurrentDate(date);
+    openNewEventForm(date);
+  };
+
+  const handleFormSubmit = (data: CalendarEventFormData) => {
+    addManualEvent(data);
+    setFormOpen(false);
+    setCurrentDate(parseLocalDateString(data.date));
+    toast.success("Event added to calendar");
+  };
+
   return (
     <div className="flex h-full overflow-hidden">
       <div
@@ -154,6 +189,8 @@ export function CalendarView() {
             return (
               <button
                 key={day}
+                type="button"
+                onClick={() => handleDateClick(new Date(year, month, day))}
                 className="flex flex-col items-center py-1 rounded-lg transition-colors hover:bg-muted"
                 style={{
                   backgroundColor: isToday ? "var(--brand-green)" : "transparent",
@@ -183,12 +220,7 @@ export function CalendarView() {
           <p style={{ fontSize: "11px", fontWeight: 600, color: "var(--muted-foreground)", textTransform: "uppercase", letterSpacing: "0.05em" }} className="mb-2">
             Event Types
           </p>
-          {[
-            { type: "Site Visit", color: "#D97706", bg: "#FFF7ED" },
-            { type: "Phone Call", color: "#0284C7", bg: "#EFF6FF" },
-            { type: "Consultation", color: "#7C3AED", bg: "#F5F3FF" },
-            { type: "Installation", color: "#16A34A", bg: "#F0FDF4" },
-          ].map((item) => (
+          {eventTypeLegend.map((item) => (
             <div key={item.type} className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: item.color }} />
               <span style={{ fontSize: "12px", color: "var(--foreground)" }}>{item.type}</span>
@@ -196,7 +228,7 @@ export function CalendarView() {
           ))}
         </div>
 
-        <div className="border-t pt-4 mt-4 space-y-2" style={{ borderColor: "var(--border)" }}>
+        {/* <div className="border-t pt-4 mt-4 space-y-2" style={{ borderColor: "var(--border)" }}>
           <p style={{ fontSize: "11px", fontWeight: 600, color: "var(--muted-foreground)", textTransform: "uppercase", letterSpacing: "0.05em" }} className="mb-2">
             Sales Team
           </p>
@@ -216,15 +248,17 @@ export function CalendarView() {
               <span style={{ fontSize: "12px", color: "var(--foreground)" }}>{rep.name}</span>
             </div>
           ))}
-        </div>
+        </div> */}
 
         {events.length === 0 && (
           <p className="mt-4 text-center" style={{ fontSize: "12px", color: "var(--muted-foreground)" }}>
-            No scheduled events yet. Create a lead with a site visit to populate the calendar.
+            No scheduled events yet. Click New Event or a date to add one.
           </p>
         )}
 
         <button
+          type="button"
+          onClick={() => openNewEventForm()}
           className="w-full flex items-center justify-center gap-2 mt-6 py-2.5 rounded-xl text-white transition-all"
           style={{ backgroundColor: "var(--brand-green)", fontSize: "13px" }}
         >
@@ -304,8 +338,10 @@ export function CalendarView() {
 
                 return (
                   <div key={date.toISOString()} className="flex-1 border-r min-w-0" style={{ borderColor: "var(--border)" }}>
-                    <div
-                      className="h-14 border-b flex flex-col items-center justify-center"
+                    <button
+                      type="button"
+                      onClick={() => handleDateClick(date)}
+                      className="h-14 w-full border-b flex flex-col items-center justify-center transition-colors hover:bg-muted"
                       style={{
                         borderColor: "var(--border)",
                         backgroundColor: isToday ? "var(--brand-light-green)" : "transparent",
@@ -336,7 +372,7 @@ export function CalendarView() {
                           {date.getDate()}
                         </span>
                       </div>
-                    </div>
+                    </button>
 
                     <div className="relative">
                       {hours.map((h) => (
@@ -371,12 +407,12 @@ export function CalendarView() {
                                 {event.title}
                               </p>
                             </div>
-                            {height > 48 && (
+                            {height > 48 && event.lead && (
                               <p className="truncate" style={{ fontSize: "10px", color: "var(--muted-foreground)" }}>
                                 {event.lead}
                               </p>
                             )}
-                            {height > 64 && (
+                            {height > 64 && event.repInitials !== "—" && (
                               <div className="flex items-center gap-1 mt-1">
                                 <div
                                   className="w-4 h-4 rounded-full flex items-center justify-center text-white"
@@ -417,9 +453,11 @@ export function CalendarView() {
                 const dayEvents = displayEvents.filter((e) => e.day === day);
                 const isToday = isCurrentMonth && day === todayDay;
                 return (
-                  <div
+                  <button
+                    type="button"
                     key={day}
-                    className="h-32 border-b border-r p-2"
+                    onClick={() => handleDateClick(new Date(year, month, day))}
+                    className="h-32 border-b border-r p-2 text-left transition-colors hover:bg-muted"
                     style={{
                       borderColor: "var(--border)",
                       backgroundColor: isToday ? "#F0FDF4" : "white",
@@ -451,13 +489,20 @@ export function CalendarView() {
                         </div>
                       )}
                     </div>
-                  </div>
+                  </button>
                 );
               })}
             </div>
           </div>
         )}
       </div>
+
+      <CalendarEventForm
+        open={formOpen}
+        onClose={() => setFormOpen(false)}
+        onSubmit={handleFormSubmit}
+        prefillDate={prefillDate}
+      />
     </div>
   );
 }

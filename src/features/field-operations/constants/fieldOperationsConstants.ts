@@ -38,7 +38,7 @@ export const FIELD_OPERATIONS_TABS: FieldOperationsTab[] = [
   { id: "details", label: "Project Details", icon: ClipboardList },
   { id: "documents-guides", label: "Documents & Guides", icon: FileText },
   { id: "work-order", label: "Work Order Management", icon: Wrench },
-  { id: "activity-timeline", label: "Activity Timeline", icon: Activity },
+  // { id: "activity-timeline", label: "Activity Timeline", icon: Activity },
 ];
 
 export const FIELD_OPERATIONS_SIDEBAR = FIELD_OPERATIONS_TABS.map((tab) => ({

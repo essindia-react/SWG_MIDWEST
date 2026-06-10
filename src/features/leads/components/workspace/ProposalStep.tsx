@@ -1,5 +1,7 @@
-import { Box, Button, Grid, Typography } from "@mui/material";
-import { FileCheck, FileText } from "lucide-react";
+import React, { useState } from "react";
+import { Box, Button, Dialog, DialogContent, DialogTitle, Grid, IconButton, Typography } from "@mui/material";
+import { FileCheck, FileText, X } from "lucide-react";
+import proposalTemplateUrl from "../../../../SWG_Proposal_Template.pdf";
 import { WorkspaceSection } from "./WorkspaceSection";
 import { SelectField, TextFieldInput } from "./workspaceFields";
 import type { WorkspaceFormChange, WorkspaceFormValues } from "./types";
@@ -13,6 +15,8 @@ interface ProposalStepProps {
 }
 
 export function ProposalStep({ values, leadNumber, onChange }: ProposalStepProps) {
+  const [previewOpen, setPreviewOpen] = useState(false);
+
   return (
     <>
       <WorkspaceSection title="Proposal Details">
@@ -82,7 +86,12 @@ export function ProposalStep({ values, leadNumber, onChange }: ProposalStepProps
             All details from Design and Estimation have been synchronized. You can now generate the final PDF for the customer.
           </Typography>
           <Box sx={{ display: "flex", gap: 2 }}>
-            <Button variant="outlined" color="inherit" sx={{ fontWeight: 600 }}>
+            <Button
+              variant="outlined"
+              color="inherit"
+              sx={{ fontWeight: 600 }}
+              onClick={() => setPreviewOpen(true)}
+            >
               Preview Layout
             </Button>
             <Button variant="contained" color="primary" startIcon={<FileText size={16} />} sx={{ fontWeight: 600, px: 4 }}>
@@ -91,6 +100,43 @@ export function ProposalStep({ values, leadNumber, onChange }: ProposalStepProps
           </Box>
         </Box>
       </WorkspaceSection>
+
+      <Dialog
+        open={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+        fullWidth
+        maxWidth={false}
+        PaperProps={{
+          sx: {
+            width: "90vw",
+            height: "92vh",
+            maxWidth: "1400px",
+          },
+        }}
+      >
+        {/* <DialogTitle
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            fontWeight: 700,
+            padding: "6px 14px",
+          }}
+        >
+          Proposal Preview
+          <IconButton onClick={() => setPreviewOpen(false)} size="small" aria-label="Close preview">
+            <X size={18} />
+          </IconButton>
+        </DialogTitle> */}
+        <DialogContent dividers sx={{ p: 0, height: "80vh" }}>
+          <Box
+            component="iframe"
+            src={proposalTemplateUrl}
+            title="SWG Proposal Template"
+            sx={{ width: "100%", height: "100%", border: "none", display: "block" }}
+          />
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
