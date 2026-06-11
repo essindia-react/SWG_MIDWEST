@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import React, { useCallback } from "react";
 import { useSearchParams } from "react-router";
 import { LeadsList } from "../../features/leads/components/LeadsList";
 import { LeadWorkspace } from "./LeadWorkspace";
@@ -17,7 +17,7 @@ export function LeadsPage() {
     (leadId: string) => {
       setSearchParams({ edit: leadId });
     },
-    [setSearchParams]
+    [setSearchParams],
   );
 
   const closeWorkspace = useCallback(() => {
@@ -27,7 +27,10 @@ export function LeadsPage() {
   if (isCreating || editLeadId) {
     return (
       <div className="flex-1 overflow-hidden flex flex-col">
-        <LeadWorkspace onBack={closeWorkspace} leadId={editLeadId ?? undefined} />
+        <LeadWorkspace
+          onBack={closeWorkspace}
+          leadId={editLeadId ?? undefined}
+        />
       </div>
     );
   }

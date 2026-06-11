@@ -11,7 +11,9 @@ interface TimesheetSummaryTableProps {
   filteredTimesheets: TimesheetEntry[];
 }
 
-export function TimesheetSummaryTable({ filteredTimesheets }: TimesheetSummaryTableProps) {
+export function TimesheetSummaryTable({
+  filteredTimesheets,
+}: TimesheetSummaryTableProps) {
   const { employees, updateTimesheetStatus } = useHR();
   const { projects } = useProjects();
 
@@ -54,13 +56,24 @@ export function TimesheetSummaryTable({ filteredTimesheets }: TimesheetSummaryTa
             const isOT = (ts.totalHours || 0) > 8; // Simple daily OT flag for UI
 
             return (
-              <tr key={ts.id} className="hover:bg-slate-50 transition-colors group">
+              <tr
+                key={ts.id}
+                className="hover:bg-slate-50 transition-colors group"
+              >
                 <td className="p-4 font-medium text-slate-800">
-                  {employee ? `${employee.firstName} ${employee.lastName}` : "Unknown"}
-                  <div className="text-xs text-slate-400 font-normal">{employee?.role}</div>
+                  {employee
+                    ? `${employee.firstName} ${employee.lastName}`
+                    : "Unknown"}
+                  <div className="text-xs text-slate-400 font-normal">
+                    {employee?.role}
+                  </div>
                 </td>
-                <td className="p-4 text-slate-600 font-medium">{formatDate(ts.clockInTime)}</td>
-                <td className="p-4 text-slate-600">{project ? project.projectCode : ts.projectId}</td>
+                <td className="p-4 text-slate-600 font-medium">
+                  {formatDate(ts.clockInTime)}
+                </td>
+                <td className="p-4 text-slate-600">
+                  {project ? project.projectCode : ts.projectId}
+                </td>
                 <td className="p-4 text-slate-600">{ts.workType}</td>
                 <td className="p-4 text-slate-800 font-bold">
                   {ts.totalHours ? `${ts.totalHours.toFixed(2)}h` : "—"}
@@ -78,14 +91,16 @@ export function TimesheetSummaryTable({ filteredTimesheets }: TimesheetSummaryTa
                       ts.status === "Approved"
                         ? "bg-green-100 text-green-700"
                         : ts.status === "Rejected"
-                        ? "bg-red-100 text-red-700"
-                        : "bg-blue-100 text-blue-700"
+                          ? "bg-red-100 text-red-700"
+                          : "bg-blue-100 text-blue-700"
                     }`}
                   >
                     {ts.status}
                   </span>
                   {ts.approvedBy && (
-                    <div className="text-[10px] text-slate-400 mt-1 italic">By {ts.approvedBy}</div>
+                    <div className="text-[10px] text-slate-400 mt-1 italic">
+                      By {ts.approvedBy}
+                    </div>
                   )}
                 </td>
                 <td className="p-4 text-center">
@@ -96,7 +111,11 @@ export function TimesheetSummaryTable({ filteredTimesheets }: TimesheetSummaryTa
                           <IconButton
                             size="small"
                             onClick={() => handleApprove(ts.id)}
-                            sx={{ color: "#16A34A", bgcolor: "#F0FDF4", "&:hover": { bgcolor: "#DCFCE7" } }}
+                            sx={{
+                              color: "#16A34A",
+                              bgcolor: "#F0FDF4",
+                              "&:hover": { bgcolor: "#DCFCE7" },
+                            }}
                           >
                             <CheckCircle className="w-4 h-4" />
                           </IconButton>
@@ -105,14 +124,18 @@ export function TimesheetSummaryTable({ filteredTimesheets }: TimesheetSummaryTa
                           <IconButton
                             size="small"
                             onClick={() => handleReject(ts.id)}
-                            sx={{ color: "#DC2626", bgcolor: "#FEF2F2", "&:hover": { bgcolor: "#FEE2E2" } }}
+                            sx={{
+                              color: "#DC2626",
+                              bgcolor: "#FEF2F2",
+                              "&:hover": { bgcolor: "#FEE2E2" },
+                            }}
                           >
                             <XCircle className="w-4 h-4" />
                           </IconButton>
                         </Tooltip>
                       </>
                     )}
-                    {ts.status === "Approved" && (
+                    {/* {ts.status === "Approved" && (
                       <Button
                         size="small"
                         startIcon={<Send className="w-3 h-3" />}
@@ -122,7 +145,7 @@ export function TimesheetSummaryTable({ filteredTimesheets }: TimesheetSummaryTa
                       >
                         Push to QB
                       </Button>
-                    )}
+                    )} */}
                     <Tooltip title="View Session Details">
                       <IconButton size="small">
                         <Eye className="w-4 h-4 text-slate-400" />

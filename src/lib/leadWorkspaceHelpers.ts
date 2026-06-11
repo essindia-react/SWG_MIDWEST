@@ -226,7 +226,12 @@ export function getLeadStageDetail(lead: Lead, stageIndex: number): LeadStageDet
           })),
           ...products.map((product) => ({
             primary: product.productName || product.productType,
-            secondary: `${product.quantity || "0"} ${product.unit}`,
+            secondary: [
+              product.forArea ? `Area: ${product.forArea}` : null,
+              `${product.quantity || "0"} ${product.unit}`,
+            ]
+              .filter(Boolean)
+              .join(" · "),
           })),
           ...overheads
             .filter((oh) => oh.title)
@@ -418,6 +423,10 @@ export function leadToWorkspaceForm(lead: Lead): WorkspaceFormValues {
     estimationDate: wd.estimationDate ?? new Date().toISOString().slice(0, 10),
     estimationCustomerName: wd.estimationCustomerName ?? customerName,
     areaName: wd.areaName ?? "",
+    installationTypes:
+      wd.installationTypes ??
+      wd.estimationAreas?.map((area) => area.areaName).filter(Boolean) ??
+      [],
     estimationAreas:
       wd.estimationAreas ??
       (wd.areaName
@@ -500,6 +509,9 @@ export function workspaceFormToLeadInput(
     estimationDate: values.estimationDate || undefined,
     estimationCustomerName: values.estimationCustomerName || customerName,
     areaName: values.estimationAreas[0]?.areaName || values.areaName || undefined,
+    installationTypes: values.installationTypes.length
+      ? values.installationTypes
+      : undefined,
     estimationAreas: values.estimationAreas,
     estimationProducts: values.estimationProducts,
     estimationOverheads: values.estimationOverheads,

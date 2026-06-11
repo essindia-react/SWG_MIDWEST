@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Box,
   Button,
@@ -13,9 +13,18 @@ import {
 } from "@mui/material";
 import { Plus, Trash2 } from "lucide-react";
 import type { LeadEstimationArea, LeadEstimationOverhead, LeadEstimationProduct } from "../../../../types/lead";
+import type { InventoryProduct, ProductCategory } from "../../../inventory/types/inventory";
+import { getProducts, subscribeInventory } from "../../../inventory/lib/inventoryStore";
 import { MATERIAL_UNITS } from "../../../projects/constants/budgetConstants";
+import {
+  getEstimationAreaNameOptions,
+  getSelectedEstimationAreaNames,
+  getUnusedAreaNameOptions,
+  removeProductsForArea,
+  renameProductAreaReferences,
+} from "../../lib/leadWorkspaceSync";
 import { WorkspaceSection } from "./WorkspaceSection";
-import { SelectField, TextFieldInput } from "./workspaceFields";
+import { LabeledSelectField, SelectField, TextFieldInput } from "./workspaceFields";
 import type { WorkspaceFormChange, WorkspaceFormValues } from "./types";
 
 const AREA_TYPES = ["Main Turf", "Putting Green", "Border"] as const;
@@ -39,20 +48,9 @@ function updateArea(
 function updateProduct(
   products: LeadEstimationProduct[],
   id: string,
-  field: keyof LeadEstimationProduct,
-  value: string | number
+  updates: Partial<LeadEstimationProduct>
 ): LeadEstimationProduct[] {
-  return products.map((product) => {
-    if (product.id !== id) return product;
-    const updated = { ...product, [field]: value };
-    if (field === "quantity" || field === "cost") {
-      const qty = Number(field === "quantity" ? value : product.quantity) || 0;
-      const rate = Number(field === "cost" ? value : product.cost) || 0;
-      updated.cost = field === "cost" ? Number(value) : product.cost;
-      if (field === "quantity") updated.quantity = String(value);
-    }
-    return updated;
-  });
+  return products.map((product) => (product.id === id ? { ...product, ...updates } : product));
 }
 
 function updateOverhead(
@@ -64,13 +62,109 @@ function updateOverhead(
   return overheads.map((oh) => (oh.id === id ? { ...oh, [field]: value } : oh));
 }
 
+function inventoryCategoryToProductType(category: ProductCategory): string {
+  if (category === "Turf") return "Turf";
+  if (category === "Infill") return "Infill";
+  if (category === "Base Material") return "Base";
+  return "Turf";
+}
+
+function getMaterialsForArea(
+  areaName: string,
+  products: InventoryProduct[]
+): InventoryProduct[] {
+  const active = products.filter((p) => p.status === "Active");
+  if (!areaName.trim()) return active;
+
+  const lower = areaName.toLowerCase();
+  if (lower.includes("putting")) {
+    return active.filter(
+      (p) =>
+        p.name.toLowerCase().includes("putting") ||
+        p.category === "Turf" ||
+        p.category === "Infill"
+    );
+  }
+  if (lower.includes("pet")) {
+    return active.filter(
+      (p) =>
+        p.name.toLowerCase().includes("pet") ||
+        p.name.toLowerCase().includes("k9") ||
+        p.category === "Turf" ||
+        p.category === "Infill"
+    );
+  }
+  if (lower.includes("sports")) {
+    return active.filter((p) => p.category === "Turf" || p.category === "Base Material");
+  }
+  return active;
+}
+
+function formatProductLabel(product: InventoryProduct): string {
+  return `${product.name} — $${product.sellingPrice.toFixed(2)}/${product.unit}`;
+}
+
 export function EstimationStep({ values, onChange }: EstimationStepProps) {
+  const [inventoryProducts, setInventoryProducts] = useState(() =>
+    getProducts().filter((p) => p.status === "Active")
+  );
+
+  const refreshInventory = useCallback(() => {
+    setInventoryProducts(getProducts().filter((p) => p.status === "Active"));
+  }, []);
+
+  useEffect(() => subscribeInventory(refreshInventory), [refreshInventory]);
+
+  const areaNameOptions = useMemo(
+    () => getEstimationAreaNameOptions(values),
+    [values.installationTypes]
+  );
+
+  const selectedAreaNames = useMemo(
+    () => getSelectedEstimationAreaNames(values),
+    [values.estimationAreas]
+  );
+
+  const unusedAreaNames = useMemo(
+    () => getUnusedAreaNameOptions(values),
+    [values.installationTypes, values.estimationAreas]
+  );
+
+  const defaultForArea = selectedAreaNames[0] ?? "";
+
+  const handleAreaNameChange = (areaId: string, areaName: string) => {
+    const currentArea = values.estimationAreas.find((area) => area.id === areaId);
+    const previousName = currentArea?.areaName ?? "";
+    const nextAreas = updateArea(values.estimationAreas, areaId, "areaName", areaName);
+
+    onChange("estimationAreas", nextAreas);
+    onChange(
+      "estimationProducts",
+      renameProductAreaReferences(values.estimationProducts, previousName, areaName)
+    );
+  };
+
+  const handleRemoveArea = (areaId: string) => {
+    const removedArea = values.estimationAreas.find((area) => area.id === areaId);
+    const nextAreas = values.estimationAreas.filter((area) => area.id !== areaId);
+    onChange("estimationAreas", nextAreas);
+    if (removedArea?.areaName) {
+      onChange(
+        "estimationProducts",
+        removeProductsForArea(values.estimationProducts, removedArea.areaName)
+      );
+    }
+  };
+
   const addArea = () => {
+    const nextAreaName = unusedAreaNames[0];
+    if (!nextAreaName) return;
+
     onChange("estimationAreas", [
       ...values.estimationAreas,
       {
         id: `area-${Date.now()}`,
-        areaName: "",
+        areaName: nextAreaName,
         areaType: "Main Turf",
         areaLength: "",
         areaWidth: "",
@@ -84,6 +178,8 @@ export function EstimationStep({ values, onChange }: EstimationStepProps) {
       ...values.estimationProducts,
       {
         id: `prod-${Date.now()}`,
+        forArea: defaultForArea,
+        productId: "",
         productType: "Turf",
         productName: "",
         unit: "sq ft",
@@ -98,6 +194,55 @@ export function EstimationStep({ values, onChange }: EstimationStepProps) {
       ...values.estimationOverheads,
       { id: `oh-${Date.now()}`, title: "", rate: "", unit: "Flat Fee" },
     ]);
+  };
+
+  const handleProductSelect = (productRowId: string, productId: string) => {
+    const inventoryProduct = inventoryProducts.find((p) => p.id === productId);
+    if (!inventoryProduct) {
+      onChange(
+        "estimationProducts",
+        updateProduct(values.estimationProducts, productRowId, {
+          productId: "",
+          productName: "",
+          cost: 0,
+        })
+      );
+      return;
+    }
+
+    onChange(
+      "estimationProducts",
+      updateProduct(values.estimationProducts, productRowId, {
+        productId,
+        productName: inventoryProduct.name,
+        productType: inventoryCategoryToProductType(inventoryProduct.category),
+        unit: inventoryProduct.unit,
+        cost: inventoryProduct.sellingPrice,
+      })
+    );
+  };
+
+  const handleForAreaChange = (productRowId: string, forArea: string) => {
+    const product = values.estimationProducts.find((p) => p.id === productRowId);
+    if (!product) return;
+
+    const filtered = getMaterialsForArea(forArea, inventoryProducts);
+    const stillValid =
+      !product.productId || filtered.some((p) => p.id === product.productId);
+
+    onChange(
+      "estimationProducts",
+      updateProduct(values.estimationProducts, productRowId, {
+        forArea,
+        ...(stillValid
+          ? {}
+          : {
+              productId: "",
+              productName: "",
+              cost: 0,
+            }),
+      })
+    );
   };
 
   return (
@@ -117,6 +262,11 @@ export function EstimationStep({ values, onChange }: EstimationStepProps) {
       </WorkspaceSection>
 
       <WorkspaceSection title="Area Info">
+        {areaNameOptions.length === 0 && (
+          <Typography sx={{ fontSize: "0.8125rem", color: "text.secondary", mb: 2 }}>
+            Select area types in the Inquiry step to populate area name options.
+          </Typography>
+        )}
         {values.estimationAreas.map((area, index) => (
           <Box
             key={area.id}
@@ -137,12 +287,7 @@ export function EstimationStep({ values, onChange }: EstimationStepProps) {
                 <IconButton
                   size="small"
                   color="error"
-                  onClick={() =>
-                    onChange(
-                      "estimationAreas",
-                      values.estimationAreas.filter((a) => a.id !== area.id)
-                    )
-                  }
+                  onClick={() => handleRemoveArea(area.id)}
                 >
                   <Trash2 size={16} />
                 </IconButton>
@@ -150,12 +295,29 @@ export function EstimationStep({ values, onChange }: EstimationStepProps) {
             </Box>
             <Grid container spacing={2}>
               <Grid size={{ xs: 12, md: 6, lg: 2.4 }}>
-                <TextFieldInput
-                  label="Area Name"
-                  placeholder="Backyard"
-                  value={area.areaName}
-                  onChange={(v) => onChange("estimationAreas", updateArea(values.estimationAreas, area.id, "areaName", v))}
-                />
+                {areaNameOptions.length > 0 ? (
+                  <SelectField
+                    label="Area Name"
+                    value={area.areaName}
+                    onChange={(v) => handleAreaNameChange(area.id, v)}
+                    options={[
+                      ...new Set([
+                        ...(area.areaName ? [area.areaName] : []),
+                        ...areaNameOptions,
+                      ]),
+                    ]}
+                  />
+                ) : (
+                  <TextFieldInput
+                    label="Area Name"
+                    placeholder="Select areas in Inquiry first"
+                    value={area.areaName}
+                    onChange={(v) =>
+                      onChange("estimationAreas", updateArea(values.estimationAreas, area.id, "areaName", v))
+                    }
+                    disabled
+                  />
+                )}
               </Grid>
               <Grid size={{ xs: 12, md: 6, lg: 2.4 }}>
                 <SelectField
@@ -192,7 +354,12 @@ export function EstimationStep({ values, onChange }: EstimationStepProps) {
             </Grid>
           </Box>
         ))}
-        <Button startIcon={<Plus size={16} />} onClick={addArea} sx={{ color: "primary.main", fontWeight: 600, fontSize: "0.8125rem" }}>
+        <Button
+          startIcon={<Plus size={16} />}
+          onClick={addArea}
+          disabled={unusedAreaNames.length === 0}
+          sx={{ color: "primary.main", fontWeight: 600, fontSize: "0.8125rem" }}
+        >
           Add Area
         </Button>
       </WorkspaceSection>
@@ -202,7 +369,7 @@ export function EstimationStep({ values, onChange }: EstimationStepProps) {
           <Table size="small">
             <TableHead>
               <TableRow sx={{ bgcolor: "grey.50" }}>
-                {["Material Type", "Material Name", "Unit", "Qty/Rate", "Cost", "Action"].map((h) => (
+                {["For Area", "Material Type", "Material Name", "Unit", "Qty/Rate", "Cost", "Action"].map((h) => (
                   <TableCell key={h} sx={{ fontSize: "0.75rem", color: "text.secondary", fontWeight: 600 }}>
                     {h}
                   </TableCell>
@@ -212,82 +379,109 @@ export function EstimationStep({ values, onChange }: EstimationStepProps) {
             <TableBody>
               {values.estimationProducts.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} sx={{ textAlign: "center", color: "text.secondary", py: 3 }}>
+                  <TableCell colSpan={7} sx={{ textAlign: "center", color: "text.secondary", py: 3 }}>
                     No materials added yet
                   </TableCell>
                 </TableRow>
               ) : (
-                values.estimationProducts.map((product) => (
-                  <TableRow key={product.id}>
-                    <TableCell sx={{ minWidth: 120 }}>
-                      <SelectField
-                        label=""
-                        value={product.productType}
-                        onChange={(v) =>
-                          onChange("estimationProducts", updateProduct(values.estimationProducts, product.id, "productType", v))
-                        }
-                        options={PRODUCT_TYPES}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <TextFieldInput
-                        label=""
-                        placeholder="Material name"
-                        value={product.productName}
-                        onChange={(v) =>
-                          onChange("estimationProducts", updateProduct(values.estimationProducts, product.id, "productName", v))
-                        }
-                      />
-                    </TableCell>
-                    <TableCell sx={{ minWidth: 110 }}>
-                      <SelectField
-                        label=""
-                        value={product.unit}
-                        onChange={(v) =>
-                          onChange("estimationProducts", updateProduct(values.estimationProducts, product.id, "unit", v))
-                        }
-                        options={MATERIAL_UNITS}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <TextFieldInput
-                        label=""
-                        type="number"
-                        placeholder="0"
-                        value={product.quantity}
-                        onChange={(v) =>
-                          onChange("estimationProducts", updateProduct(values.estimationProducts, product.id, "quantity", v))
-                        }
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Typography sx={{ fontSize: "0.8125rem", fontWeight: 600 }}>
-                        ${(Number(product.quantity) || 0) * (product.cost || 0) > 0
-                          ? ((Number(product.quantity) || 0) * (product.cost || 0)).toFixed(2)
-                          : product.cost.toFixed(2)}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <IconButton
-                        size="small"
-                        color="error"
-                        onClick={() =>
-                          onChange(
-                            "estimationProducts",
-                            values.estimationProducts.filter((p) => p.id !== product.id)
-                          )
-                        }
-                      >
-                        <Trash2 size={16} />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                ))
+                values.estimationProducts.map((product) => {
+                  const materialOptions = getMaterialsForArea(
+                    product.forArea,
+                    inventoryProducts
+                  ).map((p) => ({ value: p.id, label: formatProductLabel(p) }));
+
+                  return (
+                    <TableRow key={product.id}>
+                      <TableCell sx={{ minWidth: 130 }}>
+                        <SelectField
+                          label=""
+                          value={product.forArea ?? ""}
+                          onChange={(v) => handleForAreaChange(product.id, v)}
+                          options={selectedAreaNames}
+                        />
+                      </TableCell>
+                      <TableCell sx={{ minWidth: 120 }}>
+                        <SelectField
+                          label=""
+                          value={product.productType}
+                          onChange={(v) =>
+                            onChange(
+                              "estimationProducts",
+                              updateProduct(values.estimationProducts, product.id, { productType: v })
+                            )
+                          }
+                          options={PRODUCT_TYPES}
+                        />
+                      </TableCell>
+                      <TableCell sx={{ minWidth: 220 }}>
+                        <LabeledSelectField
+                          label=" "
+                          value={product.productId ?? ""}
+                          onChange={(v) => handleProductSelect(product.id, v)}
+                          options={materialOptions}
+                        />
+                      </TableCell>
+                      <TableCell sx={{ minWidth: 110 }}>
+                        <SelectField
+                          label=""
+                          value={product.unit}
+                          onChange={(v) =>
+                            onChange(
+                              "estimationProducts",
+                              updateProduct(values.estimationProducts, product.id, { unit: v })
+                            )
+                          }
+                          options={MATERIAL_UNITS}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <TextFieldInput
+                          label=""
+                          type="number"
+                          placeholder="0"
+                          value={product.quantity}
+                          onChange={(v) =>
+                            onChange(
+                              "estimationProducts",
+                              updateProduct(values.estimationProducts, product.id, { quantity: v })
+                            )
+                          }
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Typography sx={{ fontSize: "0.8125rem", fontWeight: 600 }}>
+                          ${(Number(product.quantity) || 0) * (product.cost || 0) > 0
+                            ? ((Number(product.quantity) || 0) * (product.cost || 0)).toFixed(2)
+                            : product.cost.toFixed(2)}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <IconButton
+                          size="small"
+                          color="error"
+                          onClick={() =>
+                            onChange(
+                              "estimationProducts",
+                              values.estimationProducts.filter((p) => p.id !== product.id)
+                            )
+                          }
+                        >
+                          <Trash2 size={16} />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
               )}
             </TableBody>
           </Table>
           <Box sx={{ p: 2 }}>
-            <Button startIcon={<Plus size={16} />} onClick={addProduct} sx={{ color: "primary.main", fontWeight: 600, fontSize: "0.8125rem" }}>
+            <Button
+              startIcon={<Plus size={16} />}
+              onClick={addProduct}
+              disabled={selectedAreaNames.length === 0}
+              sx={{ color: "primary.main", fontWeight: 600, fontSize: "0.8125rem" }}
+            >
               Add Material Item
             </Button>
           </Box>

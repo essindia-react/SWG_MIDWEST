@@ -14,6 +14,7 @@ import {
 } from "@mui/material";
 import { Camera, Send } from "lucide-react";
 import { toast } from "sonner";
+import { useIsMobile } from "../../../components/layout/Sidebar";
 import { INVENTORY_ITEMS } from "../../projects/constants/budgetConstants";
 import {
   MATERIAL_REQUEST_REASONS,
@@ -51,6 +52,7 @@ export function TaskMaterialRequestModal({
   onClose,
   onSubmitted,
 }: TaskMaterialRequestModalProps) {
+  const isMobile = useIsMobile();
   const [form, setForm] = useState<MaterialRequestFormData>(initialForm);
   const [useCustomItem, setUseCustomItem] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -121,7 +123,7 @@ export function TaskMaterialRequestModal({
   });
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth fullScreen={isMobile}>
       <DialogTitle sx={{ fontWeight: 700, pb: 1 }}>
         {submitted ? "Request Submitted" : "Material Request"}
       </DialogTitle>

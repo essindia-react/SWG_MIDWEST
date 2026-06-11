@@ -35,7 +35,7 @@ function MilestoneRow({
     <button
       type="button"
       onClick={() => onSelect(projectId, milestone.id)}
-      className="w-full flex items-center gap-3 px-4 py-3 text-left border-0 cursor-pointer transition-colors hover:bg-green-50/60"
+      className="w-full flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-3 text-left border-0 cursor-pointer transition-colors hover:bg-green-50/60"
       style={{ backgroundColor: "transparent" }}
     >
       <Flag className="w-4 h-4 flex-shrink-0" style={{ color: "var(--brand-green)" }} />
@@ -43,15 +43,22 @@ function MilestoneRow({
         <p className="text-foreground truncate" style={{ fontSize: "13px", fontWeight: 600 }}>
           {milestone.name}
         </p>
-        <p className="truncate" style={{ fontSize: "11px", color: "var(--muted-foreground)" }}>
+        <p
+          className="truncate hidden sm:block"
+          style={{ fontSize: "11px", color: "var(--muted-foreground)" }}
+        >
           {milestone.assignedTo || "Unassigned"} · {milestone.tasks.length} task
           {milestone.tasks.length !== 1 ? "s" : ""} ·{" "}
           {formatProjectDate(milestone.plannedStartDate)}
           {milestone.plannedEndDate ? ` – ${formatProjectDate(milestone.plannedEndDate)}` : ""}
         </p>
+        <p className="sm:hidden truncate" style={{ fontSize: "11px", color: "var(--muted-foreground)" }}>
+          {milestone.tasks.length} task{milestone.tasks.length !== 1 ? "s" : ""} ·{" "}
+          {formatProjectDate(milestone.plannedStartDate)}
+        </p>
       </div>
       <span
-        className="px-2 py-0.5 rounded-full flex-shrink-0"
+        className="px-1.5 sm:px-2 py-0.5 rounded-full flex-shrink-0 max-w-[5.5rem] sm:max-w-none truncate"
         style={{
           fontSize: "10px",
           fontWeight: 600,
@@ -87,7 +94,7 @@ function ProjectRow({
       <button
         type="button"
         onClick={onToggle}
-        className="w-full flex items-center gap-3 p-4 text-left border-0 cursor-pointer transition-colors hover:bg-slate-50"
+        className="w-full flex items-center gap-2 sm:gap-3 p-3 sm:p-4 text-left border-0 cursor-pointer transition-colors hover:bg-slate-50"
         style={{ backgroundColor: "white" }}
       >
         {isExpanded ? (
@@ -96,7 +103,7 @@ function ProjectRow({
           <ChevronRight className="w-4 h-4 flex-shrink-0 text-slate-500" />
         )}
         <div
-          className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+          className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center flex-shrink-0"
           style={{ backgroundColor: "var(--brand-light-green)" }}
         >
           <FolderKanban className="w-4 h-4" style={{ color: "var(--brand-green)" }} />
@@ -105,13 +112,17 @@ function ProjectRow({
           <p className="text-foreground truncate" style={{ fontSize: "14px", fontWeight: 600 }}>
             {project.customerName}
           </p>
-          <p className="truncate" style={{ fontSize: "12px", color: "var(--muted-foreground)" }}>
+          <p className="truncate hidden sm:block" style={{ fontSize: "12px", color: "var(--muted-foreground)" }}>
             {project.projectCode} · {project.projectType} · {project.milestones.length} milestone
+            {project.milestones.length !== 1 ? "s" : ""}
+          </p>
+          <p className="truncate sm:hidden" style={{ fontSize: "12px", color: "var(--muted-foreground)" }}>
+            {project.projectCode} · {project.milestones.length} milestone
             {project.milestones.length !== 1 ? "s" : ""}
           </p>
         </div>
         <span
-          className="px-2.5 py-1 rounded-full flex-shrink-0"
+          className="px-2 sm:px-2.5 py-1 rounded-full flex-shrink-0 max-w-[5.5rem] sm:max-w-none truncate"
           style={{
             fontSize: "11px",
             fontWeight: 600,
@@ -177,17 +188,20 @@ export function TaskManagementProjectsList({ onSelectMilestone }: TaskManagement
   };
 
   return (
-    <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-foreground mb-1" style={{ fontSize: "20px", fontWeight: 700 }}>
+    <div className="min-w-0 p-4 sm:p-6">
+      <div className="mb-4 sm:mb-6">
+        <h1
+          className="text-foreground mb-1"
+          style={{ fontSize: "clamp(1.125rem, 4vw, 1.25rem)", fontWeight: 700 }}
+        >
           Task Management
         </h1>
-        <p style={{ fontSize: "13px", color: "var(--muted-foreground)" }}>
+        <p style={{ fontSize: "13px", color: "var(--muted-foreground)", lineHeight: 1.5 }}>
           Select a project to view milestones, manage tasks, and maintain pick lists.
         </p>
       </div>
 
-      <div className="relative mb-5 max-w-md">
+      <div className="relative mb-4 sm:mb-5 w-full max-w-md">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <input
           className="w-full pl-9 pr-4 py-2.5 border rounded-lg bg-white"

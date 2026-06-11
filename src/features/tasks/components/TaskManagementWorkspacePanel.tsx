@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { Box, IconButton, ThemeProvider, Typography } from "@mui/material";
 import { ArrowRight, X } from "lucide-react";
+import { useIsMobile } from "../../../components/layout/Sidebar";
 import { useProjects } from "../../../hooks/useProjects";
 import { theme } from "../../../theme/theme";
 import type { TaskManagementPanelTabId } from "../constants/taskManagementConstants";
@@ -20,6 +21,7 @@ export function TaskManagementWorkspacePanel({
   milestoneId,
   onClose,
 }: TaskManagementWorkspacePanelProps) {
+  const isMobile = useIsMobile();
   const { getProjectById } = useProjects();
   const project = getProjectById(projectId);
   const milestone = project?.milestones.find((m) => m.id === milestoneId);
@@ -83,52 +85,90 @@ export function TaskManagementWorkspacePanel({
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
-              px: 2,
-              py: 2,
+              gap: 1,
+              px: { xs: 1.5, sm: 2 },
+              py: { xs: 1.5, sm: 2 },
               borderBottom: 1,
               borderColor: "divider",
               flexShrink: 0,
+              minWidth: 0,
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "center" }}>
-              <IconButton
-                onClick={handleClose}
-                size="small"
-                sx={{
-                  backgroundColor: "white",
-                  transition: "box-shadow 0.1s ease",
-                  "&:hover": {
+            <Box sx={{ display: "flex", alignItems: "center", minWidth: 0, flex: 1 }}>
+              {!isMobile && (
+                <IconButton
+                  onClick={handleClose}
+                  size="small"
+                  sx={{
                     backgroundColor: "white",
-                    boxShadow:
-                      "inset 2px 2px 4px rgba(0,0,0,0.15), inset -2px -2px 4px rgba(255,255,255,0.8)",
-                  },
-                }}
-                className="absolute top-1/2 -translate-x-[100%]"
-              >
-                <ArrowRight size={20} />
-              </IconButton>
-              <Box>
-                <Typography variant="h6" sx={{ fontWeight: 700, fontSize: "1.125rem" }}>
+                    transition: "box-shadow 0.1s ease",
+                    "&:hover": {
+                      backgroundColor: "white",
+                      boxShadow:
+                        "inset 2px 2px 4px rgba(0,0,0,0.15), inset -2px -2px 4px rgba(255,255,255,0.8)",
+                    },
+                  }}
+                  className="absolute top-1/2 -translate-x-[100%]"
+                >
+                  <ArrowRight size={20} />
+                </IconButton>
+              )}
+              <Box sx={{ minWidth: 0 }}>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    fontWeight: 700,
+                    fontSize: { xs: "1rem", sm: "1.125rem" },
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
                   {milestone.name}
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                    fontSize: { xs: "0.75rem", sm: "0.875rem" },
+                  }}
+                >
                   {project.projectCode} · {project.customerName}
                 </Typography>
               </Box>
             </Box>
-            <IconButton onClick={handleClose} size="small">
+            <IconButton onClick={handleClose} size="small" sx={{ flexShrink: 0 }}>
               <X size={20} />
             </IconButton>
           </Box>
 
-          <Box sx={{ display: "flex", flex: 1, overflow: "hidden", minHeight: 0 }}>
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: { xs: "column", md: "row" },
+              flex: 1,
+              overflow: "hidden",
+              minHeight: 0,
+            }}
+          >
             <TaskManagementSidebar
               activeTab={activeTab}
               onTabClick={setActiveTab}
               milestoneName={milestone.name}
             />
 
-            <Box sx={{ flex: 1, overflowY: "auto", p: 3, minWidth: 0 }}>
+            <Box
+              sx={{
+                flex: 1,
+                overflowY: "auto",
+                p: { xs: 2, sm: 3 },
+                minWidth: 0,
+                WebkitOverflowScrolling: "touch",
+              }}
+            >
               {activeTab === "tasks" && (
                 <TaskMilestoneTasksTab projectId={projectId} milestone={milestone} />
               )}

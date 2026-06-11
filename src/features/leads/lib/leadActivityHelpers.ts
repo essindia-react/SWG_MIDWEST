@@ -8,7 +8,11 @@ import {
   leadToWorkspaceForm,
   workspaceFormToLeadInput,
 } from "../../../lib/leadWorkspaceHelpers";
-import type { Lead, LeadFollowUpActivity, LeadFormInput } from "../../../types/lead";
+import type {
+  Lead,
+  LeadFollowUpActivity,
+  LeadFormInput,
+} from "../../../types/lead";
 import type { LucideIcon } from "lucide-react";
 import {
   Calculator,
@@ -59,7 +63,7 @@ function activity(
   title: string,
   description: string,
   date: string,
-  type: LeadActivityType
+  type: LeadActivityType,
 ): LeadActivityItem {
   return { id, title, description, date, type, icon: ACTIVITY_ICON[type] };
 }
@@ -87,12 +91,11 @@ function getDefaultFollowUpActivities(lead: Lead): LeadFollowUpActivity[] {
 }
 
 function followUpToActivityItem(entry: LeadFollowUpActivity): LeadActivityItem {
-  const type: LeadActivityType =
-    entry.title.toLowerCase().includes("email")
-      ? "email"
-      : entry.title.toLowerCase().includes("call")
-        ? "call"
-        : "note";
+  const type: LeadActivityType = entry.title.toLowerCase().includes("email")
+    ? "email"
+    : entry.title.toLowerCase().includes("call")
+      ? "call"
+      : "note";
 
   return activity(entry.id, entry.title, entry.description, entry.date, type);
 }
@@ -100,7 +103,7 @@ function followUpToActivityItem(entry: LeadFollowUpActivity): LeadActivityItem {
 export function buildLeadInputWithFollowUp(
   lead: Lead,
   entry: LeadFollowUpActivity,
-  nextFollowUpDate?: string
+  nextFollowUpDate?: string,
 ): LeadFormInput {
   const existingActivities = lead.workflowData?.followUpActivities;
   const isUsingDefaults = !existingActivities?.length;
@@ -132,8 +135,8 @@ export function getLeadActivityTimeline(lead: Lead): LeadActivityItem[] {
       "Lead Created",
       `${customerName} added to pipeline via ${getLeadSourceLabel(lead.leadSource)}. Assigned to ${rep.name}.`,
       lead.createdAt,
-      "created"
-    )
+      "created",
+    ),
   );
 
   if (wd.siteVisitScheduledDate || wd.visitDate) {
@@ -143,8 +146,8 @@ export function getLeadActivityTimeline(lead: Lead): LeadActivityItem[] {
         "Site Visit Scheduled",
         `Visit ${wd.visitStatus ? `marked as ${wd.visitStatus}` : "scheduled"}${wd.siteAddress ? ` at ${wd.siteAddress}` : ""}.`,
         wd.siteVisitScheduledDate ?? wd.visitDate ?? lead.updatedAt,
-        "site-visit"
-      )
+        "site-visit",
+      ),
     );
   }
 
@@ -157,8 +160,8 @@ export function getLeadActivityTimeline(lead: Lead): LeadActivityItem[] {
           ? `${wd.designName}${wd.designStatus ? ` — ${wd.designStatus}` : ""}`
           : `Design ${wd.designId} started${wd.designCreatedBy ? ` by ${wd.designCreatedBy}` : ""}.`,
         lead.updatedAt,
-        "design"
-      )
+        "design",
+      ),
     );
   }
 
@@ -171,8 +174,8 @@ export function getLeadActivityTimeline(lead: Lead): LeadActivityItem[] {
           ? `Estimation ${wd.estimationNo} prepared for ${wd.estimationCustomerName ?? customerName}.`
           : `Estimation with ${wd.estimationAreas?.length ?? 0} area(s) prepared.`,
         wd.estimationDate ?? lead.updatedAt,
-        "estimation"
-      )
+        "estimation",
+      ),
     );
   }
 
@@ -185,15 +188,14 @@ export function getLeadActivityTimeline(lead: Lead): LeadActivityItem[] {
           ? `${wd.proposalName}${wd.proposalStatus ? ` — ${wd.proposalStatus}` : ""}`
           : `Proposal ${wd.proposalId} shared with customer.`,
         lead.updatedAt,
-        "proposal"
-      )
+        "proposal",
+      ),
     );
   }
 
-  const storedFollowUps =
-    wd.followUpActivities?.length
-      ? wd.followUpActivities
-      : getDefaultFollowUpActivities(lead);
+  const storedFollowUps = wd.followUpActivities?.length
+    ? wd.followUpActivities
+    : getDefaultFollowUpActivities(lead);
 
   for (const entry of storedFollowUps) {
     items.push(followUpToActivityItem(entry));
@@ -206,8 +208,8 @@ export function getLeadActivityTimeline(lead: Lead): LeadActivityItem[] {
         "Follow-up Scheduled",
         `Next check-in with ${customerName}.`,
         lead.nextFollowUpDate,
-        "scheduled"
-      )
+        "scheduled",
+      ),
     );
   }
 
@@ -218,13 +220,13 @@ export function getLeadActivityTimeline(lead: Lead): LeadActivityItem[] {
         "Internal Note",
         lead.internalNotes.trim(),
         lead.updatedAt,
-        "note"
-      )
+        "note",
+      ),
     );
   }
 
   return items.sort(
-    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
   );
 }
 

@@ -2,7 +2,11 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Box, Button, Chip, Typography } from "@mui/material";
 import { Plus, User } from "lucide-react";
 import { formatProjectDate } from "../../../lib/projectHelpers";
-import type { Project, ProjectMilestone, ProjectTask } from "../../../types/project";
+import type {
+  Project,
+  ProjectMilestone,
+  ProjectTask,
+} from "../../../types/project";
 import { getMaterialRequestsForTask } from "../lib/taskMaterialRequestHelpers";
 import { TaskMaterialRequestModal } from "./TaskMaterialRequestModal";
 import { TaskMaterialRequestStatusSummary } from "./TaskMaterialRequestStatusSummary";
@@ -28,7 +32,11 @@ function TaskMaterialRequestRow({
   onOpenModal: (task: ProjectTask) => void;
   refreshKey: number;
 }) {
-  const requestCount = getMaterialRequestsForTask(project.projectCode, task.id, task.name).length;
+  const requestCount = getMaterialRequestsForTask(
+    project.projectCode,
+    task.id,
+    task.name,
+  ).length;
 
   return (
     <TaskRowCard
@@ -48,15 +56,30 @@ function TaskMaterialRequestRow({
         </Button>
       }
       subtitle={
-        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5, mt: 0.5, alignItems: "center" }}>
+        <Box
+          sx={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: 1.5,
+            mt: 0.5,
+            alignItems: "center",
+          }}
+        >
           <Typography
-            sx={{ fontSize: "0.75rem", color: "text.secondary", display: "flex", alignItems: "center", gap: 0.5 }}
+            sx={{
+              fontSize: "0.75rem",
+              color: "text.secondary",
+              display: "flex",
+              alignItems: "center",
+              gap: 0.5,
+            }}
           >
             <User size={12} />
             {task.assignedTo || "Unassigned"}
           </Typography>
           <Typography sx={{ fontSize: "0.75rem", color: "text.secondary" }}>
-            {formatProjectDate(task.plannedStartDate)} – {formatProjectDate(task.plannedEndDate)}
+            {formatProjectDate(task.plannedStartDate)} –{" "}
+            {formatProjectDate(task.plannedEndDate)}
           </Typography>
           {requestCount > 0 && !expanded && (
             <Chip
@@ -79,7 +102,14 @@ function TaskMaterialRequestRow({
       }
     >
       <Box sx={{ pt: 2 }}>
-        <Typography sx={{ fontSize: "0.8125rem", fontWeight: 600, color: "text.secondary", mb: 1.5 }}>
+        <Typography
+          sx={{
+            fontSize: "0.8125rem",
+            fontWeight: 600,
+            color: "text.secondary",
+            mb: 1.5,
+          }}
+        >
           Placed Orders
         </Typography>
         <TaskMaterialRequestStatusSummary
@@ -141,10 +171,10 @@ export function TaskMilestoneMaterialRequestTab({
 
   return (
     <Box>
-      <Typography sx={{ fontSize: "0.8125rem", color: "text.secondary", mb: 2 }}>
+      {/* <Typography sx={{ fontSize: "0.8125rem", color: "text.secondary", mb: 2 }}>
         Use <strong>+ Request</strong> to place an order. Click the task row to slide down and view
         placed orders. Approved orders show &quot;Await delivery&quot;.
-      </Typography>
+      </Typography> */}
 
       <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
         {tasks.map((task) => (

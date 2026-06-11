@@ -2,7 +2,7 @@ import { MaterialRequestApprovalView } from "../../features/site-material-reques
 
 export function SiteMaterialRequestPage() {
   return (
-    <div className="flex-1 overflow-hidden">
+    <div className="overflow-y-auto flex-1">
       <MaterialRequestApprovalView />
     </div>
   );

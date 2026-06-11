@@ -1,6 +1,12 @@
 // sideNave 1
 import React from "react";
-import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type RefObject,
+} from "react";
 import { NavLink, useLocation, useNavigate } from "react-router";
 import {
   LayoutDashboard,
@@ -22,18 +28,37 @@ import { INVENTORY_TABS } from "../../features/inventory/constants/inventoryCons
 import { ROUTES } from "../../routes/paths";
 
 const navItems = [
-  { to: ROUTES.dashboard, label: "Dashboard", icon: LayoutDashboard, end: true },
+  {
+    to: ROUTES.dashboard,
+    label: "Dashboard",
+    icon: LayoutDashboard,
+    end: true,
+  },
   { to: ROUTES.calendar, label: "Calendar", icon: Calendar },
   { to: ROUTES.leads, label: "Leads", icon: Users },
   { to: ROUTES.pipeline, label: "WIP Leads", icon: GitBranch },
   { to: ROUTES.projects, label: "Project Management", icon: FolderKanban },
   { to: ROUTES.tasks, label: "Task Management", icon: CheckSquare },
   // { to: ROUTES.fieldOperations, label: "Field Operations", icon: HardHat },
-  { to: ROUTES.siteMaterialRequest, label: "Site Material Management", icon: Package },
+  {
+    to: ROUTES.siteMaterialRequest,
+    label: "Site Material Management",
+    icon: Package,
+  },
   // { to: ROUTES.vehicleMaster, label: "Transportation", icon: Truck, hasTransportationMenu: true },
-  { to: ROUTES.inventory, label: "Inventory", icon: Warehouse, hasInventoryMenu: true },
+  {
+    to: ROUTES.inventory,
+    label: "Inventory",
+    icon: Warehouse,
+    hasInventoryMenu: true,
+  },
   { to: ROUTES.invoicing, label: "Invoicing", icon: Receipt },
-  { to: ROUTES.employees, label: "HR & People", icon: UsersRound, hasHRMenu: true },
+  {
+    to: ROUTES.employees,
+    label: "HR & People",
+    icon: UsersRound,
+    hasHRMenu: true,
+  },
 ];
 
 const EXPANDED_WIDTH = 240;
@@ -71,12 +96,10 @@ interface SidebarProps {
 function NavLabel({
   isOpen,
   isActive,
-  fontSize = 15,
   children,
 }: {
   isOpen: boolean;
   isActive: boolean;
-  fontSize?: number;
   children: React.ReactNode;
 }) {
   return (
@@ -85,12 +108,13 @@ function NavLabel({
         overflow: "hidden",
         whiteSpace: "nowrap",
         display: "block",
-        fontSize: isOpen ? `${fontSize}px` : "8px",
+        fontSize: "14px", // fixed size — no more reflow
         fontWeight: isActive ? 600 : 400,
         opacity: isOpen ? 1 : 0,
         maxWidth: isOpen ? "160px" : "0px",
+        marginLeft: isOpen ? "10px" : "0px", // gap slides in with the text
         transition:
-          "font-size 280ms cubic-bezier(0.4,0,0.2,1), opacity 220ms ease, max-width 280ms cubic-bezier(0.4,0,0.2,1)",
+          "max-width 280ms cubic-bezier(0.4,0,0.2,1), opacity 220ms ease, margin-left 280ms cubic-bezier(0.4,0,0.2,1)",
       }}
     >
       {children}
@@ -120,7 +144,9 @@ function FlyoutSubMenu({
   const flyoutRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState({ top: 0, left: 0 });
-  const [listMaxHeight, setListMaxHeight] = useState<number | undefined>(undefined);
+  const [listMaxHeight, setListMaxHeight] = useState<number | undefined>(
+    undefined,
+  );
 
   useLayoutEffect(() => {
     if (!visible || !anchorRef.current) return;
@@ -144,8 +170,14 @@ function FlyoutSubMenu({
         if (panelHeight > maxPanelHeight) {
           top = FLYOUT_VIEWPORT_MARGIN;
           listMax = Math.max(120, maxPanelHeight - headerHeight);
-        } else if (panelHeight > 0 && top + panelHeight > viewportHeight - FLYOUT_VIEWPORT_MARGIN) {
-          top = Math.max(FLYOUT_VIEWPORT_MARGIN, viewportHeight - panelHeight - FLYOUT_VIEWPORT_MARGIN);
+        } else if (
+          panelHeight > 0 &&
+          top + panelHeight > viewportHeight - FLYOUT_VIEWPORT_MARGIN
+        ) {
+          top = Math.max(
+            FLYOUT_VIEWPORT_MARGIN,
+            viewportHeight - panelHeight - FLYOUT_VIEWPORT_MARGIN,
+          );
         }
       }
 
@@ -215,7 +247,9 @@ function FlyoutSubMenu({
               color: item.isActive ? "#ffffff" : "rgba(255,255,255,0.62)",
               fontWeight: item.isActive ? 600 : 400,
               fontSize: "13px",
-              backgroundColor: item.isActive ? "rgba(255,255,255,0.1)" : "transparent",
+              backgroundColor: item.isActive
+                ? "rgba(255,255,255,0.1)"
+                : "transparent",
             }}
           >
             {item.label}
@@ -245,7 +279,9 @@ function MobileInlineSubMenu({
             color: item.isActive ? "#ffffff" : "rgba(255,255,255,0.62)",
             fontWeight: item.isActive ? 600 : 400,
             fontSize: "13px",
-            backgroundColor: item.isActive ? "rgba(255,255,255,0.1)" : "transparent",
+            backgroundColor: item.isActive
+              ? "rgba(255,255,255,0.1)"
+              : "transparent",
           }}
         >
           {item.label}
@@ -255,7 +291,13 @@ function MobileInlineSubMenu({
   );
 }
 
-function SubmenuChevron({ sidebarOpen, isHovered }: { sidebarOpen: boolean; isHovered?: boolean }) {
+function SubmenuChevron({
+  sidebarOpen,
+  isHovered,
+}: {
+  sidebarOpen: boolean;
+  isHovered?: boolean;
+}) {
   if (sidebarOpen) {
     return (
       <ChevronRight
@@ -273,7 +315,10 @@ function SubmenuChevron({ sidebarOpen, isHovered }: { sidebarOpen: boolean; isHo
   );
 }
 
-export function Sidebar({ mobileOpen: mobileOpenProp, onMobileOpenChange }: SidebarProps = {}) {
+export function Sidebar({
+  mobileOpen: mobileOpenProp,
+  onMobileOpenChange,
+}: SidebarProps = {}) {
   const location = useLocation();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -283,7 +328,9 @@ export function Sidebar({ mobileOpen: mobileOpenProp, onMobileOpenChange }: Side
   const setMobileOpen = onMobileOpenChange ?? setInternalMobileOpen;
   const [openFlyout, setOpenFlyout] = useState<FlyoutId | null>(null);
   const openFlyoutTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const closeFlyoutTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const closeFlyoutTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
 
   const inventoryAnchorRef = useRef<HTMLDivElement>(null);
   const hrAnchorRef = useRef<HTMLDivElement>(null);
@@ -291,7 +338,8 @@ export function Sidebar({ mobileOpen: mobileOpenProp, onMobileOpenChange }: Side
 
   const isInventoryPage = location.pathname === ROUTES.inventory;
   const isInventorySection = isInventoryPage;
-  const activeInventoryTab = new URLSearchParams(location.search).get("tab") ?? "master";
+  const activeInventoryTab =
+    new URLSearchParams(location.search).get("tab") ?? "master";
 
   const isHRSection =
     location.pathname.startsWith("/hr") ||
@@ -320,12 +368,17 @@ export function Sidebar({ mobileOpen: mobileOpenProp, onMobileOpenChange }: Side
   useEffect(() => {
     return () => {
       if (openFlyoutTimerRef.current) clearTimeout(openFlyoutTimerRef.current);
-      if (closeFlyoutTimerRef.current) clearTimeout(closeFlyoutTimerRef.current);
+      if (closeFlyoutTimerRef.current)
+        clearTimeout(closeFlyoutTimerRef.current);
     };
   }, []);
 
   const isOpen = isMobile ? mobileOpen : hovered;
-  const sidebarWidth = isMobile ? EXPANDED_WIDTH : isOpen ? EXPANDED_WIDTH : COLLAPSED_WIDTH;
+  const sidebarWidth = isMobile
+    ? EXPANDED_WIDTH
+    : isOpen
+      ? EXPANDED_WIDTH
+      : COLLAPSED_WIDTH;
 
   const handleSidebarMouseEnter = () => {
     if (!isMobile) setHovered(true);
@@ -389,7 +442,8 @@ export function Sidebar({ mobileOpen: mobileOpenProp, onMobileOpenChange }: Side
       style={{
         opacity: isOpen ? 0.6 : 0,
         transform: isOpen ? "scale(1)" : "scale(0.6)",
-        transition: "opacity 240ms ease, transform 260ms cubic-bezier(0.4,0,0.2,1)",
+        transition:
+          "opacity 240ms ease, transform 260ms cubic-bezier(0.4,0,0.2,1)",
       }}
     >
       <ChevronRight className="w-3.5 h-3.5" />
@@ -403,7 +457,11 @@ export function Sidebar({ mobileOpen: mobileOpenProp, onMobileOpenChange }: Side
   }));
 
   const hrFlyoutItems: FlyoutItem[] = [
-    { to: ROUTES.employees, label: "Employee Records", isActive: location.pathname === ROUTES.employees },
+    {
+      to: ROUTES.employees,
+      label: "Employee Records",
+      isActive: location.pathname === ROUTES.employees,
+    },
     // { to: ROUTES.clockInOut, label: "Clock In / Out", isActive: location.pathname === ROUTES.clockInOut },
     {
       to: ROUTES.timesheetSummary,
@@ -438,7 +496,9 @@ export function Sidebar({ mobileOpen: mobileOpenProp, onMobileOpenChange }: Side
         <div
           key={item.to}
           ref={transportationAnchorRef}
-          onMouseEnter={!isMobile ? () => handleFlyoutEnter("transportation") : undefined}
+          onMouseEnter={
+            !isMobile ? () => handleFlyoutEnter("transportation") : undefined
+          }
           onMouseLeave={!isMobile ? handleFlyoutLeave : undefined}
         >
           <NavLink
@@ -455,7 +515,9 @@ export function Sidebar({ mobileOpen: mobileOpenProp, onMobileOpenChange }: Side
                 isTransportationSection || openFlyout === "transportation"
                   ? "rgba(255,255,255,0.15)"
                   : "transparent",
-              color: isTransportationSection ? "#ffffff" : "rgba(255,255,255,0.65)",
+              color: isTransportationSection
+                ? "#ffffff"
+                : "rgba(255,255,255,0.65)",
             }}
             title={!isOpen ? item.label : undefined}
           >
@@ -470,7 +532,10 @@ export function Sidebar({ mobileOpen: mobileOpenProp, onMobileOpenChange }: Side
           </NavLink>
 
           {isMobile && openFlyout === "transportation" && (
-            <MobileInlineSubMenu items={transportationFlyoutItems} onItemSelect={handleNavSelect} />
+            <MobileInlineSubMenu
+              items={transportationFlyoutItems}
+              onItemSelect={handleNavSelect}
+            />
           )}
 
           {!isMobile && (
@@ -507,20 +572,28 @@ export function Sidebar({ mobileOpen: mobileOpenProp, onMobileOpenChange }: Side
             }`}
             style={{
               backgroundColor:
-                isHRSection || openFlyout === "hr" ? "rgba(255,255,255,0.15)" : "transparent",
+                isHRSection || openFlyout === "hr"
+                  ? "rgba(255,255,255,0.15)"
+                  : "transparent",
               color: isHRSection ? "#ffffff" : "rgba(255,255,255,0.65)",
             }}
             title={!isOpen ? item.label : undefined}
           >
             <Icon className="w-4 h-4 flex-shrink-0" />
-            <SubmenuChevron sidebarOpen={isOpen} isHovered={openFlyout === "hr"} />
+            <SubmenuChevron
+              sidebarOpen={isOpen}
+              isHovered={openFlyout === "hr"}
+            />
             <NavLabel isOpen={isOpen} isActive={isHRSection}>
               {item.label}
             </NavLabel>
           </NavLink>
 
           {isMobile && openFlyout === "hr" && (
-            <MobileInlineSubMenu items={hrFlyoutItems} onItemSelect={handleNavSelect} />
+            <MobileInlineSubMenu
+              items={hrFlyoutItems}
+              onItemSelect={handleNavSelect}
+            />
           )}
 
           {!isMobile && (
@@ -543,7 +616,9 @@ export function Sidebar({ mobileOpen: mobileOpenProp, onMobileOpenChange }: Side
         <div
           key={item.to}
           ref={inventoryAnchorRef}
-          onMouseEnter={!isMobile ? () => handleFlyoutEnter("inventory") : undefined}
+          onMouseEnter={
+            !isMobile ? () => handleFlyoutEnter("inventory") : undefined
+          }
           onMouseLeave={!isMobile ? handleFlyoutLeave : undefined}
         >
           <NavLink
@@ -565,14 +640,20 @@ export function Sidebar({ mobileOpen: mobileOpenProp, onMobileOpenChange }: Side
             title={!isOpen ? item.label : undefined}
           >
             <Icon className="w-4 h-4 flex-shrink-0" />
-            <SubmenuChevron sidebarOpen={isOpen} isHovered={openFlyout === "inventory"} />
+            <SubmenuChevron
+              sidebarOpen={isOpen}
+              isHovered={openFlyout === "inventory"}
+            />
             <NavLabel isOpen={isOpen} isActive={isInventorySection}>
               {item.label}
             </NavLabel>
           </NavLink>
 
           {isMobile && openFlyout === "inventory" && (
-            <MobileInlineSubMenu items={inventoryFlyoutItems} onItemSelect={handleNavSelect} />
+            <MobileInlineSubMenu
+              items={inventoryFlyoutItems}
+              onItemSelect={handleNavSelect}
+            />
           )}
 
           {!isMobile && (
@@ -611,7 +692,9 @@ export function Sidebar({ mobileOpen: mobileOpenProp, onMobileOpenChange }: Side
             isActive ? "" : "hover:bg-white/8"
           }`}
           style={{
-            backgroundColor: isActive ? "rgba(255,255,255,0.15)" : "transparent",
+            backgroundColor: isActive
+              ? "rgba(255,255,255,0.15)"
+              : "transparent",
             color: isActive ? "#ffffff" : "rgba(255,255,255,0.65)",
           }}
           title={!isOpen ? item.label : undefined}
@@ -681,85 +764,94 @@ export function Sidebar({ mobileOpen: mobileOpenProp, onMobileOpenChange }: Side
           backgroundColor: "var(--brand-dark-green)",
         }}
       >
-      {/* Header */}
-      <div
-        className={`flex items-center border-b px-3 py-3.5 ${isOpen ? "gap-3" : "justify-center"}`}
-        style={{ borderColor: "rgba(255,255,255,0.12)" }}
-      >
-        <div className={`flex items-center gap-3 min-w-0 ${isOpen ? "flex-1" : ""}`}>
-          <div
-            className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
-            style={{ backgroundColor: "rgba(255,255,255,0.15)" }}
-          >
-            <Leaf className="w-5 h-5 text-white" />
-          </div>
+        {/* Header */}
+        <div
+          className="flex items-center border-b px-3 py-3.5"
+          style={{ borderColor: "rgba(255,255,255,0.12)" }}
+        >
+          <div className="flex items-center min-w-0 flex-1">
+            <div
+              className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+              style={{ backgroundColor: "rgba(255,255,255,0.15)" }}
+            >
+              <Leaf className="w-5 h-5 text-white" />
+            </div>
 
-          {isOpen && (
-            <div className="min-w-0 overflow-hidden flex-1">
+            {/* Always rendered, animated in/out */}
+            <div
+              style={{
+                overflow: "hidden",
+                whiteSpace: "nowrap",
+                maxWidth: isOpen ? "160px" : "0px",
+                opacity: isOpen ? 1 : 0,
+                marginLeft: isOpen ? "10px" : "0px",
+                transition:
+                  "max-width 280ms cubic-bezier(0.4,0,0.2,1), opacity 220ms ease, margin-left 280ms cubic-bezier(0.4,0,0.2,1)",
+              }}
+            >
               <div className="text-white font-semibold leading-tight truncate text-[13px]">
                 Southwest Greens
               </div>
-              <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.55)" }}>
+              <div
+                style={{ fontSize: "11px", color: "rgba(255,255,255,0.55)" }}
+              >
                 CRM Platform
               </div>
             </div>
-          )}
+          </div>
         </div>
-      </div>
 
-      {/* Nav */}
-      <nav className="flex-1 py-4 space-y-0.5 overflow-y-auto px-4.5 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-        {navItems.map(renderNavItem)}
-      </nav>
+        {/* Nav */}
+        <nav className="flex-1 py-4 space-y-0.5 overflow-y-auto px-4.5 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+          {navItems.map(renderNavItem)}
+        </nav>
 
-      {/* Footer / User */}
-      <div
-        className="border-t pt-3 pb-4 px-2"
-        style={{ borderColor: "rgba(255,255,255,0.12)" }}
-      >
+        {/* Footer / User */}
         <div
-          className="flex items-center justify-center rounded-lg gap-3  py-2"
-          style={{ backgroundColor: "rgba(255,255,255,0.08)" }}
-          title={!isOpen ? "Alex Johnson" : undefined}
+          className="border-t pt-3 pb-4 px-2"
+          style={{ borderColor: "rgba(255,255,255,0.12)" }}
         >
           <div
-            className="w-8 h-8 rounded-full flex items-center justify-center text-white flex-shrink-0"
-            style={{ backgroundColor: "var(--brand-green)", fontSize: "12px", fontWeight: 600 }}
-          >
-            AJ
-          </div>
-
-          <div
-            className="min-w-0 hidden"
-            style={{
-              maxWidth: isOpen ? "160px" : "0px",
-              opacity: isOpen ? 1 : 0,
-              transition: "max-width 280ms cubic-bezier(0.4,0,0.2,1), opacity 220ms ease",
-            }}
+            className="flex items-center rounded-lg px-2 py-2"
+            style={{ backgroundColor: "rgba(255,255,255,0.08)" }}
+            title={!isOpen ? "Alex Johnson" : undefined}
           >
             <div
-              className="text-white truncate"
+              className="w-8 h-8 rounded-full flex items-center justify-center text-white flex-shrink-0"
               style={{
-                fontSize: isOpen ? "12px" : "8px",
-                fontWeight: 500,
-                transition: "font-size 280ms cubic-bezier(0.4,0,0.2,1)",
+                backgroundColor: "var(--brand-green)",
+                fontSize: "12px",
+                fontWeight: 600,
               }}
             >
-              Alex Johnson
+              AJ
             </div>
+
+            {/* Always rendered, animated in/out */}
             <div
               style={{
-                fontSize: isOpen ? "11px" : "7px",
-                color: "rgba(255,255,255,0.5)",
-                transition: "font-size 280ms cubic-bezier(0.4,0,0.2,1)",
+                overflow: "hidden",
+                whiteSpace: "nowrap",
+                maxWidth: isOpen ? "160px" : "0px",
+                opacity: isOpen ? 1 : 0,
+                marginLeft: isOpen ? "10px" : "0px",
+                transition:
+                  "max-width 280ms cubic-bezier(0.4,0,0.2,1), opacity 220ms ease, margin-left 280ms cubic-bezier(0.4,0,0.2,1)",
               }}
             >
-              Sales Manager
+              <div
+                className="text-white truncate"
+                style={{ fontSize: "12px", fontWeight: 500 }}
+              >
+                Alex Johnson
+              </div>
+              <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.5)" }}>
+                Sales Manager
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </aside>
+      </aside>
     </>
   );
 }

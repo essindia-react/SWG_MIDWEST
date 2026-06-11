@@ -1,3 +1,4 @@
+import React from "react";
 import { PurchaseRequisitionView } from "../../features/purchase-requisition/components/PurchaseRequisitionView";
 
 export function PurchaseRequisitionPage() {

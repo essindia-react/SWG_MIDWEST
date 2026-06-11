@@ -19,7 +19,10 @@ import {
   resolveInvoiceStatus,
 } from "../../../lib/invoiceHelpers";
 import { theme } from "../../../theme/theme";
-import type { Invoice, MilestoneCompletionRecord } from "../../../types/invoice";
+import type {
+  Invoice,
+  MilestoneCompletionRecord,
+} from "../../../types/invoice";
 import type { Project, ProjectMilestone } from "../../../types/project";
 import { DEPARTMENT_CHECKLIST_ITEMS } from "../constants/invoicingConstants";
 import { CreateInvoiceForm } from "./CreateInvoiceForm";
@@ -34,15 +37,27 @@ interface InvoicingMilestonePanelProps {
 }
 
 function createDefaultChecklist(): Record<string, boolean> {
-  return Object.fromEntries(DEPARTMENT_CHECKLIST_ITEMS.map((item) => [item, false]));
+  return Object.fromEntries(
+    DEPARTMENT_CHECKLIST_ITEMS.map((item) => [item, false]),
+  );
 }
 
-function SectionHeading({ title, subtitle }: { title: string; subtitle?: string }) {
+function SectionHeading({
+  title,
+  subtitle,
+}: {
+  title: string;
+  subtitle?: string;
+}) {
   return (
     <Box sx={{ mb: 2.5 }}>
-      <Typography sx={{ fontSize: "1rem", fontWeight: 700 }}>{title}</Typography>
+      <Typography sx={{ fontSize: "1rem", fontWeight: 700 }}>
+        {title}
+      </Typography>
       {subtitle && (
-        <Typography sx={{ fontSize: "0.8125rem", color: "text.secondary", mt: 0.25 }}>
+        <Typography
+          sx={{ fontSize: "0.8125rem", color: "text.secondary", mt: 0.25 }}
+        >
           {subtitle}
         </Typography>
       )}
@@ -63,22 +78,27 @@ export function InvoicingMilestonePanel({
   const [formInvoice, setFormInvoice] = useState<Invoice | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const existingInvoice = getInvoicesForMilestone(project.id, milestone.id).find(
-    (inv) => resolveInvoiceStatus(inv) !== "draft"
-  );
-  const milestoneDrafts = getInvoicesForMilestone(project.id, milestone.id).filter(
-    (inv) => resolveInvoiceStatus(inv) === "draft"
-  );
+  const existingInvoice = getInvoicesForMilestone(
+    project.id,
+    milestone.id,
+  ).find((inv) => resolveInvoiceStatus(inv) !== "draft");
+  const milestoneDrafts = getInvoicesForMilestone(
+    project.id,
+    milestone.id,
+  ).filter((inv) => resolveInvoiceStatus(inv) === "draft");
   const completionPct = getMilestoneCompletionPct(milestone);
 
-  const [completionRecord, setCompletionRecord] = useState<MilestoneCompletionRecord>(() => ({
-    completionPct,
-    markedCompleteBy: milestone.assignedTo || project.projectManager,
-    completionDate: new Date().toISOString().slice(0, 10),
-    completionPhotos: existingInvoice?.completionRecord.completionPhotos ?? [],
-    checklistSignedOff:
-      existingInvoice?.completionRecord.checklistSignedOff ?? createDefaultChecklist(),
-  }));
+  const [completionRecord, setCompletionRecord] =
+    useState<MilestoneCompletionRecord>(() => ({
+      completionPct,
+      markedCompleteBy: milestone.assignedTo || project.projectManager,
+      completionDate: new Date().toISOString().slice(0, 10),
+      completionPhotos:
+        existingInvoice?.completionRecord.completionPhotos ?? [],
+      checklistSignedOff:
+        existingInvoice?.completionRecord.checklistSignedOff ??
+        createDefaultChecklist(),
+    }));
 
   useEffect(() => {
     requestAnimationFrame(() => setIsVisible(true));
@@ -172,7 +192,8 @@ export function InvoicingMilestonePanel({
     setActiveInvoice(invoice);
   };
 
-  const currentInvoice = activeInvoice ?? existingInvoice ?? milestoneDrafts[0] ?? null;
+  const currentInvoice =
+    activeInvoice ?? existingInvoice ?? milestoneDrafts[0] ?? null;
 
   return (
     <Box
@@ -241,7 +262,10 @@ export function InvoicingMilestonePanel({
                 <ArrowRight size={20} />
               </IconButton>
               <Box>
-                <Typography variant="h6" sx={{ fontWeight: 700, fontSize: "1.0625rem" }}>
+                <Typography
+                  variant="h6"
+                  sx={{ fontWeight: 700, fontSize: "1.0625rem" }}
+                >
                   {milestone.name}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
@@ -255,14 +279,14 @@ export function InvoicingMilestonePanel({
           </Box>
 
           <Box sx={{ flex: 1, overflowY: "auto", p: { xs: 2, md: 4 } }}>
-            <SectionHeading
+            {/* <SectionHeading
               title="Invoice Status Tracking"
               subtitle="Invoice lifecycle flow from draft through payment"
             />
             <InvoiceStatusFlow
               currentStatus={displayStatus}
               invoiceNumber={currentInvoice?.invoiceNumber}
-            />
+            /> */}
 
             <SectionHeading
               title="Milestone Completion"
@@ -313,7 +337,9 @@ export function InvoicingMilestonePanel({
                 />
               </Grid>
               <Grid size={{ xs: 12 }}>
-                <Typography sx={{ fontSize: "0.8125rem", fontWeight: 600, mb: 1 }}>
+                <Typography
+                  sx={{ fontSize: "0.8125rem", fontWeight: 600, mb: 1 }}
+                >
                   Completion Photos
                 </Typography>
                 <input
@@ -333,7 +359,9 @@ export function InvoicingMilestonePanel({
                   Upload Photos
                 </Button>
                 {completionRecord.completionPhotos.length > 0 && (
-                  <Box sx={{ mt: 1, display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                  <Box
+                    sx={{ mt: 1, display: "flex", flexWrap: "wrap", gap: 0.5 }}
+                  >
                     {completionRecord.completionPhotos.map((name) => (
                       <Typography
                         key={name}
@@ -346,17 +374,23 @@ export function InvoicingMilestonePanel({
                 )}
               </Grid>
               <Grid size={{ xs: 12 }}>
-                <Typography sx={{ fontSize: "0.8125rem", fontWeight: 600, mb: 1 }}>
+                <Typography
+                  sx={{ fontSize: "0.8125rem", fontWeight: 600, mb: 1 }}
+                >
                   Checklist Signed Off
                 </Typography>
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+                <Box
+                  sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}
+                >
                   {DEPARTMENT_CHECKLIST_ITEMS.map((item) => (
                     <FormControlLabel
                       key={item}
                       control={
                         <Checkbox
                           size="small"
-                          checked={completionRecord.checklistSignedOff[item] ?? false}
+                          checked={
+                            completionRecord.checklistSignedOff[item] ?? false
+                          }
                           onChange={(e) =>
                             setCompletionRecord((p) => ({
                               ...p,
@@ -369,7 +403,9 @@ export function InvoicingMilestonePanel({
                         />
                       }
                       label={
-                        <Typography sx={{ fontSize: "0.8125rem" }}>{item}</Typography>
+                        <Typography sx={{ fontSize: "0.8125rem" }}>
+                          {item}
+                        </Typography>
                       }
                     />
                   ))}
@@ -377,7 +413,14 @@ export function InvoicingMilestonePanel({
               </Grid>
             </Grid>
 
-            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5, mb: showInvoiceForm ? 0 : 4 }}>
+            <Box
+              sx={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: 1.5,
+                mb: showInvoiceForm ? 0 : 4,
+              }}
+            >
               {existingInvoice ? (
                 <>
                   <Button
@@ -424,7 +467,9 @@ export function InvoicingMilestonePanel({
               invoices={milestoneDrafts}
               projects={[project]}
               onDraftClick={handleDraftClick}
-              selectedDraftId={formInvoice?.status === "draft" ? formInvoice.id : undefined}
+              selectedDraftId={
+                formInvoice?.status === "draft" ? formInvoice.id : undefined
+              }
             />
           </Box>
         </Box>

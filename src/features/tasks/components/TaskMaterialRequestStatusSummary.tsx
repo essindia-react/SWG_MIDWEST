@@ -27,34 +27,57 @@ export function TaskMaterialRequestStatusSummary({
   if (requests.length === 0) {
     if (hideEmpty) return null;
     return (
-      <Typography sx={{ fontSize: "0.75rem", color: "text.disabled", fontStyle: "italic" }}>
-        {compact ? "No requests yet — use + Request" : "Click to submit a material request for this task"}
+      <Typography
+        sx={{
+          fontSize: "0.75rem",
+          color: "text.disabled",
+          fontStyle: "italic",
+        }}
+      >
+        {compact
+          ? "No requests yet — use + Request"
+          : "Click to submit a material request for this task"}
       </Typography>
     );
   }
 
   if (compact) {
-    const approvedCount = requests.filter((r) => r.status === "approved").length;
+    const approvedCount = requests.filter(
+      (r) => r.status === "approved",
+    ).length;
     const pendingCount = requests.filter((r) => r.status === "pending").length;
 
     return (
-      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75, alignItems: "center" }}>
-        <Typography sx={{ fontSize: "0.75rem", color: "text.secondary", fontWeight: 600 }}>
+      <Box
+        sx={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: 0.75,
+          alignItems: "center",
+        }}
+      >
+        <Typography
+          sx={{ fontSize: "0.75rem", color: "text.secondary", fontWeight: 600 }}
+        >
           {requests.length} request{requests.length !== 1 ? "s" : ""} placed
         </Typography>
         {pendingCount > 0 && (
-          <Typography sx={{ fontSize: "0.6875rem", color: "#D97706", fontWeight: 600 }}>
+          <Typography
+            sx={{ fontSize: "0.6875rem", color: "#D97706", fontWeight: 600 }}
+          >
             · {pendingCount} pending
           </Typography>
         )}
-        {approvedCount > 0 && (
+        {/* {approvedCount > 0 && (
           <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
             <Truck size={12} color="#2E7D32" />
-            <Typography sx={{ fontSize: "0.6875rem", color: "#2E7D32", fontWeight: 600 }}>
+            <Typography
+              sx={{ fontSize: "0.6875rem", color: "#2E7D32", fontWeight: 600 }}
+            >
               {approvedCount} await delivery
             </Typography>
           </Box>
-        )}
+        )} */}
       </Box>
     );
   }
@@ -78,7 +101,14 @@ export function TaskMaterialRequestStatusSummary({
               borderColor: "transparent",
             }}
           >
-            <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 0.75 }}>
+            <Box
+              sx={{
+                display: "flex",
+                flexWrap: "wrap",
+                alignItems: "center",
+                gap: 0.75,
+              }}
+            >
               <Typography
                 sx={{
                   fontSize: "0.6875rem",
@@ -90,7 +120,13 @@ export function TaskMaterialRequestStatusSummary({
               >
                 {statusConfig.label}
               </Typography>
-              <Typography sx={{ fontSize: "0.75rem", fontWeight: 600, color: "text.primary" }}>
+              <Typography
+                sx={{
+                  fontSize: "0.75rem",
+                  fontWeight: 600,
+                  color: "text.primary",
+                }}
+              >
                 {request.requestNumber}
               </Typography>
               <Typography sx={{ fontSize: "0.75rem", color: "text.secondary" }}>
@@ -100,18 +136,28 @@ export function TaskMaterialRequestStatusSummary({
             {request.status === "approved" && statusConfig.message && (
               <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
                 <Truck size={12} color="#2E7D32" />
-                <Typography sx={{ fontSize: "0.75rem", fontWeight: 600, color: "#2E7D32" }}>
+                <Typography
+                  sx={{
+                    fontSize: "0.75rem",
+                    fontWeight: 600,
+                    color: "#2E7D32",
+                  }}
+                >
                   {statusConfig.message}
                 </Typography>
               </Box>
             )}
             {request.status === "rejected" && request.notesToCrew && (
-              <Typography sx={{ fontSize: "0.6875rem", color: "text.secondary" }}>
+              <Typography
+                sx={{ fontSize: "0.6875rem", color: "text.secondary" }}
+              >
                 {request.notesToCrew}
               </Typography>
             )}
             {request.status === "info_requested" && request.notesToCrew && (
-              <Typography sx={{ fontSize: "0.6875rem", color: "text.secondary" }}>
+              <Typography
+                sx={{ fontSize: "0.6875rem", color: "text.secondary" }}
+              >
                 Office: {request.notesToCrew}
               </Typography>
             )}

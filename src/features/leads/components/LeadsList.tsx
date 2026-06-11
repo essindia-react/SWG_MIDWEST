@@ -73,9 +73,15 @@ const COLUMNS: { label: string; field: keyof LeadTableRow }[] = [
   { label: "City", field: "city" },
 ];
 
-export function LeadsList({ onAddLead, onEditLead, workflowStep }: LeadsListProps) {
+export function LeadsList({
+  onAddLead,
+  onEditLead,
+  workflowStep,
+}: LeadsListProps) {
   const isWorkflowView = Boolean(workflowStep);
-  const activeWorkflow = isWorkflowView ? getLeadWorkflowSection(workflowStep) : null;
+  const activeWorkflow = isWorkflowView
+    ? getLeadWorkflowSection(workflowStep)
+    : null;
   const navigate = useNavigate();
   const { leads } = useLeads();
   const [sortField, setSortField] = useState<keyof LeadTableRow>("createdAt");
@@ -109,7 +115,7 @@ export function LeadsList({ onAddLead, onEditLead, workflowStep }: LeadsListProp
         l.contactPerson.toLowerCase().includes(search.toLowerCase()) ||
         l.leadNumber.toLowerCase().includes(search.toLowerCase()) ||
         l.city.toLowerCase().includes(search.toLowerCase()) ||
-        l.leadSource.toLowerCase().includes(search.toLowerCase())
+        l.leadSource.toLowerCase().includes(search.toLowerCase()),
     )
     .sort((a, b) => {
       const av = a[sortField];
@@ -128,7 +134,10 @@ export function LeadsList({ onAddLead, onEditLead, workflowStep }: LeadsListProp
     return (
       <div className="p-6 flex flex-col items-center justify-center h-full">
         <UserCircle className="w-12 h-12 text-muted-foreground mb-4" />
-        <p className="text-foreground mb-2" style={{ fontSize: "16px", fontWeight: 600 }}>
+        <p
+          className="text-foreground mb-2"
+          style={{ fontSize: "16px", fontWeight: 600 }}
+        >
           No leads yet
         </p>
         <p className="text-muted-foreground mb-6" style={{ fontSize: "14px" }}>
@@ -180,13 +189,13 @@ export function LeadsList({ onAddLead, onEditLead, workflowStep }: LeadsListProp
             style={{ fontSize: "13px" }}
           />
         </div>
-        <button
+        {/* <button
           className="flex items-center gap-2 px-3 py-2 border border-slate-200 rounded-lg bg-white hover:bg-slate-50"
           style={{ fontSize: "13px" }}
         >
           <Filter className="w-4 h-4" />
           Filter
-        </button>
+        </button> */}
         <div
           className="ml-auto px-4 py-2 rounded-xl"
           style={{ backgroundColor: "#E8F5E9" }}
@@ -212,7 +221,9 @@ export function LeadsList({ onAddLead, onEditLead, workflowStep }: LeadsListProp
                   </button>
                 </th>
               ))}
-              <th className="p-4 text-center sticky right-0 z-30 bg-white border-l border-slate-200 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.08)]">Actions</th>
+              <th className="p-4 text-center sticky right-0 z-30 bg-white border-l border-slate-200 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.08)]">
+                Actions
+              </th>
             </tr>
           </thead>
           <tbody className="text-sm divide-y divide-slate-100">

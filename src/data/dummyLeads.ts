@@ -40,7 +40,7 @@ const RAW_DUMMY_LEADS: Lead[] = [
       "Flagship demo lead — full pipeline with site photos, design renders, estimation, and proposal sent.",
     nextFollowUpDate: "2026-06-12",
     assignedRep: "maria-s",
-    status: "quoted",
+    status: "proposal_sent",
     workflowData: {
       visitDate: "2026-06-03",
       visitTime: "10:30",
@@ -80,6 +80,7 @@ const RAW_DUMMY_LEADS: Lead[] = [
       estimationProducts: [
         {
           id: "prod-1",
+          forArea: "Backyard",
           productType: "Turf",
           productName: "SWG Pet Pro 80 — Emerald",
           unit: "sq ft",
@@ -88,6 +89,7 @@ const RAW_DUMMY_LEADS: Lead[] = [
         },
         {
           id: "prod-2",
+          forArea: "Backyard",
           productType: "Infill",
           productName: "Cooling Infill Blend",
           unit: "lbs",
@@ -96,6 +98,7 @@ const RAW_DUMMY_LEADS: Lead[] = [
         },
         {
           id: "prod-3",
+          forArea: "Putting Green Fringe",
           productType: "Base",
           productName: "Crushed Aggregate Base",
           unit: "tons",
@@ -104,6 +107,7 @@ const RAW_DUMMY_LEADS: Lead[] = [
         },
         {
           id: "prod-4",
+          forArea: "Backyard",
           productType: "Edging",
           productName: "Aluminum Bendable Edging",
           unit: "ft",
@@ -189,7 +193,7 @@ const RAW_DUMMY_LEADS: Lead[] = [
     priority: "medium",
     nextFollowUpDate: "2026-06-10",
     assignedRep: "chris-w",
-    status: "quoted",
+    status: "proposal_sent",
     createdAt: "2026-05-25T11:00:00.000Z",
     updatedAt: "2026-06-05T07:00:00.000Z",
   },
@@ -237,7 +241,7 @@ const RAW_DUMMY_LEADS: Lead[] = [
     estimatedValue: 62000,
     priority: "medium",
     assignedRep: "chris-w",
-    status: "consulted",
+    status: "site_visit",
     createdAt: "2026-06-02T09:00:00.000Z",
     updatedAt: "2026-06-05T11:30:00.000Z",
   },

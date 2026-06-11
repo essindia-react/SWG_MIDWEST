@@ -47,6 +47,10 @@ import { FollowUpStep } from "./FollowUpStep";
 import { InquiryStep } from "./InquiryStep";
 import { ProposalStep } from "./ProposalStep";
 import { SiteVisitStep } from "./SiteVisitStep";
+import {
+  prefillFirstEstimationArea,
+  syncInquiryAddressToSiteVisit,
+} from "../../lib/leadWorkspaceSync";
 import { EMPTY_WORKSPACE_FORM, type WorkspaceFormValues } from "./types";
 import { WORKSPACE_STEPS } from "./workspaceSteps";
 import { WorkspaceVerticalStepper } from "./WorkspaceVerticalStepper";
@@ -211,6 +215,9 @@ function toWorkflowData(
     areaName: values.estimationAreas[0]?.areaName || values.areaName || undefined,
     siteVisitImages: values.siteVisitImages.length ? values.siteVisitImages : undefined,
     designImages: values.designImages.length ? values.designImages : undefined,
+    installationTypes: values.installationTypes.length
+      ? values.installationTypes
+      : undefined,
     estimationAreas: values.estimationAreas,
     estimationProducts: values.estimationProducts,
     estimationOverheads: values.estimationOverheads,
@@ -280,6 +287,16 @@ export function LeadWorkspace({ onBack, leadId }: LeadWorkspaceProps) {
     }
   }, [leadId, editingLead]);
 
+  useEffect(() => {
+    const stepId = WORKSPACE_STEPS[activeStep]?.id;
+    if (stepId === 2) {
+      setForm((prev) => syncInquiryAddressToSiteVisit(prev));
+    }
+    if (stepId === 4) {
+      setForm((prev) => prefillFirstEstimationArea(prev));
+    }
+  }, [activeStep]);
+
   const handleChange = useCallback(
     <K extends keyof WorkspaceFormValues>(field: K, value: WorkspaceFormValues[K]) => {
       setForm((prev) => {
@@ -295,6 +312,10 @@ export function LeadWorkspace({ onBack, leadId }: LeadWorkspaceProps) {
           const siteField =
             JOB_SITE_TO_SITE_FIELDS[field as keyof typeof JOB_SITE_TO_SITE_FIELDS];
           next[siteField] = String(value);
+        }
+
+        if (field === "installationTypes") {
+          next = prefillFirstEstimationArea(next);
         }
 
         if (field === "approximateArea") {

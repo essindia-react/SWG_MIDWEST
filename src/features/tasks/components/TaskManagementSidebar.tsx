@@ -1,5 +1,7 @@
 import React from "react";
 import { Box, Typography } from "@mui/material";
+import { useIsMobile } from "../../../components/layout/Sidebar";
+import type { LucideIcon } from "lucide-react";
 import {
   TASK_MANAGEMENT_PANEL_TABS,
   type TaskManagementPanelTabId,
@@ -13,11 +15,104 @@ interface TaskManagementSidebarProps {
   milestoneName: string;
 }
 
+function TabButton({
+  tabId,
+  label,
+  icon: Icon,
+  isActive,
+  onClick,
+  compact = false,
+}: {
+  tabId: TaskManagementPanelTabId;
+  label: string;
+  icon: LucideIcon;
+  isActive: boolean;
+  onClick: (tabId: TaskManagementPanelTabId) => void;
+  compact?: boolean;
+}) {
+  return (
+    <Box
+      component="button"
+      type="button"
+      onClick={() => onClick(tabId)}
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        gap: compact ? 0.75 : 1.5,
+        px: compact ? 1.5 : 2,
+        py: compact ? 1 : 1.5,
+        border: "none",
+        borderRadius: 2,
+        cursor: "pointer",
+        textAlign: "left",
+        flexShrink: 0,
+        bgcolor: isActive ? "rgba(46, 125, 50, 0.1)" : "transparent",
+        color: isActive ? BRAND_GREEN : "text.secondary",
+        transition: "all 0.2s",
+        "&:hover": {
+          bgcolor: isActive ? "rgba(46, 125, 50, 0.12)" : "action.hover",
+        },
+      }}
+    >
+      <Icon size={compact ? 16 : 18} strokeWidth={isActive ? 2.25 : 2} />
+      <Typography
+        sx={{
+          fontSize: compact ? "0.75rem" : "0.8125rem",
+          fontWeight: isActive ? 700 : 500,
+          color: isActive ? BRAND_GREEN : "text.primary",
+          whiteSpace: "nowrap",
+        }}
+      >
+        {label}
+      </Typography>
+    </Box>
+  );
+}
+
 export function TaskManagementSidebar({
   activeTab,
   onTabClick,
   milestoneName,
 }: TaskManagementSidebarProps) {
+  const isMobile = useIsMobile();
+
+  if (isMobile) {
+    return (
+      <Box
+        sx={{
+          flexShrink: 0,
+          borderBottom: 1,
+          borderColor: "divider",
+          bgcolor: "background.default",
+          overflowX: "auto",
+          WebkitOverflowScrolling: "touch",
+        }}
+      >
+        <Box
+          sx={{
+            display: "flex",
+            gap: 0.5,
+            px: 1.5,
+            py: 1,
+            minWidth: "min-content",
+          }}
+        >
+          {TASK_MANAGEMENT_PANEL_TABS.map((tab) => (
+            <TabButton
+              key={tab.id}
+              tabId={tab.id}
+              label={tab.label}
+              icon={tab.icon}
+              isActive={activeTab === tab.id}
+              onClick={onTabClick}
+              compact
+            />
+          ))}
+        </Box>
+      </Box>
+    );
+  }
+
   return (
     <Box
       sx={{
@@ -37,47 +132,16 @@ export function TaskManagementSidebar({
       </Box>
 
       <Box sx={{ py: 2, px: 1.5, display: "flex", flexDirection: "column", gap: 0.5 }}>
-        {TASK_MANAGEMENT_PANEL_TABS.map((tab) => {
-          const Icon = tab.icon;
-          const isActive = activeTab === tab.id;
-
-          return (
-            <Box
-              key={tab.id}
-              component="button"
-              type="button"
-              onClick={() => onTabClick(tab.id)}
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                gap: 1.5,
-                px: 2,
-                py: 1.5,
-                border: "none",
-                borderRadius: 2,
-                cursor: "pointer",
-                textAlign: "left",
-                bgcolor: isActive ? "rgba(46, 125, 50, 0.1)" : "transparent",
-                color: isActive ? BRAND_GREEN : "text.secondary",
-                transition: "all 0.2s",
-                "&:hover": {
-                  bgcolor: isActive ? "rgba(46, 125, 50, 0.12)" : "action.hover",
-                },
-              }}
-            >
-              <Icon size={18} strokeWidth={isActive ? 2.25 : 2} />
-              <Typography
-                sx={{
-                  fontSize: "0.8125rem",
-                  fontWeight: isActive ? 700 : 500,
-                  color: isActive ? BRAND_GREEN : "text.primary",
-                }}
-              >
-                {tab.label}
-              </Typography>
-            </Box>
-          );
-        })}
+        {TASK_MANAGEMENT_PANEL_TABS.map((tab) => (
+          <TabButton
+            key={tab.id}
+            tabId={tab.id}
+            label={tab.label}
+            icon={tab.icon}
+            isActive={activeTab === tab.id}
+            onClick={onTabClick}
+          />
+        ))}
       </Box>
     </Box>
   );

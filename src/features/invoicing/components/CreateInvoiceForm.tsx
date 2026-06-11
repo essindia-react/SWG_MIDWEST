@@ -20,7 +20,12 @@ import {
   formatInvoiceDate,
   getAmountPreviouslyPaid,
 } from "../../../lib/invoiceHelpers";
-import type { Invoice, MilestoneCompletionRecord, PaymentMethod, PaymentTerm } from "../../../types/invoice";
+import type {
+  Invoice,
+  MilestoneCompletionRecord,
+  PaymentMethod,
+  PaymentTerm,
+} from "../../../types/invoice";
 import type { Project, ProjectMilestone } from "../../../types/project";
 import {
   DEFAULT_NOTES_TO_CLIENT,
@@ -39,6 +44,7 @@ interface CreateInvoiceFormProps {
   milestone: ProjectMilestone;
   completionRecord: MilestoneCompletionRecord;
   invoice: Invoice | null;
+  variant?: "inline" | "modal";
   onClose: () => void;
   onSaved: (invoice: Invoice) => void;
   onSent: (invoice: Invoice) => void;
@@ -49,38 +55,55 @@ export function CreateInvoiceForm({
   milestone,
   completionRecord,
   invoice,
+  variant = "inline",
   onClose,
   onSaved,
   onSent,
 }: CreateInvoiceFormProps) {
-  const { invoices, createInvoice, updateInvoice, updateInvoiceStatus } = useInvoices();
+  const { invoices, createInvoice, updateInvoice, updateInvoiceStatus } =
+    useInvoices();
 
-  const [taxPercent, setTaxPercent] = useState(String(invoice?.taxPercent ?? DEFAULT_TAX_PERCENT));
-  const [paymentTerms, setPaymentTerms] = useState<PaymentTerm>(invoice?.paymentTerms ?? "Net 15");
+  const [taxPercent, setTaxPercent] = useState(
+    String(invoice?.taxPercent ?? DEFAULT_TAX_PERCENT),
+  );
+  const [paymentTerms, setPaymentTerms] = useState<PaymentTerm>(
+    invoice?.paymentTerms ?? "Net 15",
+  );
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>(
-    invoice?.paymentMethods ?? ["ACH", "Check"]
+    invoice?.paymentMethods ?? ["ACH", "Check"],
   );
   const [notesToClient, setNotesToClient] = useState(
-    invoice?.notesToClient ?? DEFAULT_NOTES_TO_CLIENT
+    invoice?.notesToClient ?? DEFAULT_NOTES_TO_CLIENT,
   );
-  const [internalNotes, setInternalNotes] = useState(invoice?.internalNotes ?? "");
+  const [internalNotes, setInternalNotes] = useState(
+    invoice?.internalNotes ?? "",
+  );
 
   const previewLineItems = useMemo(
     () => buildLineItems(project, milestone),
-    [project, milestone]
+    [project, milestone],
   );
 
-  const previewSubtotal = previewLineItems.reduce((sum, li) => sum + li.amount, 0);
-  const previewTax = Math.round(previewSubtotal * (Number(taxPercent) / 100) * 100) / 100;
+  const previewSubtotal = previewLineItems.reduce(
+    (sum, li) => sum + li.amount,
+    0,
+  );
+  const previewTax =
+    Math.round(previewSubtotal * (Number(taxPercent) / 100) * 100) / 100;
   const previewTotal = Math.round((previewSubtotal + previewTax) * 100) / 100;
-  const previewPreviouslyPaid = getAmountPreviouslyPaid(project.id, milestone.id, invoices);
+  const previewPreviouslyPaid = getAmountPreviouslyPaid(
+    project.id,
+    milestone.id,
+    invoices,
+  );
   const previewBalance = Math.max(0, previewTotal - previewPreviouslyPaid);
 
   const lineItems = invoice?.lineItems ?? previewLineItems;
   const subtotal = invoice?.subtotal ?? previewSubtotal;
   const taxAmount = invoice?.taxAmount ?? previewTax;
   const totalDue = invoice?.totalDue ?? previewTotal;
-  const amountPreviouslyPaid = invoice?.amountPreviouslyPaid ?? previewPreviouslyPaid;
+  const amountPreviouslyPaid =
+    invoice?.amountPreviouslyPaid ?? previewPreviouslyPaid;
   const balanceRemaining = invoice?.balanceRemaining ?? previewBalance;
 
   const buildInput = () => ({
@@ -96,16 +119,22 @@ export function CreateInvoiceForm({
 
   const applyDraftUpdates = (draft: Invoice): Invoice => {
     const input = buildInput();
-    const lineItems = buildLineItems(project, milestone);
+    const lineItems =
+      draft.lineItems.length > 0
+        ? draft.lineItems
+        : buildLineItems(project, milestone);
     const subtotal = lineItems.reduce((sum, li) => sum + li.amount, 0);
     const tax = Math.round(subtotal * (input.taxPercent / 100) * 100) / 100;
     const total = Math.round((subtotal + tax) * 100) / 100;
     const previouslyPaid = getAmountPreviouslyPaid(
       project.id,
       milestone.id,
-      invoices.filter((inv) => inv.id !== draft.id)
+      invoices.filter((inv) => inv.id !== draft.id),
     );
-    const balance = Math.max(0, Math.round((total - previouslyPaid) * 100) / 100);
+    const balance = Math.max(
+      0,
+      Math.round((total - previouslyPaid) * 100) / 100,
+    );
 
     const updates = {
       taxPercent: input.taxPercent,
@@ -167,44 +196,67 @@ export function CreateInvoiceForm({
     const sentInvoice = { ...target, status: "sent" as const };
     onSent(sentInvoice);
     onClose();
-    toast.success(`Invoice ${target.invoiceNumber} sent to ${target.billToEmail}`);
+    toast.success(
+      `Invoice ${target.invoiceNumber} sent to ${target.billToEmail}`,
+    );
   };
 
   const handlePreview = () => {
     if (invoice) {
-      toast.info(`Previewing invoice ${invoice.invoiceNumber} — PDF preview would open here`);
+      toast.info(
+        `Previewing invoice ${invoice.invoiceNumber} — PDF preview would open here`,
+      );
       return;
     }
     toast.info("Save as draft first to preview the invoice");
   };
 
+  const isModal = variant === "modal";
+
   return (
     <Box
       sx={{
-        borderTop: 2,
-        borderColor: "primary.main",
-        pt: 3,
-        mt: 2,
+        ...(isModal
+          ? {}
+          : {
+              borderTop: 2,
+              borderColor: "primary.main",
+              pt: 3,
+              mt: 2,
+            }),
       }}
     >
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 2.5 }}>
-        <Box>
-          <Typography sx={{ fontSize: "1rem", fontWeight: 700 }}>Invoice Creation</Typography>
-          <Typography sx={{ fontSize: "0.8125rem", color: "text.secondary", mt: 0.25 }}>
-            Review and edit invoice details before sending to client
-          </Typography>
-        </Box>
-        <Button
-          variant="text"
-          color="inherit"
-          size="small"
-          startIcon={<X size={16} />}
-          onClick={onClose}
-          sx={{ flexShrink: 0 }}
+      {!isModal && (
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+            mb: 2.5,
+          }}
         >
-          Close
-        </Button>
-      </Box>
+          <Box>
+            <Typography sx={{ fontSize: "1rem", fontWeight: 700 }}>
+              Invoice Creation
+            </Typography>
+            <Typography
+              sx={{ fontSize: "0.8125rem", color: "text.secondary", mt: 0.25 }}
+            >
+              Review and edit invoice details before sending to client
+            </Typography>
+          </Box>
+          <Button
+            variant="text"
+            color="inherit"
+            size="small"
+            startIcon={<X size={16} />}
+            onClick={onClose}
+            sx={{ flexShrink: 0 }}
+          >
+            Close
+          </Button>
+        </Box>
+      )}
 
       <Grid container spacing={2.5} sx={{ mb: 3 }}>
         <Grid size={{ xs: 12, sm: 6 }}>
@@ -218,7 +270,9 @@ export function CreateInvoiceForm({
         <Grid size={{ xs: 12, sm: 6 }}>
           <TextFieldInput
             label="Invoice Date"
-            value={formatInvoiceDate(invoice?.invoiceDate ?? new Date().toISOString().slice(0, 10))}
+            value={formatInvoiceDate(
+              invoice?.invoiceDate ?? new Date().toISOString().slice(0, 10),
+            )}
             onChange={() => {}}
             disabled
           />
@@ -313,7 +367,9 @@ export function CreateInvoiceForm({
           <TableBody>
             {lineItems.map((li) => (
               <TableRow key={li.id}>
-                <TableCell sx={{ fontSize: "0.8125rem" }}>{li.description}</TableCell>
+                <TableCell sx={{ fontSize: "0.8125rem" }}>
+                  {li.description}
+                </TableCell>
                 <TableCell sx={{ fontSize: "0.8125rem" }} align="right">
                   {formatInvoiceCurrency(li.amount)}
                 </TableCell>
@@ -333,7 +389,11 @@ export function CreateInvoiceForm({
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-          <TextFieldInput label="Tax (%)" value={taxPercent} onChange={setTaxPercent} />
+          <TextFieldInput
+            label="Tax (%)"
+            value={taxPercent}
+            onChange={setTaxPercent}
+          />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 4 }}>
           <TextFieldInput
@@ -396,9 +456,6 @@ export function CreateInvoiceForm({
       </Grid>
 
       <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5 }}>
-        <Button variant="outlined" startIcon={<FileText size={16} />} onClick={handlePreview}>
-          Preview Invoice
-        </Button>
         <Button variant="outlined" onClick={handleSaveDraft}>
           Save as Draft
         </Button>

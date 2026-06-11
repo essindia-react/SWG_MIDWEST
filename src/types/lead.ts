@@ -105,6 +105,8 @@ export interface LeadEstimationArea {
 
 export interface LeadEstimationProduct {
   id: string;
+  forArea: string;
+  productId?: string;
   productType: string;
   productName: string;
   unit: string;
@@ -148,6 +150,7 @@ export interface LeadWorkflowData {
   estimationDate?: string;
   estimationCustomerName?: string;
   areaName?: string;
+  installationTypes?: string[];
   estimationAreas?: LeadEstimationArea[];
   estimationProducts?: LeadEstimationProduct[];
   estimationOverheads?: LeadEstimationOverhead[];

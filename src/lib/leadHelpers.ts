@@ -1,8 +1,16 @@
 import { DUMMY_LEADS } from "../data/dummyLeads";
-import type { BudgetRange, Lead, LeadStatus, ProjectType } from "../types/lead";
+import { PROJECT_CUSTOMERS } from "../features/projects/constants/projectConstants";
+import type {
+  BudgetRange,
+  Lead,
+  LeadFormInput,
+  LeadStatus,
+  ProjectType,
+} from "../types/lead";
 import {
   LEAD_SOURCES,
   LEAD_STATUS_CONFIG,
+  normalizeLeadStatus,
   OHIO_REGIONS,
   PROJECT_TYPES,
   SALES_REPS,
@@ -35,7 +43,7 @@ const SQFT_RATE_BY_TYPE: Record<ProjectType, number> = {
 export function estimateLeadValue(
   projectType: ProjectType,
   squareFootageEstimate?: number,
-  budgetRange?: BudgetRange
+  budgetRange?: BudgetRange,
 ): number {
   if (budgetRange) {
     return BUDGET_MIDPOINTS[budgetRange];
@@ -51,7 +59,9 @@ export function getLeadFullName(lead: Lead): string {
 }
 
 export function getLeadDisplayAddress(lead: Lead): string {
-  const parts = [lead.address, lead.city, lead.state, lead.zipCode].filter(Boolean);
+  const parts = [lead.address, lead.city, lead.state, lead.zipCode].filter(
+    Boolean,
+  );
   return parts.join(", ");
 }
 
@@ -79,7 +89,7 @@ export function isStaleNewLead(lead: Lead): boolean {
 }
 
 export function derivePriority(
-  estimatedValue: number
+  estimatedValue: number,
 ): "high" | "medium" | "low" {
   if (estimatedValue >= 50000) return "high";
   if (estimatedValue >= 20000) return "medium";
@@ -90,11 +100,12 @@ export function leadToTags(lead: Lead): string[] {
   const tags: string[] = [];
   if (lead.propertyType) {
     tags.push(
-      lead.propertyType.charAt(0).toUpperCase() + lead.propertyType.slice(1)
+      lead.propertyType.charAt(0).toUpperCase() + lead.propertyType.slice(1),
     );
   } else if (lead.projectSubtype) {
     tags.push(
-      lead.projectSubtype.charAt(0).toUpperCase() + lead.projectSubtype.slice(1)
+      lead.projectSubtype.charAt(0).toUpperCase() +
+        lead.projectSubtype.slice(1),
     );
   }
   tags.push(getProjectTypeLabel(lead.projectType).split("/")[0].trim());
@@ -104,31 +115,29 @@ export function leadToTags(lead: Lead): string[] {
 
 export type PipelineStage =
   | "new"
-  | "contacted"
-  | "qualified"
+  | "design"
   | "site_visit"
   | "estimate_sent"
-  | "negotiation"
+  | "proposal_sent"
   | "won"
   | "lost";
 
 const STATUS_TO_PIPELINE: Record<LeadStatus, PipelineStage> = {
   new: "new",
-  contacted: "contacted",
-  consulted: "qualified",
-  quoted: "estimate_sent",
+  design: "design",
+  site_visit: "site_visit",
+  estimate_sent: "estimate_sent",
+  proposal_sent: "proposal_sent",
   won: "won",
   lost: "lost",
-  nurturing: "contacted",
 };
 
 const PIPELINE_TO_STATUS: Record<PipelineStage, LeadStatus> = {
   new: "new",
-  contacted: "contacted",
-  qualified: "consulted",
-  site_visit: "consulted",
-  estimate_sent: "quoted",
-  negotiation: "quoted",
+  design: "design",
+  site_visit: "site_visit",
+  estimate_sent: "estimate_sent",
+  proposal_sent: "proposal_sent",
   won: "won",
   lost: "lost",
 };
@@ -139,6 +148,101 @@ export function leadStatusToPipelineStage(status: LeadStatus): PipelineStage {
 
 export function pipelineStageToLeadStatus(stage: PipelineStage): LeadStatus {
   return PIPELINE_TO_STATUS[stage];
+}
+
+type ProjectCustomer = (typeof PROJECT_CUSTOMERS)[number];
+
+function parseCustomerAddress(address: string): {
+  address: string;
+  city: string;
+  state: string;
+  zipCode: string;
+} {
+  const match = address.match(/^(.+),\s*([^,]+),\s*([A-Z]{2})\s+(\d{5})$/);
+  if (match) {
+    return {
+      address: match[1],
+      city: match[2],
+      state: match[3],
+      zipCode: match[4],
+    };
+  }
+  return { address, city: "", state: "OH", zipCode: "" };
+}
+
+function parseCustomerName(name: string): {
+  firstName: string;
+  lastName: string;
+  company?: string;
+  propertyType: Lead["propertyType"];
+} {
+  const isCompany =
+    name.includes("Dev.") ||
+    name.includes("Inc.") ||
+    name.includes("LLC") ||
+    name.split(/\s+/).length > 2;
+
+  if (isCompany) {
+    return {
+      firstName: name,
+      lastName: "",
+      company: name,
+      propertyType: "commercial",
+    };
+  }
+
+  const parts = name.trim().split(/\s+/);
+  return {
+    firstName: parts[0],
+    lastName: parts.slice(1).join(" "),
+    propertyType: "residential",
+  };
+}
+
+export function findLeadForCustomer(
+  leads: Lead[],
+  customer: ProjectCustomer,
+): Lead | undefined {
+  const customerName = customer.name.toLowerCase();
+  return leads.find(
+    (lead) =>
+      lead.email.toLowerCase() === customer.email.toLowerCase() ||
+      getLeadCustomerName(lead).toLowerCase() === customerName ||
+      lead.company?.toLowerCase() === customerName,
+  );
+}
+
+export function customerToLeadFormInput(
+  customer: ProjectCustomer,
+  stage: PipelineStage,
+): LeadFormInput {
+  const { address, city, state, zipCode } = parseCustomerAddress(
+    customer.address,
+  );
+  const { firstName, lastName, company, propertyType } = parseCustomerName(
+    customer.name,
+  );
+
+  return {
+    firstName,
+    lastName,
+    email: customer.email,
+    phone: customer.phone,
+    company,
+    address,
+    city,
+    state,
+    zipCode,
+    leadSource: "referral",
+    projectType: "artificial-turf",
+    propertyType,
+    priority: "medium",
+    drainageRequired: false,
+    removeExistingGrass: false,
+    hoaApprovalRequired: false,
+    assignedRep: SALES_REPS[0].id,
+    status: pipelineStageToLeadStatus(stage),
+  };
 }
 
 export interface LeadTableRow {
@@ -167,7 +271,8 @@ export function getLeadCustomerName(lead: Lead): string {
 
 export function leadToTableRow(lead: Lead): LeadTableRow {
   const rep = getRepById(lead.assignedRep);
-  const statusConfig = LEAD_STATUS_CONFIG[lead.status];
+  const status = normalizeLeadStatus(lead.status);
+  const statusConfig = LEAD_STATUS_CONFIG[status];
 
   return {
     id: lead.id,
@@ -205,7 +310,7 @@ export function getRecentNewLeads(leads: Lead[], limit = 5): Lead[] {
     .filter((lead) => lead.status === "new")
     .sort(
       (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
     )
     .slice(0, limit);
 }
@@ -236,7 +341,7 @@ export function leadToPipelineCard(lead: Lead): PipelineLeadCard {
   const updated = new Date(lead.updatedAt).getTime();
   const daysInStage = Math.max(
     0,
-    Math.floor((Date.now() - updated) / (24 * 60 * 60 * 1000))
+    Math.floor((Date.now() - updated) / (24 * 60 * 60 * 1000)),
   );
 
   return {

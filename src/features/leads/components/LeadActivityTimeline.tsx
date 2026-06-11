@@ -19,7 +19,13 @@ interface LeadActivityTimelineProps {
   onAddFollowUp?: (values: LeadFollowUpFormValues) => void;
 }
 
-function ActivityCard({ item, align }: { item: LeadActivityItem; align: "left" | "right" }) {
+function ActivityCard({
+  item,
+  align,
+}: {
+  item: LeadActivityItem;
+  align: "left" | "right";
+}) {
   const Icon = item.icon;
 
   return (
@@ -57,14 +63,24 @@ function ActivityCard({ item, align }: { item: LeadActivityItem; align: "left" |
       >
         {item.title}
       </h4>
-      <p style={{ fontSize: "13px", color: "var(--muted-foreground)", lineHeight: 1.5 }}>
+      <p
+        style={{
+          fontSize: "13px",
+          color: "var(--muted-foreground)",
+          lineHeight: 1.5,
+        }}
+      >
         {item.description}
       </p>
       <div
         className={`mt-3 flex items-center gap-1.5 ${
           align === "left" ? "md:justify-end" : ""
         }`}
-        style={{ fontSize: "11px", color: "var(--brand-green)", fontWeight: 600 }}
+        style={{
+          fontSize: "11px",
+          color: "var(--brand-green)",
+          fontWeight: 600,
+        }}
       >
         <Icon className="w-3 h-3" />
         Activity logged
@@ -95,7 +111,13 @@ function TimelineNode({ item }: { item: LeadActivityItem }) {
   );
 }
 
-function TimelineRow({ item, index }: { item: LeadActivityItem; index: number }) {
+function TimelineRow({
+  item,
+  index,
+}: {
+  item: LeadActivityItem;
+  index: number;
+}) {
   const isLeft = index % 2 === 0;
 
   return (
@@ -103,7 +125,11 @@ function TimelineRow({ item, index }: { item: LeadActivityItem; index: number })
       initial={{ opacity: 0, y: 28 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-60px" }}
-      transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1], delay: index * 0.05 }}
+      transition={{
+        duration: 0.5,
+        ease: [0.22, 1, 0.36, 1],
+        delay: index * 0.05,
+      }}
       className="group relative"
     >
       <div className="relative pl-14 pb-10 last:pb-0 md:hidden">
@@ -114,7 +140,9 @@ function TimelineRow({ item, index }: { item: LeadActivityItem; index: number })
       </div>
 
       <div className="relative hidden pb-16 last:pb-0 md:grid md:grid-cols-[1fr_48px_1fr] md:items-start md:gap-0">
-        <div className={`col-start-1 ${isLeft ? "" : "invisible pointer-events-none"}`}>
+        <div
+          className={`col-start-1 ${isLeft ? "" : "invisible pointer-events-none"}`}
+        >
           {isLeft && (
             <div className="pr-8">
               <ActivityCard item={item} align="left" />
@@ -126,7 +154,9 @@ function TimelineRow({ item, index }: { item: LeadActivityItem; index: number })
           <TimelineNode item={item} />
         </div>
 
-        <div className={`col-start-3 ${!isLeft ? "" : "invisible pointer-events-none"}`}>
+        <div
+          className={`col-start-3 ${!isLeft ? "" : "invisible pointer-events-none"}`}
+        >
           {!isLeft && (
             <div className="pl-8">
               <ActivityCard item={item} align="right" />
@@ -155,7 +185,10 @@ function AddFollowUpButton({ onClick }: { onClick: () => void }) {
   );
 }
 
-export function LeadActivityTimeline({ lead, onAddFollowUp }: LeadActivityTimelineProps) {
+export function LeadActivityTimeline({
+  lead,
+  onAddFollowUp,
+}: LeadActivityTimelineProps) {
   const [formOpen, setFormOpen] = useState(false);
   const activities = useMemo(() => getLeadActivityTimeline(lead), [lead]);
 
@@ -189,12 +222,25 @@ export function LeadActivityTimeline({ lead, onAddFollowUp }: LeadActivityTimeli
         }}
       />
 
+      {/* Desktop: + on center line */}
+      <div className="relative mb-4 hidden md:flex md:justify-center">
+        <AddFollowUpButton onClick={() => setFormOpen(true)} />
+      </div>
+
+      {/* Mobile: + on left line */}
+      <div className="relative mb-4 flex justify-start pl-[14px] md:hidden">
+        <AddFollowUpButton onClick={() => setFormOpen(true)} />
+      </div>
+
       {activities.length === 0 ? (
         <div
           className="rounded-xl border p-10 text-center"
           style={{ borderColor: "var(--border)", backgroundColor: "#FAFAFA" }}
         >
-          <p className="text-foreground mb-1" style={{ fontSize: "14px", fontWeight: 600 }}>
+          <p
+            className="text-foreground mb-1"
+            style={{ fontSize: "14px", fontWeight: 600 }}
+          >
             No activity yet
           </p>
           <p style={{ fontSize: "13px", color: "var(--muted-foreground)" }}>
@@ -202,22 +248,12 @@ export function LeadActivityTimeline({ lead, onAddFollowUp }: LeadActivityTimeli
           </p>
         </div>
       ) : (
-        <div className="relative">
+        <div className="relative pb-4">
           {activities.map((item, index) => (
             <TimelineRow key={item.id} item={item} index={index} />
           ))}
         </div>
       )}
-
-      {/* Desktop: + on center line */}
-      <div className="relative mt-2 hidden md:flex md:justify-center md:pb-4">
-        <AddFollowUpButton onClick={() => setFormOpen(true)} />
-      </div>
-
-      {/* Mobile: + on left line */}
-      <div className="relative mt-2 flex justify-start pl-[14px] pb-4 md:hidden">
-        <AddFollowUpButton onClick={() => setFormOpen(true)} />
-      </div>
 
       {formOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">

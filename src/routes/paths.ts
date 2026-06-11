@@ -45,7 +45,7 @@ export const ROUTE_TITLES: Record<string, string> = {
   [ROUTES.automations]: "Automation Builder",
   [ROUTES.analytics]: "Lead Source Analytics",
   [ROUTES.mobile]: "Mobile Sales View",
-  [ROUTES.siteMaterialRequest]: "Site Material Request",
+  [ROUTES.siteMaterialRequest]: "Site Material Approvals",
   [ROUTES.inventory]: "Inventory Management",
   [ROUTES.purchaseRequisition]: "Purchase Requisitions",
   [ROUTES.settings]: "Settings",

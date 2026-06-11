@@ -127,7 +127,16 @@ function TaskPickListSection({
 
   return (
     <Box sx={{ pt: 2 }}>
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: { xs: "column", sm: "row" },
+          alignItems: { xs: "stretch", sm: "center" },
+          justifyContent: "space-between",
+          gap: 1,
+          mb: 2,
+        }}
+      >
         <Typography sx={{ fontSize: "0.8125rem", fontWeight: 600, color: "text.secondary" }}>
           Pick List Items
         </Typography>
@@ -140,6 +149,7 @@ function TaskPickListSection({
             setEditingItem(null);
             setModalOpen(true);
           }}
+          sx={{ alignSelf: { xs: "stretch", sm: "auto" } }}
         >
           Add Item
         </Button>

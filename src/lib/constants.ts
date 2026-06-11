@@ -179,14 +179,28 @@ export const LEAD_STATUS_CONFIG: Record<
   LeadStatus,
   { label: string; color: string; bg: string }
 > = {
-  new: { label: "New Lead", color: "#1D4ED8", bg: "#DBEAFE" },
-  contacted: { label: "Contacted", color: "#0284C7", bg: "#EFF6FF" },
-  consulted: { label: "Site Visit", color: "#B45309", bg: "#FEF3C7" },
-  quoted: { label: "Quoting", color: "#7C3AED", bg: "#F3E8FF" },
+  new: { label: "New Inquiry", color: "#64748B", bg: "#F8FAFC" },
+  site_visit: { label: "Site Visit", color: "#D97706", bg: "#FFFBEB" },
+  design: { label: "Design", color: "#0284C7", bg: "#EFF6FF" },
+  estimate_sent: { label: "Estimation", color: "#EA580C", bg: "#FFF7ED" },
+  proposal_sent: { label: "Proposal Sent", color: "#0284C7", bg: "#EFF6FF" },
   won: { label: "Won", color: "#16A34A", bg: "#F0FDF4" },
   lost: { label: "Lost", color: "#94A3B8", bg: "#F8FAFC" },
-  nurturing: { label: "Nurturing", color: "#1565C0", bg: "#E3F2FD" },
 };
+
+const LEGACY_LEAD_STATUS_MAP: Record<string, LeadStatus> = {
+  contacted: "design",
+  consulted: "site_visit",
+  quoted: "estimate_sent",
+  nurturing: "new",
+};
+
+export function normalizeLeadStatus(status: string): LeadStatus {
+  if (status in LEAD_STATUS_CONFIG) {
+    return status as LeadStatus;
+  }
+  return LEGACY_LEAD_STATUS_MAP[status] ?? "new";
+}
 
 export const PRIORITY_CONFIG: Record<
   LeadPriority,
@@ -220,9 +234,9 @@ export const PRIORITY_CONFIG: Record<
 
 export const FORM_STAGE_TO_STATUS: Record<FormPipelineStage, LeadStatus> = {
   new: "new",
-  contacted: "contacted",
-  meeting_scheduled: "consulted",
-  quoting: "quoted",
+  contacted: "design",
+  meeting_scheduled: "site_visit",
+  quoting: "estimate_sent",
 };
 
 export const DEFAULT_LEAD_SOURCE: LeadSource = "web-form";

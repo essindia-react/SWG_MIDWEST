@@ -147,9 +147,7 @@ function MilestoneSection({
 }
 
 export function InvoicingMilestoneList({ projects, onMilestoneClick }: InvoicingMilestoneListProps) {
-  const projectsWithMilestones = projects.filter((p) => p.milestones.length > 0);
-
-  if (projectsWithMilestones.length === 0) {
+  if (projects.length === 0) {
     return (
       <Typography color="text.secondary" sx={{ fontSize: "0.875rem" }}>
         No project milestones available for invoicing.
@@ -159,7 +157,7 @@ export function InvoicingMilestoneList({ projects, onMilestoneClick }: Invoicing
 
   return (
     <Box>
-      {projectsWithMilestones.map((project) => (
+      {projects.map((project) => (
         <Box
           key={project.id}
           sx={{

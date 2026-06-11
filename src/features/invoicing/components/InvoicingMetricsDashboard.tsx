@@ -1,67 +1,63 @@
-import React, { type ReactNode } from "react";
+import React from "react";
 import { Box, Grid, Typography } from "@mui/material";
 import {
-  AlertCircle,
-  CheckCircle2,
-  Clock,
-  DollarSign,
-  FileText,
-  Send,
-} from "lucide-react";
-import { calculateInvoicingMetrics, formatInvoiceCurrency } from "../../../lib/invoiceHelpers";
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Legend,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+import {
+  formatInvoiceCurrency,
+  getInvoiceStatusPieData,
+  getMonthlyInvoiceBarData,
+  getPaymentMethodsBarData,
+  getPaymentsDonutData,
+} from "../../../lib/invoiceHelpers";
 import type { Invoice } from "../../../types/invoice";
 import type { Project } from "../../../types/project";
+const tooltipStyle = {
+  borderRadius: 8,
+  border: "1px solid #E2E8F0",
+  fontSize: 12,
+  boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+};
 
-interface MetricCardProps {
-  label: string;
-  value: string;
-  icon: ReactNode;
-  accent?: string;
-  highlight?: boolean;
+interface ChartCardProps {
+  title: string;
+  subtitle?: string;
+  children: React.ReactNode;
 }
 
-function MetricCard({ label, value, icon, accent, highlight }: MetricCardProps) {
+function ChartCard({ title, subtitle, children }: ChartCardProps) {
   return (
     <Box
       sx={{
-        p: 2.5,
+        p: { xs: 2, sm: 2.5 },
         borderRadius: 2,
         border: 1,
-        borderColor: highlight ? "primary.main" : "divider",
-        bgcolor: highlight ? "rgba(46, 125, 50, 0.04)" : "background.paper",
+        borderColor: "divider",
+        bgcolor: "background.paper",
         height: "100%",
-        display: "flex",
-        flexDirection: "column",
-        gap: 1.5,
+        boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
       }}
     >
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <Typography sx={{ fontSize: "0.75rem", fontWeight: 600, color: "text.secondary" }}>
-          {label}
-        </Typography>
-        <Box
-          sx={{
-            width: 32,
-            height: 32,
-            borderRadius: 1.5,
-            bgcolor: accent ?? "grey.100",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          {icon}
-        </Box>
-      </Box>
-      <Typography
-        sx={{
-          fontSize: highlight ? "1.375rem" : "1.125rem",
-          fontWeight: 700,
-          color: highlight ? "primary.main" : "text.primary",
-        }}
-      >
-        {value}
+      <Typography sx={{ fontSize: "0.875rem", fontWeight: 700, mb: 0.25 }}>
+        {title}
       </Typography>
+      {subtitle && (
+        <Typography sx={{ fontSize: "0.75rem", color: "text.secondary", mb: 2 }}>
+          {subtitle}
+        </Typography>
+      )}
+      {!subtitle && <Box sx={{ mb: 2 }} />}
+      {children}
     </Box>
   );
 }
@@ -71,8 +67,13 @@ interface InvoicingMetricsDashboardProps {
   invoices: Invoice[];
 }
 
-export function InvoicingMetricsDashboard({ projects, invoices }: InvoicingMetricsDashboardProps) {
-  const metrics = calculateInvoicingMetrics(projects, invoices);
+export function InvoicingMetricsDashboard({ invoices }: InvoicingMetricsDashboardProps) {
+  const paymentsData = getPaymentsDonutData(invoices);
+  const statusData = getInvoiceStatusPieData(invoices);
+  const methodsData = getPaymentMethodsBarData(invoices);
+  const monthlyData = getMonthlyInvoiceBarData(invoices);
+
+  const paymentsTotal = paymentsData.reduce((sum, d) => sum + d.value, 0);
 
   return (
     <Box sx={{ mb: 4 }}>
@@ -80,59 +81,217 @@ export function InvoicingMetricsDashboard({ projects, invoices }: InvoicingMetri
         Invoicing Overview
       </Typography>
       <Typography sx={{ fontSize: "0.8125rem", color: "text.secondary", mb: 2.5 }}>
-        Milestone billing metrics across all projects
+        Payment collection, status breakdown, and billing trends
       </Typography>
 
       <Grid container spacing={2}>
-        <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
-          <MetricCard
-            label="Total Invoices"
-            value={String(metrics.totalInvoices)}
-            icon={<FileText size={16} color="#2E7D32" />}
-            accent="rgba(46, 125, 50, 0.12)"
-          />
+        <Grid size={{ xs: 12, md: 6, lg: 3 }}>
+          <ChartCard title="Payments" subtitle="Collected vs outstanding">
+            {paymentsData.length === 0 ? (
+              <Typography sx={{ fontSize: "0.8125rem", color: "text.secondary", py: 4, textAlign: "center" }}>
+                No payment data yet
+              </Typography>
+            ) : (
+              <>
+                <ResponsiveContainer width="100%" height={160}>
+                  <PieChart>
+                    <Pie
+                      data={paymentsData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={42}
+                      outerRadius={65}
+                      paddingAngle={3}
+                      dataKey="value"
+                    >
+                      {paymentsData.map((entry) => (
+                        <Cell key={entry.name} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={tooltipStyle}
+                      formatter={(value: number) => formatInvoiceCurrency(value)}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+                <Box sx={{ mt: 1, display: "flex", flexDirection: "column", gap: 0.75 }}>
+                  {paymentsData.map((slice) => (
+                    <Box
+                      key={slice.name}
+                      sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}
+                    >
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <Box
+                          sx={{
+                            width: 10,
+                            height: 10,
+                            borderRadius: "50%",
+                            bgcolor: slice.color,
+                          }}
+                        />
+                        <Typography sx={{ fontSize: "0.75rem", color: "text.secondary" }}>
+                          {slice.name}
+                        </Typography>
+                      </Box>
+                      <Typography sx={{ fontSize: "0.75rem", fontWeight: 600 }}>
+                        {paymentsTotal > 0
+                          ? `${Math.round((slice.value / paymentsTotal) * 100)}%`
+                          : "0%"}
+                      </Typography>
+                    </Box>
+                  ))}
+                </Box>
+              </>
+            )}
+          </ChartCard>
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
-          <MetricCard
-            label="Ready to Invoice"
-            value={String(metrics.readyToInvoice)}
-            icon={<CheckCircle2 size={16} color="#0284C7" />}
-            accent="rgba(2, 132, 199, 0.12)"
-            highlight={metrics.readyToInvoice > 0}
-          />
+
+        <Grid size={{ xs: 12, md: 6, lg: 3 }}>
+          <ChartCard title="Invoice Status" subtitle="By current status">
+            {statusData.length === 0 ? (
+              <Typography sx={{ fontSize: "0.8125rem", color: "text.secondary", py: 4, textAlign: "center" }}>
+                No invoices yet
+              </Typography>
+            ) : (
+              <>
+                <ResponsiveContainer width="100%" height={160}>
+                  <PieChart>
+                    <Pie
+                      data={statusData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={42}
+                      outerRadius={65}
+                      paddingAngle={2}
+                      dataKey="value"
+                    >
+                      {statusData.map((entry) => (
+                        <Cell key={entry.name} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip contentStyle={tooltipStyle} />
+                  </PieChart>
+                </ResponsiveContainer>
+                <Box sx={{ mt: 1, display: "flex", flexDirection: "column", gap: 0.75 }}>
+                  {statusData.map((slice) => (
+                    <Box
+                      key={slice.name}
+                      sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}
+                    >
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <Box
+                          sx={{
+                            width: 10,
+                            height: 10,
+                            borderRadius: "50%",
+                            bgcolor: slice.color,
+                          }}
+                        />
+                        <Typography sx={{ fontSize: "0.75rem", color: "text.secondary" }}>
+                          {slice.name}
+                        </Typography>
+                      </Box>
+                      <Typography sx={{ fontSize: "0.75rem", fontWeight: 600 }}>
+                        {slice.value}
+                      </Typography>
+                    </Box>
+                  ))}
+                </Box>
+              </>
+            )}
+          </ChartCard>
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
-          <MetricCard
-            label="Draft / Sent"
-            value={`${metrics.draftCount} / ${metrics.sentCount}`}
-            icon={<Send size={16} color="#7C3AED" />}
-            accent="rgba(124, 58, 237, 0.12)"
-          />
+
+        <Grid size={{ xs: 12, md: 6, lg: 3 }}>
+          <ChartCard title="Payment Methods" subtitle="Accepted on invoices">
+            {methodsData.length === 0 ? (
+              <Typography sx={{ fontSize: "0.8125rem", color: "text.secondary", py: 4, textAlign: "center" }}>
+                No methods recorded
+              </Typography>
+            ) : (
+              <ResponsiveContainer width="100%" height={200}>
+                <BarChart data={methodsData} margin={{ top: 5, right: 5, left: -15, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
+                  <XAxis
+                    dataKey="name"
+                    tick={{ fontSize: 10, fill: "#94A3B8" }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    allowDecimals={false}
+                    tick={{ fontSize: 10, fill: "#94A3B8" }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <Tooltip contentStyle={tooltipStyle} />
+                  <Bar dataKey="count" name="Invoices" radius={[4, 4, 0, 0]}>
+                    {methodsData.map((entry) => (
+                      <Cell key={entry.name} fill={entry.color} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </ChartCard>
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
-          <MetricCard
-            label="Paid / Overdue"
-            value={`${metrics.paidCount} / ${metrics.overdueCount}`}
-            icon={<AlertCircle size={16} color="#DC2626" />}
-            accent="rgba(220, 38, 38, 0.12)"
-          />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6 }}>
-          <MetricCard
-            label="Total Outstanding ($)"
-            value={formatInvoiceCurrency(metrics.totalOutstanding)}
-            icon={<Clock size={16} color="#D97706" />}
-            accent="rgba(217, 119, 6, 0.12)"
-          />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6 }}>
-          <MetricCard
-            label="Total Collected ($)"
-            value={formatInvoiceCurrency(metrics.totalCollected)}
-            icon={<DollarSign size={16} color="#2E7D32" />}
-            accent="rgba(46, 125, 50, 0.12)"
-            highlight
-          />
+
+        <Grid size={{ xs: 12, md: 6, lg: 3 }}>
+          <ChartCard title="Monthly Invoices" subtitle="Count & amount (last 6 months)">
+            {monthlyData.length === 0 ? (
+              <Typography sx={{ fontSize: "0.8125rem", color: "text.secondary", py: 4, textAlign: "center" }}>
+                No invoices yet
+              </Typography>
+            ) : (
+              <ResponsiveContainer width="100%" height={200}>
+                <BarChart data={monthlyData} margin={{ top: 5, right: 5, left: -10, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
+                  <XAxis
+                    dataKey="month"
+                    tick={{ fontSize: 10, fill: "#94A3B8" }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    yAxisId="left"
+                    allowDecimals={false}
+                    tick={{ fontSize: 10, fill: "#94A3B8" }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    yAxisId="right"
+                    orientation="right"
+                    tick={{ fontSize: 10, fill: "#94A3B8" }}
+                    axisLine={false}
+                    tickLine={false}
+                    tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`}
+                  />
+                  <Tooltip
+                    contentStyle={tooltipStyle}
+                    formatter={(value: number, name: string) =>
+                      name === "Amount" ? formatInvoiceCurrency(value) : value
+                    }
+                  />
+                  <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: "11px" }} />
+                  <Bar
+                    yAxisId="left"
+                    dataKey="count"
+                    fill="#2E7D32"
+                    name="Count"
+                    radius={[4, 4, 0, 0]}
+                  />
+                  <Bar
+                    yAxisId="right"
+                    dataKey="amount"
+                    fill="#A5D6A7"
+                    name="Amount"
+                    radius={[4, 4, 0, 0]}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </ChartCard>
         </Grid>
       </Grid>
     </Box>

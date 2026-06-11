@@ -1,11 +1,14 @@
-import type { MaterialRequest, MaterialRequestStatus } from "../../site-material-request/types/materialRequest";
+import type {
+  MaterialRequest,
+  MaterialRequestStatus,
+} from "../../site-material-request/types/materialRequest";
 import { getMaterialRequests } from "../../site-material-request/lib/materialRequestStore";
 
 function matchesTask(
   request: MaterialRequest,
   projectCode: string,
   taskId: string,
-  taskName: string
+  taskName: string,
 ): boolean {
   if (request.projectCode !== projectCode) return false;
   if (request.taskId) return request.taskId === taskId;
@@ -15,10 +18,10 @@ function matchesTask(
 export function getMaterialRequestsForTask(
   projectCode: string,
   taskId: string,
-  taskName: string
+  taskName: string,
 ): MaterialRequest[] {
   return getMaterialRequests().filter((request) =>
-    matchesTask(request, projectCode, taskId, taskName)
+    matchesTask(request, projectCode, taskId, taskName),
   );
 }
 
@@ -31,8 +34,12 @@ export const MATERIAL_REQUEST_STATUS_LABELS: Record<
     label: "Approved",
     color: "#2E7D32",
     bg: "#E8F5E9",
-    message: "Await delivery",
+    message: "Awaiting Delivery",
   },
   rejected: { label: "Rejected", color: "#DC2626", bg: "#FEF2F2" },
-  info_requested: { label: "More Info Requested", color: "#0284C7", bg: "#EFF6FF" },
+  info_requested: {
+    label: "More Info Requested",
+    color: "#0284C7",
+    bg: "#EFF6FF",
+  },
 };

@@ -8,7 +8,12 @@ import {
   type ReactNode,
 } from "react";
 import { DUMMY_PROJECTS } from "../data/dummyProjects";
-import { generateProjectCode, getDefaultProjectDocuments, normalizeProject } from "../lib/projectHelpers";
+import {
+  filterProjectsWithMilestones,
+  generateProjectCode,
+  getDefaultProjectDocuments,
+  normalizeProject,
+} from "../lib/projectHelpers";
 import {
   mergeProjectsWithStored,
   saveUserProjects,
@@ -114,12 +119,17 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
     saveUserProjects(projects);
   }, [projects]);
 
+  const projectsWithMilestones = useMemo(
+    () => filterProjectsWithMilestones(projects),
+    [projects]
+  );
+
   const userAddedProjects = useMemo(
     () =>
-      projects.filter(
+      projectsWithMilestones.filter(
         (project) => !DUMMY_PROJECTS.some((dummy) => dummy.id === project.id)
       ),
-    [projects]
+    [projectsWithMilestones]
   );
 
   const addProject = useCallback((input: ProjectFormInput) => {
@@ -346,7 +356,7 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo(
     () => ({
-      projects,
+      projects: projectsWithMilestones,
       userAddedProjects,
       addProject,
       updateProject,
@@ -362,7 +372,7 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
       removeTask,
     }),
     [
-      projects,
+      projectsWithMilestones,
       userAddedProjects,
       addProject,
       updateProject,

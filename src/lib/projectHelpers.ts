@@ -10,6 +10,10 @@ import {
 import { getEmptyProjectBudget } from "./budgetHelpers";
 import type { Project, ProjectDocument, ProjectStatus } from "../types/project";
 
+export function filterProjectsWithMilestones(projects: Project[]): Project[] {
+  return projects.filter((project) => project.milestones.length > 0);
+}
+
 export interface ProjectTableRow {
   id: string;
   projectCode: string;

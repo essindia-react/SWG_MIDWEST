@@ -1,6 +1,9 @@
 import { format, parseISO } from "date-fns";
 import { getCustomerById } from "../features/projects/constants/projectConstants";
-import { paymentTermDays } from "../features/invoicing/constants/invoicingConstants";
+import {
+  invoiceStatusLabel,
+  paymentTermDays,
+} from "../features/invoicing/constants/invoicingConstants";
 import type { Invoice, InvoiceFormInput, InvoiceLineItem, InvoiceStatus } from "../types/invoice";
 import type { Project, ProjectMilestone } from "../types/project";
 
@@ -228,4 +231,180 @@ export function calculateInvoicingMetrics(
 
 export function isChecklistComplete(checklist: Record<string, boolean>): boolean {
   return Object.values(checklist).every(Boolean);
+}
+
+export function buildSnapshotMilestoneFromInvoice(invoice: Invoice): ProjectMilestone {
+  return {
+    id: invoice.milestoneId,
+    name: invoice.milestoneName,
+    description: invoice.milestoneName,
+    assignedTo: invoice.completionRecord.markedCompleteBy,
+    plannedStartDate: invoice.invoiceDate,
+    plannedEndDate: invoice.dueDate,
+    estimateEffortHrs: Math.max(invoice.lineItems.length, 1),
+    status: "completed",
+    tasks: invoice.lineItems.map((lineItem, index) => ({
+      id: `snapshot-${invoice.id}-task-${index}`,
+      milestoneId: invoice.milestoneId,
+      name: lineItem.description,
+      estimateEffortHrs: 1,
+      plannedStartDate: invoice.invoiceDate,
+      plannedEndDate: invoice.dueDate,
+      assignedTo: invoice.completionRecord.markedCompleteBy,
+      status: "completed",
+    })),
+  };
+}
+
+export function buildSnapshotProjectFromInvoice(invoice: Invoice): Project {
+  const milestone = buildSnapshotMilestoneFromInvoice(invoice);
+
+  return {
+    id: invoice.projectId,
+    projectCode: invoice.projectName,
+    projectDate: invoice.invoiceDate,
+    customerId: "",
+    customerName: invoice.billToName,
+    plannedStartDate: invoice.invoiceDate,
+    plannedEndDate: invoice.dueDate,
+    description: "",
+    projectType: "",
+    actualStartDate: "",
+    actualEndDate: "",
+    status: "in-progress",
+    projectValue: invoice.subtotal,
+    projectManager: invoice.completionRecord.markedCompleteBy,
+    remarks: "",
+    teamAssignments: [],
+    milestones: [milestone],
+    documents: [],
+    budget: { materials: [], crew: [], equipment: [], overhead: [] },
+    createdAt: invoice.createdAt,
+    updatedAt: invoice.updatedAt,
+  };
+}
+
+export function resolveInvoiceEditContext(
+  invoice: Invoice,
+  getProjectById: (id: string) => Project | undefined
+): { project: Project; milestone: ProjectMilestone } {
+  const project = getProjectById(invoice.projectId);
+  const milestone = project?.milestones.find((item) => item.id === invoice.milestoneId);
+
+  if (project && milestone) {
+    return { project, milestone };
+  }
+
+  if (project) {
+    return { project, milestone: buildSnapshotMilestoneFromInvoice(invoice) };
+  }
+
+  const snapshotProject = buildSnapshotProjectFromInvoice(invoice);
+  return { project: snapshotProject, milestone: snapshotProject.milestones[0] };
+}
+
+export interface ChartSlice {
+  name: string;
+  value: number;
+  color: string;
+}
+
+export interface MonthlyInvoiceBarPoint {
+  month: string;
+  count: number;
+  amount: number;
+}
+
+export interface PaymentMethodBarPoint {
+  name: string;
+  count: number;
+  color: string;
+}
+
+const CHART_COLORS = {
+  green: "#2E7D32",
+  greenLight: "#66BB6A",
+  greenPale: "#A5D6A7",
+  blue: "#0284C7",
+  orange: "#D97706",
+  red: "#DC2626",
+  purple: "#7C3AED",
+  slate: "#64748B",
+  grey: "#94A3B8",
+} as const;
+
+export function getPaymentsDonutData(invoices: Invoice[]): ChartSlice[] {
+  const metrics = calculateInvoicingMetrics([], invoices);
+  return [
+    { name: "Collected", value: metrics.totalCollected, color: CHART_COLORS.green },
+    { name: "Outstanding", value: metrics.totalOutstanding, color: CHART_COLORS.orange },
+  ].filter((slice) => slice.value > 0);
+}
+
+export function getInvoiceStatusPieData(invoices: Invoice[]): ChartSlice[] {
+  const statusColors: Record<InvoiceStatus, string> = {
+    draft: CHART_COLORS.grey,
+    sent: CHART_COLORS.blue,
+    viewed: "#0369A1",
+    paid: CHART_COLORS.green,
+    "partially-paid": CHART_COLORS.orange,
+    overdue: CHART_COLORS.red,
+    void: CHART_COLORS.slate,
+  };
+
+  const counts = new Map<InvoiceStatus, number>();
+  for (const inv of invoices) {
+    const status = resolveInvoiceStatus(inv);
+    counts.set(status, (counts.get(status) ?? 0) + 1);
+  }
+
+  return Array.from(counts.entries()).map(([status, value]) => ({
+    name: invoiceStatusLabel(status),
+    value,
+    color: statusColors[status],
+  }));
+}
+
+export function getPaymentMethodsBarData(invoices: Invoice[]): PaymentMethodBarPoint[] {
+  const methodColors: Record<string, string> = {
+    ACH: CHART_COLORS.green,
+    Check: CHART_COLORS.blue,
+    "Credit Card": CHART_COLORS.purple,
+    Zelle: CHART_COLORS.orange,
+  };
+
+  const counts = new Map<string, number>();
+  for (const inv of invoices) {
+    for (const method of inv.paymentMethods) {
+      counts.set(method, (counts.get(method) ?? 0) + 1);
+    }
+  }
+
+  return Array.from(counts.entries()).map(([name, count]) => ({
+    name,
+    count,
+    color: methodColors[name] ?? CHART_COLORS.slate,
+  }));
+}
+
+export function getMonthlyInvoiceBarData(invoices: Invoice[]): MonthlyInvoiceBarPoint[] {
+  const monthMap = new Map<string, { count: number; amount: number }>();
+
+  for (const inv of invoices) {
+    const monthKey = inv.invoiceDate.slice(0, 7);
+    const entry = monthMap.get(monthKey) ?? { count: 0, amount: 0 };
+    entry.count += 1;
+    entry.amount += inv.totalDue;
+    monthMap.set(monthKey, entry);
+  }
+
+  const sorted = Array.from(monthMap.entries()).sort(([a], [b]) => a.localeCompare(b));
+  const recent = sorted.slice(-6);
+
+  return recent.map(([key, data]) => {
+    const [, monthNum] = key.split("-");
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const month = monthNames[parseInt(monthNum, 10) - 1] ?? key;
+    return { month, count: data.count, amount: Math.round(data.amount) };
+  });
 }

@@ -1,4 +1,5 @@
 import type { Lead, LeadPriority, PropertyType } from "../types/lead";
+import { normalizeLeadStatus } from "./constants";
 
 export function generateLeadNumber(): string {
   return `LD-${Date.now().toString().slice(-4)}`;
@@ -36,5 +37,6 @@ export function applyLeadDefaults(lead: Lead): Lead {
     priority: (lead.priority ?? "medium") as LeadPriority,
     propertyType: (lead.propertyType ?? "residential") as PropertyType,
     state: lead.state ?? "OH",
+    status: normalizeLeadStatus(lead.status),
   };
 }

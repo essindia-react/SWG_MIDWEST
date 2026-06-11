@@ -12,6 +12,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import { useIsMobile } from "../../../components/layout/Sidebar";
 import { INVENTORY_ITEMS } from "../../projects/constants/budgetConstants";
 import { TASK_PICK_LIST_UNITS } from "../constants/taskManagementConstants";
 import type {
@@ -37,6 +38,7 @@ interface TaskPickListModalProps {
 }
 
 export function TaskPickListModal({ open, item, onClose, onSave }: TaskPickListModalProps) {
+  const isMobile = useIsMobile();
   const [form, setForm] = useState<TaskManagementPickListFormData>(emptyForm);
 
   useEffect(() => {
@@ -74,7 +76,7 @@ export function TaskPickListModal({ open, item, onClose, onSave }: TaskPickListM
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth fullScreen={isMobile}>
       <DialogTitle sx={{ fontWeight: 700 }}>
         {item ? "Edit Pick List Item" : "Add Pick List Item"}
       </DialogTitle>

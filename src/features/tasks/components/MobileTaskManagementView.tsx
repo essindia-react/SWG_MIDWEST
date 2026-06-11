@@ -110,11 +110,11 @@ function DashboardScreen({
 
   return (
     <>
-      <div className="px-5 pt-3 pb-4" style={{ backgroundColor: "var(--brand-dark-green)" }}>
+      <div className="px-4 sm:px-5 pt-3 pb-4" style={{ backgroundColor: "var(--brand-dark-green)" }}>
         <p className="text-white" style={{ fontSize: "11px", opacity: 0.7 }}>
           Field Crew App
         </p>
-        <p className="text-white" style={{ fontSize: "18px", fontWeight: 700 }}>
+        <p className="text-white" style={{ fontSize: "clamp(1rem, 4vw, 1.125rem)", fontWeight: 700 }}>
           Tasks Dashboard
         </p>
         <p className="text-white mt-1" style={{ fontSize: "11px", opacity: 0.65 }}>
@@ -122,7 +122,7 @@ function DashboardScreen({
         </p>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 py-4">
+      <div className="flex-1 overflow-y-auto px-3 sm:px-4 py-4 min-w-0">
         <label
           className="block mb-1"
           style={{ fontSize: "11px", fontWeight: 600, color: "var(--muted-foreground)" }}
@@ -143,7 +143,7 @@ function DashboardScreen({
           ))}
         </select>
 
-        <div className="grid grid-cols-3 gap-2 mb-5">
+        <div className="grid grid-cols-3 gap-1.5 sm:gap-2 mb-5">
           {[
             { label: "New", value: newTasks.length, color: "#0284C7", bg: "#EFF6FF" },
             { label: "Active", value: activeTasks.length, color: "#2E7D32", bg: "#E8F5E9" },
@@ -634,9 +634,7 @@ export function MobileTaskManagementView({ standalone = false }: { standalone?: 
 
   const projectOptions = useMemo(
     () =>
-      projects
-        .filter((p) => p.milestones.length > 0)
-        .map((p) => ({
+      projects.map((p) => ({
           id: p.id,
           projectCode: p.projectCode,
           customerName: p.customerName,
@@ -731,21 +729,18 @@ export function MobileTaskManagementView({ standalone = false }: { standalone?: 
 
   return (
     <div
-      className="flex justify-center items-start h-full overflow-y-auto p-8"
+      className="flex flex-col lg:flex-row justify-center items-stretch lg:items-start h-full min-h-0 overflow-y-auto p-4 sm:p-6 lg:p-8 gap-6 lg:gap-8"
       style={{ backgroundColor: "var(--background)" }}
     >
       <div
-        className="rounded-3xl overflow-hidden flex flex-col"
+        className="w-full max-w-[390px] mx-auto lg:mx-0 rounded-3xl overflow-hidden flex flex-col flex-shrink-0 min-h-[min(780px,100dvh-8rem)] lg:min-h-[780px]"
         style={{
-          width: "390px",
-          minHeight: "780px",
           backgroundColor: "white",
           boxShadow: "0 25px 80px rgba(0,0,0,0.18), 0 0 0 12px #1B1B1B",
-          flexShrink: 0,
         }}
       >
         <div
-          className="flex items-center justify-between px-5 pt-3 pb-1"
+          className="hidden sm:flex items-center justify-between px-5 pt-3 pb-1"
           style={{ backgroundColor: "var(--brand-dark-green)" }}
         >
           <span className="text-white" style={{ fontSize: "12px", fontWeight: 600 }}>
@@ -764,7 +759,7 @@ export function MobileTaskManagementView({ standalone = false }: { standalone?: 
         {content}
       </div>
 
-      <div className="ml-8 max-w-72 flex-shrink-0 self-center">
+      <div className="w-full max-w-md lg:max-w-72 flex-shrink-0 lg:self-center px-1 sm:px-0">
         <h3 className="text-foreground mb-3" style={{ fontSize: "16px", fontWeight: 700 }}>
           Field Task Management
         </h3>
