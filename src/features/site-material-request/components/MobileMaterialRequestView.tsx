@@ -10,7 +10,7 @@ import {
 import { useLocation, useNavigate } from "react-router";
 import { toast } from "sonner";
 import { ROUTES } from "../../../routes/paths";
-import { INVENTORY_ITEMS } from "../../projects/constants/budgetConstants";
+import type { AssignedPickItem } from "../../tasks/lib/taskPickListHelpers";
 import {
   DEMO_ACTIVE_JOB,
   MATERIAL_REQUEST_REASONS,
@@ -193,13 +193,25 @@ function MobileInput({
   );
 }
 
+export interface MobileMaterialRequestTaskContext {
+  projectCode: string;
+  projectName: string;
+  taskId: string;
+  taskName: string;
+  milestoneName: string;
+  requestedBy: string;
+  assignedMaterials: AssignedPickItem[];
+}
+
 export function MobileMaterialRequestView({
   standalone = false,
   embedded = false,
+  taskContext,
   onClose,
 }: {
   standalone?: boolean;
   embedded?: boolean;
+  taskContext?: MobileMaterialRequestTaskContext;
   onClose?: () => void;
 }) {
   const navigate = useNavigate();
@@ -211,7 +223,7 @@ export function MobileMaterialRequestView({
   const [form, setForm] = useState<MaterialRequestFormData>(initialForm);
   const [submitted, setSubmitted] = useState(false);
   const [requestNumber, setRequestNumber] = useState("");
-  const [useCustomItem, setUseCustomItem] = useState(false);
+  const materialOptions = taskContext?.assignedMaterials ?? [];
 
   const handleClose = () => {
     if (onClose) {
@@ -235,15 +247,26 @@ export function MobileMaterialRequestView({
       return;
     }
 
-    const request = createMaterialRequest({
-      itemName: form.itemName,
-      quantityNeeded: qty,
-      unit: form.unit,
-      reason: form.reason,
-      urgency: form.urgency,
-      photoAttached: form.photoAttached,
-      notes: form.notes,
-    });
+    const request = createMaterialRequest(
+      {
+        itemName: form.itemName,
+        quantityNeeded: qty,
+        unit: form.unit,
+        reason: form.reason,
+        urgency: form.urgency,
+        photoAttached: form.photoAttached,
+        notes: form.notes,
+      },
+      taskContext
+        ? {
+            projectCode: taskContext.projectCode,
+            projectName: taskContext.projectName,
+            requestedBy: taskContext.requestedBy,
+            taskId: taskContext.taskId,
+            taskName: taskContext.taskName,
+          }
+        : undefined
+    );
 
     setRequestNumber(request.requestNumber);
     setSubmitted(true);
@@ -254,7 +277,6 @@ export function MobileMaterialRequestView({
     setForm(initialForm);
     setSubmitted(false);
     setRequestNumber("");
-    setUseCustomItem(false);
   };
 
   const closeButton =
@@ -358,11 +380,21 @@ export function MobileMaterialRequestView({
       <div className="flex-1 overflow-y-auto px-4 py-4">
         <ReadOnlyField
           label="Project"
-          value={`${DEMO_ACTIVE_JOB.projectCode} — ${DEMO_ACTIVE_JOB.projectName}`}
+          value={
+            taskContext
+              ? `${taskContext.projectCode} — ${taskContext.projectName}`
+              : `${DEMO_ACTIVE_JOB.projectCode} — ${DEMO_ACTIVE_JOB.projectName}`
+          }
         />
+        {taskContext && (
+          <ReadOnlyField
+            label="Task"
+            value={`${taskContext.taskName} (${taskContext.milestoneName})`}
+          />
+        )}
         <ReadOnlyField
           label="Requested By"
-          value={DEMO_ACTIVE_JOB.crewMember}
+          value={taskContext?.requestedBy ?? DEMO_ACTIVE_JOB.crewMember}
         />
         <ReadOnlyField
           label="Request Date & Time"
@@ -377,63 +409,29 @@ export function MobileMaterialRequestView({
 
         <div className="mb-3">
           <FieldLabel>Item Name</FieldLabel>
-          <div className="flex gap-2 mb-2">
-            <button
-              type="button"
-              onClick={() => setUseCustomItem(false)}
-              className="flex-1 py-1.5 rounded-lg text-center"
-              style={{
-                fontSize: "11px",
-                fontWeight: 600,
-                backgroundColor: !useCustomItem
-                  ? "var(--brand-green)"
-                  : "var(--muted)",
-                color: !useCustomItem ? "white" : "var(--muted-foreground)",
-              }}
-            >
-              From List
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setUseCustomItem(true);
-                updateForm("itemName", "");
-              }}
-              className="flex-1 py-1.5 rounded-lg text-center"
-              style={{
-                fontSize: "11px",
-                fontWeight: 600,
-                backgroundColor: useCustomItem
-                  ? "var(--brand-green)"
-                  : "var(--muted)",
-                color: useCustomItem ? "white" : "var(--muted-foreground)",
-              }}
-            >
-              Free Text
-            </button>
-          </div>
-          {useCustomItem ? (
-            <MobileInput
-              label=""
-              value={form.itemName}
-              onChange={(value) => updateForm("itemName", value)}
-              placeholder="Enter item name"
-            />
-          ) : (
-            <select
-              value={form.itemName}
-              onChange={(e) => updateForm("itemName", e.target.value)}
-              className="w-full px-3 py-2 rounded-lg border outline-none"
-              style={{ fontSize: "13px", borderColor: "var(--border)" }}
-            >
-              <option value="">Select material...</option>
-              {INVENTORY_ITEMS.map((item) => (
-                <option key={item.sku} value={item.name}>
-                  {item.name}
-                </option>
-              ))}
-            </select>
-          )}
+          <select
+            value={form.itemName}
+            onChange={(e) => {
+              const itemName = e.target.value;
+              const assigned = materialOptions.find((item) => item.itemName === itemName);
+              updateForm("itemName", itemName);
+              if (assigned) updateForm("unit", assigned.unit);
+            }}
+            className="w-full px-3 py-2 rounded-lg border outline-none"
+            style={{ fontSize: "13px", borderColor: "var(--border)" }}
+          >
+            <option value="">Select material...</option>
+            {materialOptions.map((item) => (
+              <option key={item.sourceLineId} value={item.itemName}>
+                {item.itemName}
+              </option>
+            ))}
+          </select>
+          <p style={{ fontSize: "11px", color: "var(--muted-foreground)", marginTop: "6px" }}>
+            {taskContext
+              ? "From project budget materials (inventory catalog)"
+              : "Open from a task to request project-assigned materials"}
+          </p>
         </div>
 
         <div className="grid grid-cols-2 gap-3">

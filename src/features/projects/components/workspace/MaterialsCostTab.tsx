@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { subscribeInventory } from "../../../inventory/lib/inventoryStore";
 import {
   Box,
   Button,
@@ -20,8 +21,8 @@ import {
 } from "../../../leads/components/workspace/workspaceFields";
 import { WorkspaceSection } from "../../../leads/components/workspace/WorkspaceSection";
 import {
+  getInventoryCatalogItems,
   getInventoryItem,
-  INVENTORY_ITEMS,
   MATERIAL_SOURCES,
   MATERIAL_UNITS,
 } from "../../constants/budgetConstants";
@@ -36,6 +37,9 @@ interface MaterialsCostTabProps {
 export function MaterialsCostTab({ project, onBudgetChange }: MaterialsCostTabProps) {
   const budget = project.budget;
   const { removeLine, confirmDialog } = useBudgetLineRemover(budget, onBudgetChange);
+  const [inventoryItems, setInventoryItems] = useState(getInventoryCatalogItems);
+
+  useEffect(() => subscribeInventory(() => setInventoryItems(getInventoryCatalogItems())), []);
 
   const [form, setForm] = useState({
     materialName: "",
@@ -65,6 +69,10 @@ export function MaterialsCostTab({ project, onBudgetChange }: MaterialsCostTabPr
       toast.error("Select material and enter quantity");
       return;
     }
+    if (!getInventoryItem(form.materialName)) {
+      toast.error("Materials must be selected from active inventory");
+      return;
+    }
     const line: MaterialCostLine = {
       id: `mat-${Date.now()}`,
       materialName: form.materialName,
@@ -73,7 +81,7 @@ export function MaterialsCostTab({ project, onBudgetChange }: MaterialsCostTabPr
       estimatedQuantity: qty,
       unitCost,
       totalCost: qty * unitCost,
-      source: form.source || "From Inventory",
+      source: "From Inventory",
       notes: form.notes,
     };
     onBudgetChange({ ...budget, materials: [...budget.materials, line] });
@@ -105,7 +113,7 @@ export function MaterialsCostTab({ project, onBudgetChange }: MaterialsCostTabPr
               label="Material Name"
               value={form.materialName}
               onChange={handleMaterialNameChange}
-              options={INVENTORY_ITEMS.map((i) => i.name)}
+              options={inventoryItems.map((i) => i.name)}
             />
           </Grid>
           <Grid size={{ xs: 12, md: 6, lg: 3 }}>

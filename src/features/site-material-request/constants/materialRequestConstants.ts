@@ -43,8 +43,8 @@ export const FULFILLMENT_METHODS: FulfillmentMethod[] = [
 
 export const DEMO_ACTIVE_JOB = {
   projectCode: "SWG-PROJ-2026-101",
-  projectName: "John Smith — Backyard Turf Installation",
-  crewMember: "Maria S.",
+  projectName: "Henderson Estate — Pet Turf Installation",
+  crewMember: "Alex J.",
 };
 
 export const MATERIAL_REQUEST_UNITS = ["sq ft", "roll", "bag", "unit"] as const;

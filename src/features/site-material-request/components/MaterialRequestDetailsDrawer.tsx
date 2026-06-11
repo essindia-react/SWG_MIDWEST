@@ -17,7 +17,7 @@ import {
   FULFILLMENT_METHODS,
   SITE_MATERIAL_REQUEST_STATUS_CONFIG,
 } from "../constants/materialRequestConstants";
-import { updateMaterialRequest } from "../lib/materialRequestStore";
+import { processMaterialRequestDecision } from "../lib/materialRequestStore";
 import type {
   ApprovalDecision,
   MaterialRequest,
@@ -96,7 +96,7 @@ export function MaterialRequestDetailsDrawer({
           ? "rejected"
           : "info_requested";
 
-    const updated = updateMaterialRequest(request.id, {
+    const updated = processMaterialRequestDecision(request.id, {
       approvalDecision,
       fulfillmentMethod:
         approvalDecision === "Approve"
@@ -156,6 +156,12 @@ export function MaterialRequestDetailsDrawer({
           />
           <RequestDetailRow label="Reason" value={request.reason} />
           <RequestDetailRow label="Urgency" value={request.urgency} />
+          {request.linkedPONumber && (
+            <RequestDetailRow label="Linked PO #" value={request.linkedPONumber} />
+          )}
+          {request.fulfillmentMethod && (
+            <RequestDetailRow label="Fulfillment" value={request.fulfillmentMethod} />
+          )}
           <RequestDetailRow
             label="Photo"
             value={request.photoAttached ? "Attached" : "None"}

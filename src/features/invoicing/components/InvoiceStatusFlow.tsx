@@ -5,22 +5,13 @@ import type { InvoiceStatus } from "../../../types/invoice";
 import {
   INVOICE_STATUS_OPTIONS,
   invoiceStatusColor,
-  invoiceStatusDescription,
   invoiceStatusLabel,
 } from "../constants/invoicingConstants";
 
 const ICON_SIZE = 40;
 const BRAND_GREEN = "#2E7D32";
 
-const FLOW_ORDER: InvoiceStatus[] = [
-  "draft",
-  "sent",
-  "viewed",
-  "paid",
-  "partially-paid",
-  "overdue",
-  "void",
-];
+const FLOW_ORDER: InvoiceStatus[] = ["draft", "sent", "paid"];
 
 function getOption(value: InvoiceStatus) {
   return INVOICE_STATUS_OPTIONS.find((o) => o.value === value)!;
@@ -32,7 +23,7 @@ function getEffectiveIndex(status: InvoiceStatus): number {
 
 function getStepState(
   stepIndex: number,
-  currentStatus: InvoiceStatus | null
+  currentStatus: InvoiceStatus | null,
 ): "completed" | "active" | "upcoming" {
   if (!currentStatus) return "upcoming";
 
@@ -47,7 +38,7 @@ interface InvoiceStatusFlowProps {
   invoiceNumber?: string;
 }
 
-export function InvoiceStatusFlow({ currentStatus, invoiceNumber }: InvoiceStatusFlowProps) {
+export function InvoiceStatusFlow({ currentStatus }: InvoiceStatusFlowProps) {
   const activeIndex = currentStatus ? getEffectiveIndex(currentStatus) : -1;
 
   return (
@@ -64,13 +55,12 @@ export function InvoiceStatusFlow({ currentStatus, invoiceNumber }: InvoiceStatu
           minHeight: ICON_SIZE + 52,
         }}
       >
-        {/* Background track */}
         <Box
           sx={{
             position: "absolute",
             top: ICON_SIZE / 2 - 1,
-            left: `calc(${ICON_SIZE / 2}px + 4%)`,
-            right: `calc(${ICON_SIZE / 2}px + 4%)`,
+            left: `calc(${ICON_SIZE / 2}px + 8%)`,
+            right: `calc(${ICON_SIZE / 2}px + 8%)`,
             height: 2,
             bgcolor: "#E2E8F0",
             borderRadius: 1,
@@ -78,14 +68,13 @@ export function InvoiceStatusFlow({ currentStatus, invoiceNumber }: InvoiceStatu
           }}
         />
 
-        {/* Progress track */}
         {currentStatus && activeIndex > 0 && (
           <Box
             sx={{
               position: "absolute",
               top: ICON_SIZE / 2 - 1,
-              left: `calc(${ICON_SIZE / 2}px + 4%)`,
-              width: `calc(${(activeIndex / (FLOW_ORDER.length - 1)) * 92}% )`,
+              left: `calc(${ICON_SIZE / 2}px + 8%)`,
+              width: `calc(${(activeIndex / (FLOW_ORDER.length - 1)) * 84}% )`,
               height: 2,
               bgcolor: BRAND_GREEN,
               borderRadius: 1,
@@ -111,7 +100,7 @@ export function InvoiceStatusFlow({ currentStatus, invoiceNumber }: InvoiceStatu
                 flexDirection: "column",
                 alignItems: "center",
                 flex: "1 1 0",
-                minWidth: 72,
+                minWidth: 96,
                 zIndex: 1,
               }}
             >

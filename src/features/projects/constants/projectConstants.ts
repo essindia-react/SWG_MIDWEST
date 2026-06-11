@@ -61,39 +61,61 @@ export const PROJECT_WORKSPACE_SIDEBAR: ProjectWorkspaceSidebarItem[] = [
 export const PROJECT_CUSTOMERS = [
   {
     id: "cust-1024",
-    name: "John Smith",
+    name: "Henderson Estate",
     code: "SWG-CUST-1024",
-    email: "john.smith@email.com",
-    phone: "(614) 555-0142",
-    address: "4521 Oak Ridge Dr, Columbus, OH 43220",
+    email: "rob.henderson@gmail.com",
+    phone: "(614) 555-0187",
+    address: "5500 McCormick Ranch Dr, Dublin, OH 43017",
   },
   {
     id: "cust-1156",
     name: "Park Estates Dev.",
     code: "SWG-CUST-1156",
-    email: "projects@parkestates.com",
-    phone: "(513) 555-0167",
-    address: "890 Park Blvd, Cincinnati, OH 45202",
+    email: "dev@parkestates.com",
+    phone: "(513) 555-0601",
+    address: "2100 Park Blvd, Mason, OH 45040",
+  },
+  {
+    id: "cust-1188",
+    name: "Rivera Pool & Turf",
+    code: "SWG-CUST-1188",
+    email: "tony@riverapool.com",
+    phone: "(614) 555-0334",
+    address: "7834 W Camelback Rd, Columbus, OH 43220",
+  },
+  {
+    id: "cust-1201",
+    name: "Sunbelt Properties",
+    code: "SWG-CUST-1201",
+    email: "pm@sunbeltprop.com",
+    phone: "(937) 555-0728",
+    address: "4400 S Power Rd, Dayton, OH 45429",
   },
 ] as const;
 
 export const PROJECT_PROPOSALS = [
   {
     id: "PRP-9902",
-    name: "Proposal - John Smith Backyard",
+    name: "Final Proposal — Henderson Estate Pet Turf",
     customerId: "cust-1024",
-    status: "Accepted",
+    status: "Sent",
   },
   {
-    id: "PRP-9903",
-    name: "Proposal - Park Estates Phase 1",
+    id: "PRP-9841",
+    name: "Park Estates Amenity Center Putting Green",
     customerId: "cust-1156",
     status: "Sent",
   },
   {
-    id: "PRP-9904",
-    name: "Proposal - John Smith Putting Green",
-    customerId: "cust-1024",
+    id: "PRP-9755",
+    name: "Rivera Showroom Hardscape Refresh",
+    customerId: "cust-1188",
+    status: "Draft",
+  },
+  {
+    id: "PRP-9680",
+    name: "Sunbelt Properties Sports Practice Field",
+    customerId: "cust-1201",
     status: "Accepted",
   },
 ] as const;
@@ -147,6 +169,9 @@ export const TEAM_USERS = [
   { id: "alex-j", name: "Alex J." },
   { id: "carlos-r", name: "Carlos R." },
 ] as const;
+
+/** Shared site supervisor across demo projects — field crew app uses this identity. */
+export const FIELD_SITE_SUPERVISOR = TEAM_USERS.find((user) => user.id === "alex-j")!;
 
 export const SECTION_PLACEHOLDERS = {
   project: "Yet not decided",

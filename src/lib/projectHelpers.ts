@@ -14,6 +14,22 @@ export function filterProjectsWithMilestones(projects: Project[]): Project[] {
   return projects.filter((project) => project.milestones.length > 0);
 }
 
+export function isSiteSupervisorOnProject(
+  project: Project,
+  userId: string
+): boolean {
+  return project.teamAssignments.some(
+    (member) => member.userId === userId && member.role === "Site Supervisor"
+  );
+}
+
+export function getProjectsForSiteSupervisor(
+  projects: Project[],
+  userId: string
+): Project[] {
+  return projects.filter((project) => isSiteSupervisorOnProject(project, userId));
+}
+
 export interface ProjectTableRow {
   id: string;
   projectCode: string;

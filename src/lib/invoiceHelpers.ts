@@ -115,9 +115,9 @@ export function getAmountPreviouslyPaid(
       (inv) =>
         inv.projectId === projectId &&
         inv.milestoneId !== milestoneId &&
-        (inv.status === "paid" || inv.status === "partially-paid")
+        inv.status === "paid",
     )
-    .reduce((sum, inv) => sum + (inv.status === "paid" ? inv.totalDue : inv.totalDue * 0.5), 0);
+    .reduce((sum, inv) => sum + inv.totalDue, 0);
 }
 
 export function buildInvoiceFromInput(
@@ -172,16 +172,6 @@ export function buildInvoiceFromInput(
 }
 
 export function resolveInvoiceStatus(invoice: Invoice): InvoiceStatus {
-  if (invoice.status === "void" || invoice.status === "draft" || invoice.status === "sent" || invoice.status === "viewed") {
-    return invoice.status;
-  }
-  const today = new Date().toISOString().slice(0, 10);
-  if (invoice.status === "paid") return "paid";
-  if (invoice.status === "partially-paid") {
-    if (invoice.dueDate < today) return "overdue";
-    return "partially-paid";
-  }
-  if (invoice.dueDate < today) return "overdue";
   return invoice.status;
 }
 
@@ -190,7 +180,6 @@ export interface InvoicingMetrics {
   draftCount: number;
   sentCount: number;
   paidCount: number;
-  overdueCount: number;
   readyToInvoice: number;
   totalOutstanding: number;
   totalCollected: number;
@@ -216,16 +205,15 @@ export function calculateInvoicingMetrics(
   return {
     totalInvoices: invoices.length,
     draftCount: resolved.filter((i) => i.status === "draft").length,
-    sentCount: resolved.filter((i) => i.status === "sent" || i.status === "viewed").length,
+    sentCount: resolved.filter((i) => i.status === "sent").length,
     paidCount: resolved.filter((i) => i.status === "paid").length,
-    overdueCount: resolved.filter((i) => i.status === "overdue").length,
     readyToInvoice,
     totalOutstanding: resolved
-      .filter((i) => ["sent", "viewed", "partially-paid", "overdue", "draft"].includes(i.status))
+      .filter((i) => i.status === "sent" || i.status === "draft")
       .reduce((sum, i) => sum + i.balanceRemaining, 0),
     totalCollected: resolved
-      .filter((i) => i.status === "paid" || i.status === "partially-paid")
-      .reduce((sum, i) => sum + (i.status === "paid" ? i.totalDue : i.totalDue * 0.5), 0),
+      .filter((i) => i.status === "paid")
+      .reduce((sum, i) => sum + i.totalDue, 0),
   };
 }
 
@@ -345,11 +333,7 @@ export function getInvoiceStatusPieData(invoices: Invoice[]): ChartSlice[] {
   const statusColors: Record<InvoiceStatus, string> = {
     draft: CHART_COLORS.grey,
     sent: CHART_COLORS.blue,
-    viewed: "#0369A1",
     paid: CHART_COLORS.green,
-    "partially-paid": CHART_COLORS.orange,
-    overdue: CHART_COLORS.red,
-    void: CHART_COLORS.slate,
   };
 
   const counts = new Map<InvoiceStatus, number>();

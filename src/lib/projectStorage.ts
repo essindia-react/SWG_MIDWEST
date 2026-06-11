@@ -52,8 +52,6 @@ export function saveUserProjects(projects: Project[]): void {
 }
 
 export function mergeProjectsWithStored(dummyProjects: Project[]): Project[] {
-  const stored = loadUserProjects();
-  const dummyIds = new Set(dummyProjects.map((project) => project.id));
-  const uniqueStored = stored.filter((project) => !dummyIds.has(project.id));
-  return [...uniqueStored, ...dummyProjects];
+  localStorage.removeItem(USER_PROJECTS_STORAGE_KEY);
+  return dummyProjects;
 }

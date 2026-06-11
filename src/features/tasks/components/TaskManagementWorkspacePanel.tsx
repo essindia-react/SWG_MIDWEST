@@ -173,7 +173,7 @@ export function TaskManagementWorkspacePanel({
                 <TaskMilestoneTasksTab projectId={projectId} milestone={milestone} />
               )}
               {activeTab === "pick-list" && (
-                <TaskMilestonePickListTab projectId={projectId} milestone={milestone} />
+                <TaskMilestonePickListTab project={project} milestone={milestone} />
               )}
               {activeTab === "material-request" && (
                 <TaskMilestoneMaterialRequestTab project={project} milestone={milestone} />

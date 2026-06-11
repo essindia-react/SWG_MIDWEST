@@ -1,14 +1,20 @@
-import React, { useCallback, useState } from "react";
-import { Box, Button, Typography } from "@mui/material";
-import { Plus } from "lucide-react";
+import React, { useMemo } from "react";
+import { Box } from "@mui/material";
 import { useInvoicesWithProjects } from "../../../hooks/useInvoices";
-import type { Invoice } from "../../../types/invoice";
-import { CreateInvoiceModal } from "./CreateInvoiceModal";
+import { DEMO_INVOICE_COUNT } from "../constants/invoicingConstants";
 import { InvoicingInvoiceList } from "./InvoicingInvoiceList";
 import { InvoicingMetricsDashboard } from "./InvoicingMetricsDashboard";
 
 export function InvoicingView() {
   const { projects, invoices } = useInvoicesWithProjects();
+
+  const displayedInvoices = useMemo(
+    () =>
+      [...invoices]
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+        .slice(0, DEMO_INVOICE_COUNT),
+    [invoices],
+  );
 
   return (
     <Box
@@ -20,12 +26,8 @@ export function InvoicingView() {
       }}
     >
       <Box sx={{ maxWidth: 1200, mx: "auto" }}>
-        <InvoicingMetricsDashboard projects={projects} invoices={invoices} />
-        <InvoicingInvoiceList
-          invoices={invoices}
-          projects={projects}
-          // onInvoiceClick={handleInvoiceClick}
-        />
+        <InvoicingMetricsDashboard projects={projects} invoices={displayedInvoices} />
+        <InvoicingInvoiceList invoices={invoices} projects={projects} />
       </Box>
     </Box>
   );

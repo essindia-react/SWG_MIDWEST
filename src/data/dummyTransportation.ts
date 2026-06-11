@@ -10,8 +10,8 @@ export const dummyVehicles: Vehicle[] = [
     gpsDeviceId: "GPS-X100",
     status: "At Job Site",
     assignedDriverId: "emp-1", // John Doe
-    assignedProjectId: "proj-1",
-    currentLocation: "Columbus, OH (Site A)",
+    assignedProjectId: "project-1",
+    currentLocation: "Dublin, OH — Henderson Estate",
     lastUpdated: new Date().toISOString(),
     todayMileage: 42.5,
     createdAt: "2023-01-01T00:00:00Z",
@@ -26,7 +26,7 @@ export const dummyVehicles: Vehicle[] = [
     gpsDeviceId: "GPS-X104",
     status: "In Transit",
     assignedDriverId: "emp-3", // Mike Ross
-    assignedProjectId: "proj-2",
+    assignedProjectId: "project-2",
     currentLocation: "I-71 North, OH",
     lastUpdated: new Date().toISOString(),
     todayMileage: 88.2,
@@ -71,7 +71,7 @@ export const dummyTrips: TripRecord[] = [
     distanceTravelled: 45.2,
     mileage: 12450.5,
     status: "Completed",
-    projectId: "proj-1",
+    projectId: "project-1",
   },
   {
     id: "trip-2",
@@ -82,6 +82,6 @@ export const dummyTrips: TripRecord[] = [
     distanceTravelled: 32.1,
     mileage: 8200.0,
     status: "In Progress",
-    projectId: "proj-2",
+    projectId: "project-2",
   },
 ];

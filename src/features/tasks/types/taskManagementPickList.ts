@@ -5,6 +5,8 @@ export interface TaskManagementPickListItem {
   sku: string;
   quantityRequired: number;
   unit: string;
+  category: "Material" | "Equipment";
+  sourceLineId: string;
   pulledFromInventory: boolean;
   notes: string;
 }
@@ -15,6 +17,8 @@ export interface TaskManagementPickListFormData {
   sku: string;
   quantityRequired: string;
   unit: string;
+  category: "Material" | "Equipment";
+  sourceLineId: string;
   pulledFromInventory: boolean;
   notes: string;
 }

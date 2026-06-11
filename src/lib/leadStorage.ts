@@ -52,8 +52,6 @@ export function saveUserLeads(leads: Lead[]): void {
 }
 
 export function mergeLeadsWithStored(dummyLeads: Lead[]): Lead[] {
-  const stored = loadUserLeads();
-  const dummyIds = new Set(dummyLeads.map((lead) => lead.id));
-  const uniqueStored = stored.filter((lead) => !dummyIds.has(lead.id));
-  return [...uniqueStored, ...dummyLeads];
+  localStorage.removeItem(USER_LEADS_STORAGE_KEY);
+  return dummyLeads;
 }

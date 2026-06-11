@@ -27,6 +27,7 @@ import type { Project, ProjectMilestone } from "../../../types/project";
 import { DEPARTMENT_CHECKLIST_ITEMS } from "../constants/invoicingConstants";
 import { CreateInvoiceForm } from "./CreateInvoiceForm";
 import { InvoiceDraftList } from "./InvoiceDraftList";
+import { InvoicePdfPreviewDialog } from "./InvoicePdfPreviewDialog";
 import { InvoiceStatusFlow } from "./InvoiceStatusFlow";
 import { TextFieldInput } from "../../leads/components/workspace/workspaceFields";
 
@@ -76,6 +77,7 @@ export function InvoicingMilestonePanel({
   const [showInvoiceForm, setShowInvoiceForm] = useState(false);
   const [activeInvoice, setActiveInvoice] = useState<Invoice | null>(null);
   const [formInvoice, setFormInvoice] = useState<Invoice | null>(null);
+  const [pdfPreviewOpen, setPdfPreviewOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const existingInvoice = getInvoicesForMilestone(
@@ -168,8 +170,13 @@ export function InvoicingMilestonePanel({
 
   const handleViewInvoice = () => {
     if (!existingInvoice) return;
-    setFormInvoice(existingInvoice);
-    setShowInvoiceForm(true);
+    const status = resolveInvoiceStatus(existingInvoice);
+    if (status === "draft") {
+      setFormInvoice(existingInvoice);
+      setShowInvoiceForm(true);
+      return;
+    }
+    setPdfPreviewOpen(true);
   };
 
   const handleDraftClick = (draft: Invoice) => {
@@ -181,7 +188,7 @@ export function InvoicingMilestonePanel({
 
   const handleDownload = () => {
     if (!existingInvoice) return;
-    toast.success(`Downloading invoice ${existingInvoice.invoiceNumber}.pdf`);
+    setPdfPreviewOpen(true);
   };
 
   const handleInvoiceSaved = (invoice: Invoice) => {
@@ -474,6 +481,11 @@ export function InvoicingMilestonePanel({
           </Box>
         </Box>
       </ThemeProvider>
+      <InvoicePdfPreviewDialog
+        open={pdfPreviewOpen}
+        invoice={existingInvoice ?? activeInvoice}
+        onClose={() => setPdfPreviewOpen(false)}
+      />
       {confirmDialog}
     </Box>
   );

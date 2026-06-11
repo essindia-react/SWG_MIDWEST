@@ -1,11 +1,4 @@
-export type InvoiceStatus =
-  | "draft"
-  | "sent"
-  | "viewed"
-  | "paid"
-  | "partially-paid"
-  | "overdue"
-  | "void";
+export type InvoiceStatus = "draft" | "sent" | "paid";
 
 export type PaymentTerm = "Due on Receipt" | "Net 15" | "Net 30";
 

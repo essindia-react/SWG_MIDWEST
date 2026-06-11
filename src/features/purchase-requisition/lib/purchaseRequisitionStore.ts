@@ -53,3 +53,9 @@ export function updatePurchaseRequisition(
 export function getPurchaseRequisitionById(id: string): PurchaseRequisition | undefined {
   return purchaseRequisitions.find((pr) => pr.id === id);
 }
+
+export function findPurchaseRequisitionByLinkedRef(
+  linkedRef: string
+): PurchaseRequisition | undefined {
+  return purchaseRequisitions.find((pr) => pr.linkedMaterialRequestNumber === linkedRef);
+}

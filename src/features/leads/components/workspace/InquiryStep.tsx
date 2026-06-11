@@ -67,8 +67,10 @@ const LOST_REASONS = [
 const PRIORITIES = ["High", "Medium", "Low"] as const;
 
 const EXISTING_CUSTOMERS = [
-  "John Smith — SWG-CUST-1024",
+  "Henderson Estate — SWG-CUST-1024",
   "Park Estates Dev. — SWG-CUST-1156",
+  "Rivera Pool & Turf — SWG-CUST-1188",
+  "Sunbelt Properties — SWG-CUST-1201",
 ] as const;
 
 const SALES_REP_NAMES = SALES_REPS.map((rep) => rep.name);

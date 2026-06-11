@@ -35,6 +35,7 @@ export type TransactionType =
   | "Stock In"
   | "Project Allocation"
   | "Site Request"
+  | "Purchase Order"
   | "Product Swap"
   | "Adjustment";
 

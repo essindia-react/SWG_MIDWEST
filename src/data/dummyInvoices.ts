@@ -1,4 +1,16 @@
-import type { Invoice } from "../types/invoice";
+import {
+  DEFAULT_NOTES_TO_CLIENT,
+  DEFAULT_TAX_PERCENT,
+} from "../features/invoicing/constants/invoicingConstants";
+import { getCustomerById } from "../features/projects/constants/projectConstants";
+import {
+  buildLineItems,
+  calculateDueDate,
+  getAmountPreviouslyPaid,
+} from "../lib/invoiceHelpers";
+import type { Invoice, InvoiceStatus } from "../types/invoice";
+import type { Project, ProjectMilestone } from "../types/project";
+import { DUMMY_PROJECTS } from "./dummyProjects";
 
 const defaultChecklist = {
   "Site Preparation Complete": true,
@@ -7,234 +19,210 @@ const defaultChecklist = {
   "Manager Sign-off": true,
 };
 
-export const DUMMY_INVOICES: Invoice[] = [
-  {
-    id: "inv-dummy-1",
-    invoiceNumber: "SWG-INV-2026-0001",
-    projectId: "project-1",
-    milestoneId: "ms-1",
-    status: "sent",
-    invoiceDate: "2026-03-26",
-    dueDate: "2026-04-10",
-    billToName: "John Smith",
-    billToAddress: "4521 Oak Ridge Dr, Columbus, OH 43220",
-    billToEmail: "john.smith@email.com",
-    projectName: "SWG-PROJ-2026-101",
-    jobSiteAddress: "4521 Oak Ridge Dr, Columbus, OH 43220",
-    milestoneName: "Site Preparation",
-    lineItems: [
-      { id: "li-ms-1-0", description: "Remove existing sod (Site Preparation)", amount: 4275 },
-      { id: "li-ms-1-1", description: "Install drainage system (Site Preparation)", amount: 5700 },
-    ],
-    subtotal: 9975,
-    taxPercent: 7.25,
-    taxAmount: 723.19,
-    totalDue: 10698.19,
-    amountPreviouslyPaid: 0,
-    balanceRemaining: 10698.19,
-    paymentTerms: "Net 15",
-    paymentMethods: ["ACH", "Check"],
-    notesToClient:
-      "Thank you for choosing Southwest Greens. Site preparation work has been completed.",
-    internalNotes: "First milestone invoice for John Smith backyard project.",
+function getProjectContext(
+  projectId: string,
+  milestoneId: string,
+): { project: Project; milestone: ProjectMilestone } | null {
+  const project = DUMMY_PROJECTS.find((item) => item.id === projectId);
+  const milestone = project?.milestones.find((item) => item.id === milestoneId);
+  if (!project || !milestone) return null;
+  return { project, milestone };
+}
+
+function buildSeedInvoice(
+  config: {
+    id: string;
+    invoiceNumber: string;
+    projectId: string;
+    milestoneId: string;
+    status: InvoiceStatus;
+    invoiceDate: string;
+    paymentTerms: Invoice["paymentTerms"];
+    paymentMethods: Invoice["paymentMethods"];
+    notesToClient: string;
+    internalNotes: string;
+    completionPct: number;
+    completionDate: string;
+    completionPhotos: string[];
+    createdAt: string;
+    updatedAt: string;
+    balanceRemaining?: number;
+  },
+  priorInvoices: Invoice[],
+): Invoice | null {
+  const context = getProjectContext(config.projectId, config.milestoneId);
+  if (!context) return null;
+
+  const { project, milestone } = context;
+  const customer = getCustomerById(project.customerId);
+  const lineItems = buildLineItems(project, milestone);
+  const subtotal = lineItems.reduce((sum, item) => sum + item.amount, 0);
+  const taxAmount = Math.round(subtotal * (DEFAULT_TAX_PERCENT / 100) * 100) / 100;
+  const totalDue = Math.round((subtotal + taxAmount) * 100) / 100;
+  const amountPreviouslyPaid = getAmountPreviouslyPaid(
+    project.id,
+    milestone.id,
+    priorInvoices,
+  );
+  const balanceRemaining =
+    config.balanceRemaining ??
+    Math.max(0, Math.round((totalDue - amountPreviouslyPaid) * 100) / 100);
+
+  return {
+    id: config.id,
+    invoiceNumber: config.invoiceNumber,
+    projectId: project.id,
+    milestoneId: milestone.id,
+    status: config.status,
+    invoiceDate: config.invoiceDate,
+    dueDate: calculateDueDate(config.invoiceDate, config.paymentTerms),
+    billToName: project.customerName,
+    billToAddress: customer?.address ?? "",
+    billToEmail: customer?.email ?? "",
+    projectName: project.projectCode,
+    jobSiteAddress: customer?.address ?? "",
+    milestoneName: milestone.name,
+    lineItems,
+    subtotal,
+    taxPercent: DEFAULT_TAX_PERCENT,
+    taxAmount,
+    totalDue,
+    amountPreviouslyPaid,
+    balanceRemaining,
+    paymentTerms: config.paymentTerms,
+    paymentMethods: config.paymentMethods,
+    notesToClient: config.notesToClient,
+    internalNotes: config.internalNotes,
     completionRecord: {
-      completionPct: 100,
-      markedCompleteBy: "Alex J.",
-      completionDate: "2026-03-25",
-      completionPhotos: ["site-prep-before.jpg", "site-prep-after.jpg"],
+      completionPct: config.completionPct,
+      markedCompleteBy: milestone.assignedTo,
+      completionDate: config.completionDate,
+      completionPhotos: config.completionPhotos,
       checklistSignedOff: defaultChecklist,
     },
-    createdAt: "2026-03-26T10:00:00.000Z",
-    updatedAt: "2026-03-26T10:00:00.000Z",
-  },
-  {
-    id: "inv-dummy-2",
-    invoiceNumber: "SWG-INV-2026-0002",
-    projectId: "project-1",
-    milestoneId: "ms-2",
-    status: "paid",
-    invoiceDate: "2026-04-15",
-    dueDate: "2026-04-30",
-    billToName: "John Smith",
-    billToAddress: "4521 Oak Ridge Dr, Columbus, OH 43220",
-    billToEmail: "john.smith@email.com",
-    projectName: "SWG-PROJ-2026-101",
-    jobSiteAddress: "4521 Oak Ridge Dr, Columbus, OH 43220",
-    milestoneName: "Turf Installation",
-    lineItems: [
-      { id: "li-ms-2-0", description: "Compact base layer (Turf Installation)", amount: 2850 },
-      { id: "li-ms-2-1", description: "Install turf rolls (Turf Installation)", amount: 8550 },
-    ],
-    subtotal: 11400,
-    taxPercent: 7.25,
-    taxAmount: 826.5,
-    totalDue: 12226.5,
-    amountPreviouslyPaid: 10698.19,
-    balanceRemaining: 0,
-    paymentTerms: "Net 15",
-    paymentMethods: ["ACH", "Credit Card"],
-    notesToClient: "Thank you for your payment. Turf installation milestone complete.",
-    internalNotes: "Paid via ACH on 2026-04-28.",
-    completionRecord: {
+    createdAt: config.createdAt,
+    updatedAt: config.updatedAt,
+  };
+}
+
+function buildDummyInvoices(): Invoice[] {
+  const seeds: Invoice[] = [];
+
+  const inv1 = buildSeedInvoice(
+    {
+      id: "inv-dummy-1",
+      invoiceNumber: "SWG-INV-2026-0001",
+      projectId: "project-1",
+      milestoneId: "p1-ms-1",
+      status: "paid",
+      invoiceDate: "2026-06-14",
+      paymentTerms: "Net 15",
+      paymentMethods: ["ACH", "Check"],
+      notesToClient:
+        "Site preparation milestone complete — sod removal and base prep finished.",
+      internalNotes: "Henderson Estate p1-task-1 completed by Chris W.",
       completionPct: 100,
-      markedCompleteBy: "Chris W.",
-      completionDate: "2026-04-14",
-      completionPhotos: ["turf-install-complete.jpg"],
-      checklistSignedOff: defaultChecklist,
+      completionDate: "2026-06-14",
+      completionPhotos: ["henderson-prep-before.jpg", "henderson-prep-after.jpg"],
+      createdAt: "2026-06-14T10:00:00.000Z",
+      updatedAt: "2026-06-20T14:00:00.000Z",
+      balanceRemaining: 0,
     },
-    createdAt: "2026-04-15T09:30:00.000Z",
-    updatedAt: "2026-04-28T14:00:00.000Z",
-  },
-  {
-    id: "inv-dummy-3",
-    invoiceNumber: "SWG-INV-2026-0003",
-    projectId: "project-2",
-    milestoneId: "ms-3",
-    status: "draft",
-    invoiceDate: "2026-05-20",
-    dueDate: "2026-06-04",
-    billToName: "Green Valley",
-    billToAddress: "1200 Valley Rd, Dublin, OH 43017",
-    billToEmail: "board@greenvalley.org",
-    projectName: "SWG-PROJ-2026-102",
-    jobSiteAddress: "1200 Valley Rd, Dublin, OH 43017",
-    milestoneName: "Design & Approval",
-    lineItems: [
-      {
-        id: "li-ms-3-0",
-        description: "Finalize green layout drawings (Design & Approval)",
-        amount: 6200,
-      },
-    ],
-    subtotal: 6200,
-    taxPercent: 7.25,
-    taxAmount: 449.5,
-    totalDue: 6649.5,
-    amountPreviouslyPaid: 0,
-    balanceRemaining: 6649.5,
-    paymentTerms: "Net 15",
-    paymentMethods: ["Check", "Zelle"],
-    notesToClient: "Design milestone invoice — pending board approval.",
-    internalNotes: "Draft — hold until design sign-off.",
-    completionRecord: {
+    seeds,
+  );
+  if (inv1) seeds.push(inv1);
+
+  const inv2 = buildSeedInvoice(
+    {
+      id: "inv-dummy-2",
+      invoiceNumber: "SWG-INV-2026-0002",
+      projectId: "project-1",
+      milestoneId: "p1-ms-2",
+      status: "sent",
+      invoiceDate: "2026-06-20",
+      paymentTerms: "Net 15",
+      paymentMethods: ["ACH", "Credit Card"],
+      notesToClient:
+        "Turf installation in progress — compact base and turf roll-out underway.",
+      internalNotes: "p1-task-2 in progress; p1-task-3 not started.",
+      completionPct: 33,
+      completionDate: "2026-06-20",
+      completionPhotos: ["henderson-turf-progress.jpg"],
+      createdAt: "2026-06-20T09:30:00.000Z",
+      updatedAt: "2026-06-20T09:30:00.000Z",
+    },
+    seeds,
+  );
+  if (inv2) seeds.push(inv2);
+
+  const inv3 = buildSeedInvoice(
+    {
+      id: "inv-dummy-3",
+      invoiceNumber: "SWG-INV-2026-0003",
+      projectId: "project-2",
+      milestoneId: "p2-ms-1",
+      status: "paid",
+      invoiceDate: "2026-06-13",
+      paymentTerms: "Net 15",
+      paymentMethods: ["ACH", "Check"],
+      notesToClient: "Field grading and perimeter drainage milestone complete.",
+      internalNotes: "Sunbelt p2-task-1 and p2-task-2 completed.",
       completionPct: 100,
-      markedCompleteBy: "Emily C.",
-      completionDate: "2026-05-19",
-      completionPhotos: ["design-layout-v2.jpg"],
-      checklistSignedOff: defaultChecklist,
+      completionDate: "2026-06-12",
+      completionPhotos: ["sunbelt-drainage-complete.jpg"],
+      createdAt: "2026-06-13T11:00:00.000Z",
+      updatedAt: "2026-06-18T16:00:00.000Z",
+      balanceRemaining: 0,
     },
-    createdAt: "2026-05-20T11:00:00.000Z",
-    updatedAt: "2026-05-20T11:00:00.000Z",
-  },
-  {
-    id: "inv-dummy-4",
-    invoiceNumber: "SWG-INV-2026-0004",
-    projectId: "project-1",
-    milestoneId: "ms-1",
-    status: "sent",
-    invoiceDate: "2026-04-01",
-    dueDate: "2026-04-16",
-    billToName: "John Smith",
-    billToAddress: "4521 Oak Ridge Dr, Columbus, OH 43220",
-    billToEmail: "john.smith@email.com",
-    projectName: "SWG-PROJ-2026-101",
-    jobSiteAddress: "4521 Oak Ridge Dr, Columbus, OH 43220",
-    milestoneName: "Site Preparation",
-    lineItems: [
-      { id: "li-ms-1-rev-0", description: "Additional grading work (Site Preparation)", amount: 1500 },
-    ],
-    subtotal: 1500,
-    taxPercent: 7.25,
-    taxAmount: 108.75,
-    totalDue: 1608.75,
-    amountPreviouslyPaid: 0,
-    balanceRemaining: 1608.75,
-    paymentTerms: "Net 15",
-    paymentMethods: ["ACH"],
-    notesToClient: "Supplemental invoice for additional grading.",
-    internalNotes: "Overdue — follow up with client.",
-    completionRecord: {
-      completionPct: 100,
-      markedCompleteBy: "Alex J.",
-      completionDate: "2026-03-31",
-      completionPhotos: ["grading-extra.jpg"],
-      checklistSignedOff: defaultChecklist,
+    seeds,
+  );
+  if (inv3) seeds.push(inv3);
+
+  const inv4 = buildSeedInvoice(
+    {
+      id: "inv-dummy-4",
+      invoiceNumber: "SWG-INV-2026-0004",
+      projectId: "project-2",
+      milestoneId: "p2-ms-2",
+      status: "draft",
+      invoiceDate: "2026-06-28",
+      paymentTerms: "Net 15",
+      paymentMethods: ["ACH", "Check", "Zelle"],
+      notesToClient: DEFAULT_NOTES_TO_CLIENT,
+      internalNotes: "Hold until p2-task-5 grooming task is complete.",
+      completionPct: 67,
+      completionDate: "2026-06-27",
+      completionPhotos: ["sunbelt-turf-laydown.jpg"],
+      createdAt: "2026-06-28T10:00:00.000Z",
+      updatedAt: "2026-06-28T10:00:00.000Z",
     },
-    createdAt: "2026-04-01T08:00:00.000Z",
-    updatedAt: "2026-04-01T08:00:00.000Z",
-  },
-  {
-    id: "inv-dummy-5",
-    invoiceNumber: "SWG-INV-2026-0005",
-    projectId: "project-2",
-    milestoneId: "ms-3",
-    status: "partially-paid",
-    invoiceDate: "2026-05-01",
-    dueDate: "2026-06-15",
-    billToName: "Green Valley",
-    billToAddress: "1200 Valley Rd, Dublin, OH 43017",
-    billToEmail: "board@greenvalley.org",
-    projectName: "SWG-PROJ-2026-102",
-    jobSiteAddress: "1200 Valley Rd, Dublin, OH 43017",
-    milestoneName: "Design & Approval",
-    lineItems: [
-      { id: "li-ms-3-dep-0", description: "Design deposit — putting green layout", amount: 12400 },
-    ],
-    subtotal: 12400,
-    taxPercent: 7.25,
-    taxAmount: 899,
-    totalDue: 13299,
-    amountPreviouslyPaid: 0,
-    balanceRemaining: 6649.5,
-    paymentTerms: "Net 30",
-    paymentMethods: ["Check", "ACH", "Zelle"],
-    notesToClient: "50% deposit received. Balance due upon design approval.",
-    internalNotes: "Partial payment recorded 2026-05-10.",
-    completionRecord: {
-      completionPct: 100,
-      markedCompleteBy: "Emily C.",
-      completionDate: "2026-04-30",
-      completionPhotos: ["deposit-milestone.jpg"],
-      checklistSignedOff: defaultChecklist,
+    seeds,
+  );
+  if (inv4) seeds.push(inv4);
+
+  const inv5 = buildSeedInvoice(
+    {
+      id: "inv-dummy-5",
+      invoiceNumber: "SWG-INV-2026-0005",
+      projectId: "project-2",
+      milestoneId: "p2-ms-2",
+      status: "sent",
+      invoiceDate: "2026-06-19",
+      paymentTerms: "Net 15",
+      paymentMethods: ["ACH"],
+      notesToClient: "Progress invoice — shock pad underlayment complete.",
+      internalNotes: "p2-task-3 completed; sports turf roll-out in progress.",
+      completionPct: 33,
+      completionDate: "2026-06-18",
+      completionPhotos: ["sunbelt-shock-pad-complete.jpg"],
+      createdAt: "2026-06-19T08:00:00.000Z",
+      updatedAt: "2026-06-19T08:00:00.000Z",
     },
-    createdAt: "2026-05-01T10:00:00.000Z",
-    updatedAt: "2026-05-10T16:30:00.000Z",
-  },
-  {
-    id: "inv-dummy-6",
-    invoiceNumber: "SWG-INV-2026-0006",
-    projectId: "project-1",
-    milestoneId: "ms-2",
-    status: "viewed",
-    invoiceDate: "2026-06-01",
-    dueDate: "2026-06-16",
-    billToName: "John Smith",
-    billToAddress: "4521 Oak Ridge Dr, Columbus, OH 43220",
-    billToEmail: "john.smith@email.com",
-    projectName: "SWG-PROJ-2026-101",
-    jobSiteAddress: "4521 Oak Ridge Dr, Columbus, OH 43220",
-    milestoneName: "Turf Installation",
-    lineItems: [
-      { id: "li-ms-2-final-0", description: "Edge trimming and seaming (Turf Installation)", amount: 4275 },
-    ],
-    subtotal: 4275,
-    taxPercent: 7.25,
-    taxAmount: 309.94,
-    totalDue: 4584.94,
-    amountPreviouslyPaid: 12226.5,
-    balanceRemaining: 4584.94,
-    paymentTerms: "Net 15",
-    paymentMethods: ["ACH", "Check", "Credit Card"],
-    notesToClient: "Final turf installation invoice. Client viewed on 2026-06-03.",
-    internalNotes: "Awaiting payment.",
-    completionRecord: {
-      completionPct: 100,
-      markedCompleteBy: "Chris W.",
-      completionDate: "2026-05-31",
-      completionPhotos: ["turf-final-seam.jpg"],
-      checklistSignedOff: defaultChecklist,
-    },
-    createdAt: "2026-06-01T09:00:00.000Z",
-    updatedAt: "2026-06-03T11:20:00.000Z",
-  },
-];
+    seeds,
+  );
+  if (inv5) seeds.push(inv5);
+
+  return seeds;
+}
+
+export const DUMMY_INVOICES: Invoice[] = buildDummyInvoices();

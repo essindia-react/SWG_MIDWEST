@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import {
   Box,
   Button,
@@ -9,7 +9,6 @@ import {
   TableCell,
   TableContainer,
   TableHead,
-  TablePagination,
   TableRow,
   Typography,
 } from "@mui/material";
@@ -22,61 +21,75 @@ import {
 import type { Invoice } from "../../../types/invoice";
 import type { Project } from "../../../types/project";
 import {
+  DEMO_INVOICE_COUNT,
   invoiceStatusColor,
   invoiceStatusLabel,
 } from "../constants/invoicingConstants";
 import { CreateInvoiceModal } from "./CreateInvoiceModal";
+import { InvoicePdfPreviewDialog } from "./InvoicePdfPreviewDialog";
 
 interface InvoicingInvoiceListProps {
   invoices: Invoice[];
   projects: Project[];
-  // onInvoiceClick: (invoice: Invoice) => void;
 }
 
 export function InvoicingInvoiceList({
   invoices,
   projects,
-  // onInvoiceClick,
 }: InvoicingInvoiceListProps) {
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [modalOpen, setModalOpen] = useState(false);
+  const [pdfPreviewOpen, setPdfPreviewOpen] = useState(false);
+  const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
+  const [previewInvoice, setPreviewInvoice] = useState<Invoice | null>(null);
 
-  const sorted = useMemo(
-    () => [...invoices].sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+  const displayed = useMemo(
+    () =>
+      [...invoices]
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+        .slice(0, DEMO_INVOICE_COUNT),
     [invoices],
   );
-
-  const paginated = useMemo(
-    () => sorted.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage),
-    [sorted, page, rowsPerPage],
-  );
-
-  useEffect(() => {
-    const maxPage = Math.max(0, Math.ceil(sorted.length / rowsPerPage) - 1);
-    if (page > maxPage) setPage(maxPage);
-  }, [sorted.length, rowsPerPage, page]);
-
-  const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
 
   const getProjectCode = (projectId: string) => {
     const project = projects.find((p) => p.id === projectId);
     return project?.projectCode ?? invoiceProjectName(projectId, invoices);
   };
 
-  const handleNewInvoice = useCallback(() => {
-    setEditingInvoice(null);
+  const openDraftModal = useCallback((invoice: Invoice) => {
+    setEditingInvoice(invoice);
     setModalOpen(true);
   }, []);
 
-  const handleInvoiceClick = useCallback((invoice: Invoice) => {
-    setEditingInvoice(invoice);
+  const openPdfPreview = useCallback((invoice: Invoice) => {
+    setPreviewInvoice(invoice);
+    setPdfPreviewOpen(true);
+  }, []);
+
+  const handleInvoiceClick = useCallback(
+    (invoice: Invoice) => {
+      const status = resolveInvoiceStatus(invoice);
+      if (status === "draft") {
+        openDraftModal(invoice);
+        return;
+      }
+      openPdfPreview(invoice);
+    },
+    [openDraftModal, openPdfPreview],
+  );
+
+  const handleNewInvoice = useCallback(() => {
+    setEditingInvoice(null);
     setModalOpen(true);
   }, []);
 
   const handleCloseModal = useCallback(() => {
     setModalOpen(false);
     setEditingInvoice(null);
+  }, []);
+
+  const handleClosePdfPreview = useCallback(() => {
+    setPdfPreviewOpen(false);
+    setPreviewInvoice(null);
   }, []);
 
   const handleSaved = useCallback(() => {
@@ -99,6 +112,11 @@ export function InvoicingInvoiceList({
         onSaved={handleSaved}
         onSent={handleSent}
       />
+      <InvoicePdfPreviewDialog
+        open={pdfPreviewOpen}
+        invoice={previewInvoice}
+        onClose={handleClosePdfPreview}
+      />
       <Box>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
           <FileText size={18} />
@@ -106,7 +124,7 @@ export function InvoicingInvoiceList({
             Invoices
           </Typography>
           <Chip
-            label={sorted.length}
+            label={displayed.length}
             size="small"
             sx={{ height: 22, fontSize: "0.75rem" }}
           />
@@ -126,7 +144,7 @@ export function InvoicingInvoiceList({
           </Button>
         </Box>
 
-        {sorted.length === 0 ? (
+        {displayed.length === 0 ? (
           <Box
             sx={{
               py: 6,
@@ -181,7 +199,7 @@ export function InvoicingInvoiceList({
                 </TableRow>
               </TableHead>
               <TableBody>
-                {paginated.map((invoice) => {
+                {displayed.map((invoice) => {
                   const status = resolveInvoiceStatus(invoice);
                   const colors = invoiceStatusColor(status);
 
@@ -247,7 +265,11 @@ export function InvoicingInvoiceList({
                             e.stopPropagation();
                             handleInvoiceClick(invoice);
                           }}
-                          aria-label={`View invoice ${invoice.invoiceNumber}`}
+                          aria-label={
+                            status === "draft"
+                              ? `Edit invoice ${invoice.invoiceNumber}`
+                              : `Preview invoice ${invoice.invoiceNumber}`
+                          }
                         >
                           <Eye size={16} />
                         </IconButton>
@@ -257,18 +279,6 @@ export function InvoicingInvoiceList({
                 })}
               </TableBody>
             </Table>
-            <TablePagination
-              component="div"
-              count={sorted.length}
-              page={page}
-              onPageChange={(_, nextPage) => setPage(nextPage)}
-              rowsPerPage={rowsPerPage}
-              onRowsPerPageChange={(e) => {
-                setRowsPerPage(parseInt(e.target.value, 10));
-                setPage(0);
-              }}
-              rowsPerPageOptions={[5, 10, 25]}
-            />
           </TableContainer>
         )}
       </Box>

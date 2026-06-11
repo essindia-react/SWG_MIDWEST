@@ -12,6 +12,16 @@ export const OVERHEAD_CATEGORIES = [
   "Miscellaneous",
 ] as const;
 
+import { getProducts } from "../../inventory/lib/inventoryStore";
+
+export interface InventoryCatalogItem {
+  name: string;
+  sku: string;
+  unit: string;
+  unitCost: number;
+}
+
+/** @deprecated use getInventoryCatalogItems() — kept for static fallbacks */
 export const INVENTORY_ITEMS = [
   { name: "Premium Landscape Turf 15mm", sku: "TURF-PREM-15", unit: "sq ft", unitCost: 4.25 },
   { name: "Putting Green Turf", sku: "TURF-PG-12", unit: "sq ft", unitCost: 6.5 },
@@ -19,11 +29,28 @@ export const INVENTORY_ITEMS = [
   { name: "Crushed Aggregate Base", sku: "AGG-CRUSH-01", unit: "bag", unitCost: 12.75 },
   { name: "Landscape Nails Box", sku: "NAIL-LND-BOX", unit: "unit", unitCost: 28 },
   { name: "Seam Tape Roll", sku: "TAPE-SEAM-01", unit: "roll", unitCost: 42 },
+  { name: "Silica Sand Infill 50lb", sku: "INFILL-SIL-50", unit: "bag", unitCost: 18.5 },
+  { name: "Aluminum Edging 8ft", sku: "EDGE-ALU-8", unit: "linear ft", unitCost: 3.2 },
 ] as const;
+
+/** Active stocked inventory products — sole source for project material planning. */
+export function getInventoryCatalogItems(): InventoryCatalogItem[] {
+  return getProducts()
+    .filter(
+      (product) =>
+        product.status === "Active" && product.inventoryType !== "Non-Inventory"
+    )
+    .map((product) => ({
+      name: product.name,
+      sku: product.sku,
+      unit: product.unit,
+      unitCost: product.unitCost,
+    }));
+}
 
 export const BUDGET_EMPLOYEES = [
   { name: "Maria S.", role: "Crew Leader", hourlyRate: 38 },
-  { name: "Alex J.", role: "Installer", hourlyRate: 32 },
+  { name: "Alex J.", role: "Site Supervisor", hourlyRate: 40 },
   { name: "Chris W.", role: "Installer", hourlyRate: 30 },
   { name: "Carlos R.", role: "Estimator", hourlyRate: 36 },
   { name: "Emily C.", role: "Site Supervisor", hourlyRate: 40 },
@@ -38,7 +65,7 @@ export const EQUIPMENT_ITEMS = [
 ] as const;
 
 export function getInventoryItem(name: string) {
-  return INVENTORY_ITEMS.find((item) => item.name === name);
+  return getInventoryCatalogItems().find((item) => item.name === name);
 }
 
 export function getBudgetEmployee(name: string) {

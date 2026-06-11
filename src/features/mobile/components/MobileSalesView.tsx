@@ -23,30 +23,29 @@ type MobileView = "today" | "lead" | "calllog" | "notes";
 
 const todayTasks = [
   { id: "1", title: "Site visit — Henderson Estate", time: "10:00 AM", type: "visit", lead: "Henderson Estate", done: false, priority: "high" },
-  // { id: "2", title: "Follow-up call — Riverside HOA board", time: "11:30 AM", type: "call", lead: "Riverside HOA", done: false, priority: "high" },
-  { id: "3", title: "Send revised quote to Park Estates", time: "1:00 PM", type: "email", lead: "Park Estates Dev.", done: false, priority: "medium" },
-  { id: "4", title: "Call Thornton re: site visit scheduling", time: "2:30 PM", type: "call", lead: "Thornton Family", done: true, priority: "low" },
-  { id: "5", title: "Check on Martinez installation progress", time: "4:00 PM", type: "followup", lead: "Martinez Residence", done: false, priority: "medium" },
+  { id: "2", title: "Send revised quote to Park Estates", time: "1:00 PM", type: "email", lead: "Park Estates Dev.", done: false, priority: "medium" },
+  { id: "3", title: "Follow-up — Rivera hardscape estimate", time: "2:30 PM", type: "call", lead: "Rivera Pool & Turf", done: false, priority: "medium" },
+  { id: "4", title: "Sunbelt kickoff coordination", time: "4:00 PM", type: "followup", lead: "Sunbelt Properties", done: false, priority: "high" },
 ];
 
 const myLeads = [
-  { id: "1", name: "Henderson Estate", value: 54000, stage: "Site Visit", lastContact: "2h ago", priority: "high" },
-  // { id: "2", name: "Riverside HOA", value: 210000, stage: "Negotiation", lastContact: "4h ago", priority: "high" },
-  { id: "3", name: "Park Estates Dev.", value: 178000, stage: "Estimate Sent", lastContact: "Yesterday", priority: "medium" },
-  { id: "4", name: "Thornton Family", value: 22000, stage: "Qualified", lastContact: "2 days ago", priority: "low" },
+  { id: "1", name: "Henderson Estate", value: 42850, stage: "Proposal Sent", lastContact: "2h ago", priority: "high" },
+  { id: "2", name: "Park Estates Dev.", value: 178000, stage: "Proposal Sent", lastContact: "Yesterday", priority: "medium" },
+  { id: "3", name: "Rivera Pool & Turf", value: 62000, stage: "Estimation", lastContact: "Today", priority: "medium" },
+  { id: "4", name: "Sunbelt Properties", value: 72000, stage: "Won", lastContact: "2 days ago", priority: "high" },
 ];
 
 const callLog = [
-  { id: "1", name: "Robert Henderson", phone: "(602) 555-0187", time: "Today 10:34 AM", duration: "14 min", outcome: "Connected — Site visit confirmed for tomorrow", type: "outbound" },
-  // { id: "2", name: "HOA Board (Riverside)", phone: "(480) 555-0522", time: "Today 9:10 AM", duration: "—", outcome: "Voicemail left — callback requested", type: "outbound" },
-  { id: "3", name: "Karen Thornton", phone: "(480) 555-0198", time: "Yesterday 3:45 PM", duration: "8 min", outcome: "Connected — Interested, scheduling site visit", type: "inbound" },
-  { id: "4", name: "Park Estates Dev.", phone: "(623) 555-0601", time: "Yesterday 11:20 AM", duration: "22 min", outcome: "Connected — Contract language discussed, legal review underway", type: "outbound" },
+  { id: "1", name: "Robert Henderson", phone: "(614) 555-0187", time: "Today 10:34 AM", duration: "14 min", outcome: "Connected — Proposal follow-up scheduled", type: "outbound" },
+  { id: "2", name: "Tony Rivera", phone: "(614) 555-0334", time: "Today 9:10 AM", duration: "11 min", outcome: "Connected — Reviewing hardscape estimate", type: "inbound" },
+  { id: "3", name: "Robert Fox", phone: "(513) 555-0601", time: "Yesterday 3:45 PM", duration: "18 min", outcome: "Connected — Board reviewing proposal", type: "outbound" },
+  { id: "4", name: "Sunbelt Properties", phone: "(937) 555-0728", time: "Yesterday 11:20 AM", duration: "22 min", outcome: "Connected — Contract signed, kickoff planning", type: "outbound" },
 ];
 
 const quickNotes = [
-  { id: "1", lead: "Henderson Estate", time: "Today 10:30 AM", text: "Client wants dog-friendly turf. Has military ID — verify discount eligibility. Prefers morning installation." },
-  { id: "2", lead: "Riverside HOA", time: "Jun 4, 3:00 PM", text: "Board approved Phase 1 in principle. Financing terms are key — they want 90-day net terms. Follow up with finance team." },
-  { id: "3", lead: "Park Estates", time: "Jun 3, 1:15 PM", text: "Dev team wants 3-phase completion. Phase 1 by July 4th is critical for their open house." },
+  { id: "1", lead: "Henderson Estate", time: "Today 10:30 AM", text: "Client wants dog-friendly turf with cooling infill. Prefers morning installation before July hosting season." },
+  { id: "2", lead: "Rivera Pool & Turf", time: "Jun 4, 3:00 PM", text: "Tony wants phased hardscape install to keep showroom open. Drainage correction is a priority." },
+  { id: "3", lead: "Park Estates", time: "Jun 3, 1:15 PM", text: "Dev team needs putting green complete before fall model-home tour. LED cup lighting included." },
 ];
 
 const priorityColors: Record<string, string> = {

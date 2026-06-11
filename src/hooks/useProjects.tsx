@@ -14,6 +14,7 @@ import {
   getDefaultProjectDocuments,
   normalizeProject,
 } from "../lib/projectHelpers";
+import { syncAllProjectBudgetPurchaseOrders } from "../lib/inventoryIntegration";
 import {
   mergeProjectsWithStored,
   saveUserProjects,
@@ -118,6 +119,12 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     saveUserProjects(projects);
   }, [projects]);
+
+  useEffect(() => {
+    syncAllProjectBudgetPurchaseOrders(
+      mergeProjectsWithStored(DUMMY_PROJECTS).map(normalizeProject)
+    );
+  }, []);
 
   const projectsWithMilestones = useMemo(
     () => filterProjectsWithMilestones(projects),

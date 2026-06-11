@@ -16,7 +16,7 @@ import { InventoryStatusChip } from "../../inventory/components/shared/Inventory
 import { SITE_MATERIAL_REQUEST_STATUS_CONFIG } from "../constants/materialRequestConstants";
 import {
   getMaterialRequests,
-  seedDemoMaterialRequestIfEmpty,
+  resetAndSeedMaterialRequests,
 } from "../lib/materialRequestStore";
 import type { MaterialRequest, MaterialRequestStatus } from "../types/materialRequest";
 import { MaterialRequestDetailsDrawer } from "./MaterialRequestDetailsDrawer";
@@ -56,7 +56,7 @@ export function MaterialRequestApprovalView() {
   const [selectedRequest, setSelectedRequest] = useState<MaterialRequest | null>(null);
 
   const refresh = useCallback(() => {
-    seedDemoMaterialRequestIfEmpty();
+    resetAndSeedMaterialRequests();
     setRequests(getMaterialRequests());
   }, []);
 

@@ -35,7 +35,7 @@ export function TaskMaterialRequestStatusSummary({
         }}
       >
         {compact
-          ? "No requests yet — use + Request"
+          ? "No requests yet"
           : "Click to submit a material request for this task"}
       </Typography>
     );

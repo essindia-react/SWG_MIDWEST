@@ -3,12 +3,15 @@ import { Box, Button, Chip, IconButton, Typography } from "@mui/material";
 import { Edit2, Package, Plus, Trash2, User } from "lucide-react";
 import { toast } from "sonner";
 import { formatProjectDate } from "../../../lib/projectHelpers";
-import type { ProjectMilestone, ProjectTask } from "../../../types/project";
+import type { Project, ProjectMilestone, ProjectTask } from "../../../types/project";
+import { getMilestoneAssignedPickItems } from "../lib/taskPickListHelpers";
+import { processPickListItemPull } from "../../../lib/inventoryIntegration";
 import {
   addPickListItem,
   getTaskPickList,
   getTaskPickListCount,
   removePickListItem,
+  seedTaskPickListsFromProjects,
   updatePickListItem,
 } from "../lib/taskManagementPickListStore";
 import type {
@@ -19,7 +22,7 @@ import { TaskPickListModal } from "./TaskPickListModal";
 import { TaskRowCard } from "./TaskRowCard";
 
 interface TaskMilestonePickListTabProps {
-  projectId: string;
+  project: Project;
   milestone: ProjectMilestone;
 }
 
@@ -66,16 +69,23 @@ function PickListSummary({
 }
 
 function TaskPickListSection({
-  projectId,
+  project,
   milestoneId,
+  milestoneName,
   taskId,
   onItemsChange,
 }: {
-  projectId: string;
+  project: Project;
   milestoneId: string;
+  milestoneName: string;
   taskId: string;
   onItemsChange: () => void;
 }) {
+  const projectId = project.id;
+  const task = project.milestones
+    .find((milestone) => milestone.id === milestoneId)
+    ?.tasks.find((entry) => entry.id === taskId);
+  const availableItems = getMilestoneAssignedPickItems(project, milestoneId);
   const [items, setItems] = useState<TaskManagementPickListItem[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<TaskManagementPickListItem | null>(null);
@@ -91,26 +101,38 @@ function TaskPickListSection({
   const handleSave = (data: TaskManagementPickListFormData) => {
     const qty = Number(data.quantityRequired);
     if (editingItem) {
-      updatePickListItem(projectId, milestoneId, taskId, editingItem.id, {
+      const updatedItem: TaskManagementPickListItem = {
+        ...editingItem,
         fieldName: data.fieldName,
         itemName: data.itemName,
         sku: data.sku,
         quantityRequired: qty || 0,
         unit: data.unit,
+        category: data.category,
+        sourceLineId: data.sourceLineId,
         pulledFromInventory: data.pulledFromInventory,
         notes: data.notes,
-      });
+      };
+      updatePickListItem(projectId, milestoneId, taskId, editingItem.id, updatedItem);
+      if (data.pulledFromInventory) {
+        processPickListItemPull(project, taskId, updatedItem, task?.assignedTo);
+      }
       toast.success(data.pulledFromInventory ? `${data.itemName} updated & pulled` : "Pick list item updated");
     } else {
-      addPickListItem(projectId, milestoneId, taskId, {
+      const newItem = addPickListItem(projectId, milestoneId, taskId, {
         fieldName: data.fieldName,
         itemName: data.itemName,
         sku: data.sku,
         quantityRequired: qty || 0,
         unit: data.unit,
+        category: data.category,
+        sourceLineId: data.sourceLineId,
         pulledFromInventory: data.pulledFromInventory,
         notes: data.notes,
       });
+      if (data.pulledFromInventory) {
+        processPickListItemPull(project, taskId, newItem, task?.assignedTo);
+      }
       toast.success(data.pulledFromInventory ? `${data.itemName} added & pulled` : "Pick list item added");
     }
     setEditingItem(null);
@@ -137,9 +159,15 @@ function TaskPickListSection({
           mb: 2,
         }}
       >
-        <Typography sx={{ fontSize: "0.8125rem", fontWeight: 600, color: "text.secondary" }}>
-          Pick List Items
-        </Typography>
+        <Box>
+          <Typography sx={{ fontSize: "0.8125rem", fontWeight: 600, color: "text.secondary" }}>
+            Pick List Items
+          </Typography>
+          <Typography sx={{ fontSize: "0.6875rem", color: "text.disabled", mt: 0.25 }}>
+            From project budget assigned to this milestone ({availableItems.length} item
+            {availableItems.length !== 1 ? "s" : ""} available)
+          </Typography>
+        </Box>
         <Button
           variant="outlined"
           color="primary"
@@ -169,7 +197,8 @@ function TaskPickListSection({
         >
           <Package size={20} style={{ margin: "0 auto 8px", opacity: 0.4 }} />
           <Typography sx={{ fontSize: "0.8125rem", color: "text.secondary" }}>
-            No pick list items for this task yet.
+            No pick list items for this task yet. Add from the {availableItems.length} material
+            {availableItems.length !== 1 ? "s" : ""}/equipment assigned to this milestone.
           </Typography>
         </Box>
       ) : (
@@ -198,6 +227,11 @@ function TaskPickListSection({
                     <Typography sx={{ fontSize: "0.6875rem", color: "text.secondary" }}>
                       · {item.quantityRequired} {item.unit}
                     </Typography>
+                    <Chip
+                      label={item.category}
+                      size="small"
+                      sx={{ height: 20, fontSize: "0.625rem", fontWeight: 600 }}
+                    />
                     <Chip
                       label={item.pulledFromInventory ? "Pulled" : "Not Pulled"}
                       size="small"
@@ -239,6 +273,8 @@ function TaskPickListSection({
       <TaskPickListModal
         open={modalOpen}
         item={editingItem}
+        availableItems={availableItems}
+        defaultFieldName={milestoneName}
         onClose={() => {
           setModalOpen(false);
           setEditingItem(null);
@@ -251,21 +287,24 @@ function TaskPickListSection({
 
 function TaskPickListRow({
   task,
-  projectId,
+  project,
   milestoneId,
+  milestoneName,
   expanded,
   onToggle,
   refreshKey,
   onItemsChange,
 }: {
   task: ProjectTask;
-  projectId: string;
+  project: Project;
   milestoneId: string;
+  milestoneName: string;
   expanded: boolean;
   onToggle: () => void;
   refreshKey: number;
   onItemsChange: () => void;
 }) {
+  const projectId = project.id;
   const itemCount = getTaskPickListCount(projectId, milestoneId, task.id);
 
   return (
@@ -303,8 +342,9 @@ function TaskPickListRow({
       }
     >
       <TaskPickListSection
-        projectId={projectId}
+        project={project}
         milestoneId={milestoneId}
+        milestoneName={milestoneName}
         taskId={task.id}
         onItemsChange={onItemsChange}
       />
@@ -312,9 +352,14 @@ function TaskPickListRow({
   );
 }
 
-export function TaskMilestonePickListTab({ projectId, milestone }: TaskMilestonePickListTabProps) {
+export function TaskMilestonePickListTab({ project, milestone }: TaskMilestonePickListTabProps) {
   const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
+
+  useEffect(() => {
+    seedTaskPickListsFromProjects([project]);
+    setRefreshKey((k) => k + 1);
+  }, [project]);
 
   const handleItemsChange = () => {
     setRefreshKey((k) => k + 1);
@@ -342,7 +387,8 @@ export function TaskMilestonePickListTab({ projectId, milestone }: TaskMilestone
   return (
     <Box>
       <Typography sx={{ fontSize: "0.8125rem", color: "text.secondary", mb: 2 }}>
-        Each task has its own pick list. Click a task to expand and add materials.
+        Pick lists use materials and equipment assigned to this milestone in project management.
+        Each task tracks what was pulled for the job.
       </Typography>
 
       <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
@@ -350,8 +396,9 @@ export function TaskMilestonePickListTab({ projectId, milestone }: TaskMilestone
           <TaskPickListRow
             key={task.id}
             task={task}
-            projectId={projectId}
+            project={project}
             milestoneId={milestone.id}
+            milestoneName={milestone.name}
             expanded={expandedTaskId === task.id}
             onToggle={() => setExpandedTaskId(expandedTaskId === task.id ? null : task.id)}
             refreshKey={refreshKey}

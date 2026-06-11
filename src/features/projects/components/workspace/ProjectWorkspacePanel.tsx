@@ -3,6 +3,7 @@ import { Box, IconButton, ThemeProvider, Typography } from "@mui/material";
 import { ArrowRight, X } from "lucide-react";
 import { toast } from "sonner";
 import { useProjects } from "../../../../hooks/useProjects";
+import { syncProjectBudgetToPurchaseOrders } from "../../../../lib/inventoryIntegration";
 import { theme } from "../../../../theme/theme";
 import type { ProjectBudget, ProjectDocument } from "../../../../types/project";
 import type { ProjectWorkspaceTabId } from "../../constants/projectConstants";
@@ -118,6 +119,12 @@ export function ProjectWorkspacePanel(props: ProjectWorkspacePanelProps) {
       setFocus({});
       setActiveTab(tabId as ProjectWorkspaceTabId);
     }
+    if (
+      project &&
+      (tabId === "budget-materials" || tabId === "budget-equipment")
+    ) {
+      syncProjectBudgetToPurchaseOrders(project);
+    }
     const label = SECTION_SAVE_LABELS[tabId] ?? "Section";
     toast.success(`${label} saved`);
   };
@@ -128,8 +135,9 @@ export function ProjectWorkspacePanel(props: ProjectWorkspacePanelProps) {
   };
 
   const handleBudgetChange = (budget: ProjectBudget) => {
-    if (!projectId) return;
+    if (!projectId || !project) return;
     updateProject(projectId, { budget });
+    syncProjectBudgetToPurchaseOrders({ ...project, budget });
   };
 
   const sidebarItems = PROJECT_WORKSPACE_SIDEBAR;

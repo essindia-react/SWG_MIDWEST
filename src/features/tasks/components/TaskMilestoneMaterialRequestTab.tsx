@@ -7,6 +7,7 @@ import type {
   ProjectMilestone,
   ProjectTask,
 } from "../../../types/project";
+import { resetAndSeedMaterialRequests } from "../../site-material-request/lib/materialRequestStore";
 import { getMaterialRequestsForTask } from "../lib/taskMaterialRequestHelpers";
 import { TaskMaterialRequestModal } from "./TaskMaterialRequestModal";
 import { TaskMaterialRequestStatusSummary } from "./TaskMaterialRequestStatusSummary";
@@ -133,6 +134,7 @@ export function TaskMilestoneMaterialRequestTab({
   const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
+    resetAndSeedMaterialRequests();
     const refresh = () => setRefreshKey((k) => k + 1);
     window.addEventListener("material-requests-updated", refresh);
     window.addEventListener("storage", refresh);

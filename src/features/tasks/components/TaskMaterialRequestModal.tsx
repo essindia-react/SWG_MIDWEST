@@ -15,7 +15,7 @@ import {
 import { Camera, Send } from "lucide-react";
 import { toast } from "sonner";
 import { useIsMobile } from "../../../components/layout/Sidebar";
-import { INVENTORY_ITEMS } from "../../projects/constants/budgetConstants";
+import { getProjectAssignedMaterials } from "../lib/taskPickListHelpers";
 import {
   MATERIAL_REQUEST_REASONS,
   MATERIAL_REQUEST_UNITS,
@@ -54,14 +54,13 @@ export function TaskMaterialRequestModal({
 }: TaskMaterialRequestModalProps) {
   const isMobile = useIsMobile();
   const [form, setForm] = useState<MaterialRequestFormData>(initialForm);
-  const [useCustomItem, setUseCustomItem] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [requestNumber, setRequestNumber] = useState("");
+  const assignedMaterials = getProjectAssignedMaterials(project);
 
   useEffect(() => {
     if (open) {
       setForm(initialForm);
-      setUseCustomItem(false);
       setSubmitted(false);
       setRequestNumber("");
     }
@@ -75,10 +74,10 @@ export function TaskMaterialRequestModal({
   };
 
   const handleItemChange = (itemName: string) => {
-    const inventoryItem = INVENTORY_ITEMS.find((i) => i.name === itemName);
+    const assigned = assignedMaterials.find((item) => item.itemName === itemName);
     updateForm("itemName", itemName);
-    if (inventoryItem) {
-      updateForm("unit", inventoryItem.unit);
+    if (assigned) {
+      updateForm("unit", assigned.unit);
     }
   };
 
@@ -169,56 +168,22 @@ export function TaskMaterialRequestModal({
               size="small"
             />
 
-            <Box>
-              <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, mb: 1, display: "block" }}>
-                Item Name
-              </Typography>
-              <Box sx={{ display: "flex", gap: 1, mb: 1.5 }}>
-                <Button
-                  size="small"
-                  variant={!useCustomItem ? "contained" : "outlined"}
-                  onClick={() => setUseCustomItem(false)}
-                  sx={{ flex: 1 }}
-                >
-                  From List
-                </Button>
-                <Button
-                  size="small"
-                  variant={useCustomItem ? "contained" : "outlined"}
-                  onClick={() => {
-                    setUseCustomItem(true);
-                    updateForm("itemName", "");
-                  }}
-                  sx={{ flex: 1 }}
-                >
-                  Free Text
-                </Button>
-              </Box>
-              {useCustomItem ? (
-                <TextField
-                  value={form.itemName}
-                  onChange={(e) => updateForm("itemName", e.target.value)}
-                  placeholder="Enter item name"
-                  fullWidth
-                  size="small"
-                />
-              ) : (
-                <TextField
-                  select
-                  value={form.itemName}
-                  onChange={(e) => handleItemChange(e.target.value)}
-                  fullWidth
-                  size="small"
-                >
-                  <MenuItem value="">Select material...</MenuItem>
-                  {INVENTORY_ITEMS.map((item) => (
-                    <MenuItem key={item.sku} value={item.name}>
-                      {item.name}
-                    </MenuItem>
-                  ))}
-                </TextField>
-              )}
-            </Box>
+            <TextField
+              select
+              label="Item Name"
+              value={form.itemName}
+              onChange={(e) => handleItemChange(e.target.value)}
+              fullWidth
+              size="small"
+              helperText="Only materials from the project budget (inventory catalog)"
+            >
+              <MenuItem value="">Select material...</MenuItem>
+              {assignedMaterials.map((item) => (
+                <MenuItem key={item.sourceLineId} value={item.itemName}>
+                  {item.itemName} (budget: {item.quantityAvailable} {item.unit})
+                </MenuItem>
+              ))}
+            </TextField>
 
             <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
               <TextField

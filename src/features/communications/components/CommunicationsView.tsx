@@ -59,15 +59,15 @@ const threads = [
   },
   {
     id: "6",
-    name: "Karen Thornton",
-    subject: "Interested in Backyard Turf Installation",
-    preview: "Hi, we found you through our neighbors the Johnsons. We're interested in getting artificial turf...",
+    name: "Sunbelt Properties",
+    subject: "RE: Sports Practice Field — Project Kickoff",
+    preview: "Chris, our team is ready to proceed. Please confirm the June install schedule and resident notification plan...",
     time: "Jun 3",
     unread: false,
-    starred: false,
-    status: "needs_reply",
-    tags: ["New Inquiry"],
-    lead: "Thornton Family",
+    starred: true,
+    status: "replied",
+    tags: ["Won", "Kickoff"],
+    lead: "Sunbelt Properties",
   },
 ];
 

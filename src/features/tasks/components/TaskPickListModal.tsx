@@ -13,8 +13,8 @@ import {
   Typography,
 } from "@mui/material";
 import { useIsMobile } from "../../../components/layout/Sidebar";
-import { INVENTORY_ITEMS } from "../../projects/constants/budgetConstants";
 import { TASK_PICK_LIST_UNITS } from "../constants/taskManagementConstants";
+import type { AssignedPickItem } from "../lib/taskPickListHelpers";
 import type {
   TaskManagementPickListFormData,
   TaskManagementPickListItem,
@@ -26,6 +26,8 @@ const emptyForm: TaskManagementPickListFormData = {
   sku: "",
   quantityRequired: "",
   unit: "sq ft",
+  category: "Material",
+  sourceLineId: "",
   pulledFromInventory: false,
   notes: "",
 };
@@ -33,11 +35,20 @@ const emptyForm: TaskManagementPickListFormData = {
 interface TaskPickListModalProps {
   open: boolean;
   item?: TaskManagementPickListItem | null;
+  availableItems: AssignedPickItem[];
+  defaultFieldName?: string;
   onClose: () => void;
   onSave: (data: TaskManagementPickListFormData) => void;
 }
 
-export function TaskPickListModal({ open, item, onClose, onSave }: TaskPickListModalProps) {
+export function TaskPickListModal({
+  open,
+  item,
+  availableItems,
+  defaultFieldName = "",
+  onClose,
+  onSave,
+}: TaskPickListModalProps) {
   const isMobile = useIsMobile();
   const [form, setForm] = useState<TaskManagementPickListFormData>(emptyForm);
 
@@ -50,43 +61,60 @@ export function TaskPickListModal({ open, item, onClose, onSave }: TaskPickListM
           sku: item.sku,
           quantityRequired: String(item.quantityRequired),
           unit: item.unit,
+          category: item.category,
+          sourceLineId: item.sourceLineId,
           pulledFromInventory: item.pulledFromInventory,
           notes: item.notes,
         });
       } else {
-        setForm(emptyForm);
+        setForm({
+          ...emptyForm,
+          fieldName: defaultFieldName,
+          unit: availableItems[0]?.unit ?? "sq ft",
+        });
       }
     }
-  }, [open, item]);
+  }, [open, item, defaultFieldName, availableItems]);
 
   const handleItemChange = (itemName: string) => {
-    const inventoryItem = INVENTORY_ITEMS.find((i) => i.name === itemName);
+    const assigned = availableItems.find((entry) => entry.itemName === itemName);
+    if (!assigned) return;
     setForm((prev) => ({
       ...prev,
-      itemName,
-      sku: inventoryItem?.sku ?? "",
-      unit: inventoryItem?.unit ?? prev.unit,
+      itemName: assigned.itemName,
+      sku: assigned.sku,
+      unit: assigned.unit,
+      category: assigned.category,
+      sourceLineId: assigned.sourceLineId,
     }));
   };
 
   const handleSubmit = () => {
-    if (!form.fieldName.trim() || !form.itemName.trim()) return;
+    if (!form.fieldName.trim() || !form.itemName.trim() || !form.sourceLineId) return;
     onSave(form);
     onClose();
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth fullScreen={isMobile}>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="sm"
+      fullWidth
+      fullScreen={isMobile}
+    >
       <DialogTitle sx={{ fontWeight: 700 }}>
         {item ? "Edit Pick List Item" : "Add Pick List Item"}
       </DialogTitle>
       <DialogContent>
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}>
           <TextField
-            label="Field Name"
+            label="Area / Field Name"
             value={form.fieldName}
-            onChange={(e) => setForm((prev) => ({ ...prev, fieldName: e.target.value }))}
-            placeholder="e.g. Turf Installation Area"
+            onChange={(e) =>
+              setForm((prev) => ({ ...prev, fieldName: e.target.value }))
+            }
+            placeholder="e.g. Site Preparation"
             fullWidth
             size="small"
             required
@@ -100,12 +128,18 @@ export function TaskPickListModal({ open, item, onClose, onSave }: TaskPickListM
             fullWidth
             size="small"
             required
-            helperText="From materials list"
+            helperText={
+              availableItems.length === 0
+                ? "No materials or equipment assigned to this milestone"
+                : "Only items from the project budget for this milestone"
+            }
+            disabled={availableItems.length === 0}
           >
-            <MenuItem value="">Select material...</MenuItem>
-            {INVENTORY_ITEMS.map((inv) => (
-              <MenuItem key={inv.sku} value={inv.name}>
-                {inv.name}
+            <MenuItem value="">Select assigned item...</MenuItem>
+            {availableItems.map((assigned) => (
+              <MenuItem key={assigned.sourceLineId} value={assigned.itemName}>
+                {assigned.category === "Equipment" ? "🛠 " : "📦 "}
+                {assigned.itemName} (budget: {assigned.quantityAvailable} {assigned.unit})
               </MenuItem>
             ))}
           </TextField>
@@ -116,25 +150,29 @@ export function TaskPickListModal({ open, item, onClose, onSave }: TaskPickListM
             InputProps={{ readOnly: true }}
             fullWidth
             size="small"
-            helperText="Auto-filled from material selection"
+            helperText="From project budget assignment"
           />
 
           <TextField
             label="Quantity Required"
             type="number"
             value={form.quantityRequired}
-            onChange={(e) => setForm((prev) => ({ ...prev, quantityRequired: e.target.value }))}
+            onChange={(e) =>
+              setForm((prev) => ({ ...prev, quantityRequired: e.target.value }))
+            }
             fullWidth
             size="small"
             inputProps={{ min: 0, step: "any" }}
-            helperText="Enter quantity for this field"
+            helperText="Quantity to pull for this task"
           />
 
           <TextField
             select
             label="Unit"
             value={form.unit}
-            onChange={(e) => setForm((prev) => ({ ...prev, unit: e.target.value }))}
+            onChange={(e) =>
+              setForm((prev) => ({ ...prev, unit: e.target.value }))
+            }
             fullWidth
             size="small"
           >
@@ -150,21 +188,33 @@ export function TaskPickListModal({ open, item, onClose, onSave }: TaskPickListM
               <Switch
                 checked={form.pulledFromInventory}
                 onChange={(e) =>
-                  setForm((prev) => ({ ...prev, pulledFromInventory: e.target.checked }))
+                  setForm((prev) => ({
+                    ...prev,
+                    pulledFromInventory: e.target.checked,
+                  }))
                 }
                 color="primary"
+                disabled={form.category === "Equipment"}
               />
             }
             label="Pulled from Inventory"
           />
-          <Typography variant="caption" color="text.secondary" sx={{ mt: -1.5, ml: 1 }}>
-            Updates inventory on confirmation when saved
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{ mt: -1.5, ml: 1 }}
+          >
+            {form.category === "Equipment"
+              ? "Equipment rentals are tracked separately from inventory stock"
+              : "Updates inventory on confirmation when saved"}
           </Typography>
 
           <TextField
             label="Notes"
             value={form.notes}
-            onChange={(e) => setForm((prev) => ({ ...prev, notes: e.target.value }))}
+            onChange={(e) =>
+              setForm((prev) => ({ ...prev, notes: e.target.value }))
+            }
             placeholder="Any substitution notes"
             fullWidth
             size="small"
@@ -181,7 +231,12 @@ export function TaskPickListModal({ open, item, onClose, onSave }: TaskPickListM
           variant="contained"
           color="primary"
           onClick={handleSubmit}
-          disabled={!form.fieldName.trim() || !form.itemName.trim()}
+          disabled={
+            !form.fieldName.trim() ||
+            !form.itemName.trim() ||
+            !form.sourceLineId ||
+            availableItems.length === 0
+          }
         >
           {item ? "Update" : "Add"} Item
         </Button>

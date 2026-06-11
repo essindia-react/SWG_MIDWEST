@@ -242,15 +242,15 @@ function FlyoutSubMenu({
             key={item.to}
             to={item.to}
             onClick={onItemSelect}
-            className="flex items-center no-underline px-4 py-2 mx-1.5 rounded-md transition-colors hover:bg-white/12"
-            style={{
-              color: item.isActive ? "#ffffff" : "rgba(255,255,255,0.62)",
-              fontWeight: item.isActive ? 600 : 400,
-              fontSize: "13px",
-              backgroundColor: item.isActive
-                ? "rgba(255,255,255,0.1)"
-                : "transparent",
-            }}
+            className={`
+            flex items-center no-underline px-4 py-1 mx-1.5 mb-1 rounded-md
+            transition-colors
+            ${
+              item.isActive
+                ? "bg-white/10 text-white font-semibold"
+                : "text-white/60 hover:bg-white/10 hover:text-white"
+            }
+          `}
           >
             {item.label}
           </NavLink>
@@ -714,16 +714,14 @@ export function Sidebar({
         to={item.to}
         end={item.end}
         onClick={handleNavSelect}
+        title={!isOpen ? item.label : undefined}
         className={({ isActive }) =>
           `w-full flex items-center gap-3 rounded-lg transition-all group no-underline px-3 py-2.5 ${
-            isActive ? "" : "hover:bg-white/8"
+            isActive
+              ? "bg-white/15 text-white"
+              : "text-white/65 hover:bg-white/10 hover:text-white"
           }`
         }
-        style={({ isActive }) => ({
-          backgroundColor: isActive ? "rgba(255,255,255,0.15)" : "transparent",
-          color: isActive ? "#ffffff" : "rgba(255,255,255,0.65)",
-        })}
-        title={!isOpen ? item.label : undefined}
       >
         {({ isActive }) => (
           <>

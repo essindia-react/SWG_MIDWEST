@@ -13,13 +13,19 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useProjects } from "../../../hooks/useProjects";
-import { formatProjectDate, getProjectStatusConfig } from "../../../lib/projectHelpers";
+import {
+  formatProjectDate,
+  getProjectStatusConfig,
+  getProjectsForSiteSupervisor,
+} from "../../../lib/projectHelpers";
+import { FIELD_SITE_SUPERVISOR } from "../../projects/constants/projectConstants";
 import type { Project, ProjectMilestone, ProjectTask } from "../../../types/project";
 import {
   milestoneStatusFromApi,
   taskStatusFromApi,
 } from "../../projects/constants/projectConstants";
 import { MobileMaterialRequestView } from "../../site-material-request/components/MobileMaterialRequestView";
+import { getProjectAssignedMaterials } from "../lib/taskPickListHelpers";
 import type { FlatProjectTask } from "../lib/taskManagementHelpers";
 import {
   flattenProjectTasks,
@@ -87,17 +93,21 @@ function TaskListItem({
 
 function DashboardScreen({
   projects,
+  supervisorProjects,
   selectedProjectId,
   onProjectChange,
   onSelectTask,
 }: {
   projects: { id: string; projectCode: string; customerName: string }[];
+  supervisorProjects: Project[];
   selectedProjectId: string;
   onProjectChange: (id: string) => void;
   onSelectTask: (task: FlatProjectTask) => void;
 }) {
-  const { projects: allProjects } = useProjects();
-  const allTasks = useMemo(() => flattenProjectTasks(allProjects), [allProjects]);
+  const allTasks = useMemo(
+    () => flattenProjectTasks(supervisorProjects),
+    [supervisorProjects]
+  );
 
   const filteredTasks = useMemo(() => {
     if (!selectedProjectId) return allTasks;
@@ -118,7 +128,8 @@ function DashboardScreen({
           Tasks Dashboard
         </p>
         <p className="text-white mt-1" style={{ fontSize: "11px", opacity: 0.65 }}>
-          View and manage your assigned project tasks
+          {FIELD_SITE_SUPERVISOR.name} · Site Supervisor — {projects.length} project
+          {projects.length !== 1 ? "s" : ""} assigned
         </p>
       </div>
 
@@ -626,7 +637,11 @@ function toFlatTask(task: ProjectTask, project: Project, milestoneName: string):
 }
 
 export function MobileTaskManagementView({ standalone = false }: { standalone?: boolean }) {
-  const { projects, getProjectById, updateTask } = useProjects();
+  const { projects: allProjects, getProjectById, updateTask } = useProjects();
+  const projects = useMemo(
+    () => getProjectsForSiteSupervisor(allProjects, FIELD_SITE_SUPERVISOR.id),
+    [allProjects]
+  );
   const [screen, setScreen] = useState<MobileScreen>("dashboard");
   const [selectedProjectId, setSelectedProjectId] = useState("");
   const [highlightedTaskId, setHighlightedTaskId] = useState<string | null>(null);
@@ -635,10 +650,10 @@ export function MobileTaskManagementView({ standalone = false }: { standalone?: 
   const projectOptions = useMemo(
     () =>
       projects.map((p) => ({
-          id: p.id,
-          projectCode: p.projectCode,
-          customerName: p.customerName,
-        })),
+        id: p.id,
+        projectCode: p.projectCode,
+        customerName: p.customerName,
+      })),
     [projects]
   );
 
@@ -686,9 +701,18 @@ export function MobileTaskManagementView({ standalone = false }: { standalone?: 
   };
 
   const content =
-    screen === "material-request" ? (
+    screen === "material-request" && selectedTask && activeProject ? (
       <MobileMaterialRequestView
         embedded
+        taskContext={{
+          projectCode: activeProject.projectCode,
+          projectName: `${activeProject.customerName} — ${activeProject.projectType}`,
+          taskId: selectedTask.id,
+          taskName: selectedTask.name,
+          milestoneName: selectedTask.milestoneName,
+          requestedBy: selectedTask.assignedTo || "Field Crew",
+          assignedMaterials: getProjectAssignedMaterials(activeProject),
+        }}
         onClose={() => setScreen("task-detail")}
       />
     ) : screen === "task-detail" && selectedTask ? (
@@ -717,6 +741,7 @@ export function MobileTaskManagementView({ standalone = false }: { standalone?: 
     ) : (
       <DashboardScreen
         projects={projectOptions}
+        supervisorProjects={projects}
         selectedProjectId={selectedProjectId}
         onProjectChange={handleProjectChangeFromDashboard}
         onSelectTask={handleSelectTaskFromDashboard}

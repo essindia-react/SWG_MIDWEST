@@ -83,7 +83,7 @@ export const dummyTimesheets: TimesheetEntry[] = [
   {
     id: "ts-1",
     employeeId: "emp-1",
-    projectId: "proj-1", // Reference to a dummy project
+    projectId: "project-1",
     workType: "Regular Installation",
     clockInTime: "2024-06-03T07:00:00Z",
     clockInLocation: "Columbus, OH (40.0, -83.0)",
@@ -99,7 +99,7 @@ export const dummyTimesheets: TimesheetEntry[] = [
   {
     id: "ts-2",
     employeeId: "emp-3",
-    projectId: "proj-1",
+    projectId: "project-1",
     workType: "Regular Installation",
     clockInTime: "2024-06-03T07:00:00Z",
     clockInLocation: "Columbus, OH (40.0, -83.0)",
@@ -114,7 +114,7 @@ export const dummyTimesheets: TimesheetEntry[] = [
   {
     id: "ts-3",
     employeeId: "emp-1",
-    projectId: "proj-2",
+    projectId: "project-2",
     workType: "Travel",
     clockInTime: "2024-06-04T08:00:00Z",
     clockInLocation: "Columbus, OH",

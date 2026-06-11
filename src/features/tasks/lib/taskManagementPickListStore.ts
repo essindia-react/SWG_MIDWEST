@@ -1,6 +1,11 @@
+import { applyPickListInventoryPulls } from "../../../lib/inventoryIntegration";
+import type { Project } from "../../../types/project";
 import type { TaskManagementPickListItem } from "../types/taskManagementPickList";
+import { getAllTaskPickListSeedsForProjects } from "./taskPickListHelpers";
 
 const STORAGE_KEY = "landscapems-task-management-picklists";
+const VERSION_KEY = "landscapems-task-management-picklists-version";
+const CURRENT_VERSION = "4";
 
 type PickListStore = Record<string, TaskManagementPickListItem[]>;
 
@@ -20,6 +25,27 @@ function readStore(): PickListStore {
 
 function writeStore(store: PickListStore): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+}
+
+export function seedTaskPickListsFromProjects(projects: Project[]): void {
+  if (localStorage.getItem(VERSION_KEY) === CURRENT_VERSION) return;
+
+  const seeds = getAllTaskPickListSeedsForProjects(projects);
+  const store: PickListStore = {};
+
+  for (const [key, items] of Object.entries(seeds)) {
+    if (items.length === 0) continue;
+    store[key] = items.map((item, index) => ({
+      id: `tmpl-seed-${key}-${index}`,
+      ...item,
+    }));
+  }
+
+  writeStore(store);
+  localStorage.setItem(VERSION_KEY, CURRENT_VERSION);
+  for (const project of projects) {
+    applyPickListInventoryPulls(project);
+  }
 }
 
 export function getTaskPickList(

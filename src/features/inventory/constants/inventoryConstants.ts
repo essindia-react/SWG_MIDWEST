@@ -72,6 +72,7 @@ export const TRANSACTION_TYPE_COLORS: Record<
   "Stock In": { bg: "#E8F5E9", color: "#2E7D32" },
   "Project Allocation": { bg: "#FFEBEE", color: "#C62828" },
   "Site Request": { bg: "#FFEBEE", color: "#C62828" },
+  "Purchase Order": { bg: "#F3E5F5", color: "#6A1B9A" },
   "Product Swap": { bg: "#E3F2FD", color: "#1565C0" },
   Adjustment: { bg: "#FFF3E0", color: "#E65100" },
 };

@@ -35,6 +35,7 @@ export interface MaterialRequest {
   fulfillmentMethod?: FulfillmentMethod;
   approvedQuantity?: number;
   notesToCrew?: string;
+  linkedPONumber?: string;
 }
 
 export interface MaterialRequestFormData {

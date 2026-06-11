@@ -1,11 +1,11 @@
 export type LeadStatus =
   | "new"
-  | "contacted"
-  | "consulted"
-  | "quoted"
+  | "design"
+  | "site_visit"
+  | "estimate_sent"
+  | "proposal_sent"
   | "won"
-  | "lost"
-  | "nurturing";
+  | "lost";
 
 export type LeadSource =
   | "web-form"
@@ -42,17 +42,9 @@ export type PropertyType =
 
 export type LeadPriority = "low" | "medium" | "high" | "urgent";
 
-export type ExistingSurface =
-  | "grass"
-  | "dirt"
-  | "concrete"
-  | "weeds"
-  | "other";
+export type ExistingSurface = "grass" | "dirt" | "concrete" | "weeds" | "other";
 
-export type TurfStyle =
-  | "pet-friendly"
-  | "putting-green"
-  | "landscape-premium";
+export type TurfStyle = "pet-friendly" | "putting-green" | "landscape-premium";
 
 export type FormPipelineStage =
   | "new"
