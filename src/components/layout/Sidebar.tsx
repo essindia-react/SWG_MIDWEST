@@ -225,7 +225,7 @@ function FlyoutSubMenu({
     >
       <div
         ref={headerRef}
-        className="px-4 py-2.5 text-white font-semibold text-sm flex-shrink-0"
+        className="px-3 py-2 text-white font-semibold text-md flex-shrink-0"
         style={{
           backgroundColor: "rgba(0,0,0,0.12)",
           borderBottom: "1px solid rgba(255,255,255,0.1)",
@@ -703,7 +703,7 @@ export function Sidebar({
           <NavLabel isOpen={isOpen} isActive={isActive}>
             {item.label}
           </NavLabel>
-          {isActive && <ChevronLabel isActive={isActive} />}
+          {/* {isActive && <ChevronLabel isActive={isActive} />} */}
         </NavLink>
       );
     }
@@ -729,7 +729,7 @@ export function Sidebar({
             <NavLabel isOpen={isOpen} isActive={isActive}>
               {item.label}
             </NavLabel>
-            {isActive && <ChevronLabel isActive={isActive} />}
+            {/* {isActive && <ChevronLabel isActive={isActive} />} */}
           </>
         )}
       </NavLink>
