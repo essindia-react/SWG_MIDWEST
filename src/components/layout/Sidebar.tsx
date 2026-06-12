@@ -793,7 +793,7 @@ export function Sidebar({
               <div
                 style={{ fontSize: "11px", color: "rgba(255,255,255,0.55)" }}
               >
-                CRM Platform
+                Business Management Platform
               </div>
             </div>
           </div>
